@@ -1,10 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { UnitPlan, AssessmentData } from "../types";
 
+// Fallback key provided by user for immediate functionality
+const HARDCODED_KEY = "AIzaSyDqxNaoliLZY6YW9y0nSCxiwHNbczpanNE";
+
 const getClient = () => {
-  const apiKey = process.env.API_KEY;
+  // Prioritize environment variable (for Vercel), fallback to hardcoded key
+  const apiKey = process.env.API_KEY || HARDCODED_KEY;
   if (!apiKey) {
-    throw new Error("API_KEY is not defined in environment variables.");
+    throw new Error("API_KEY is not defined.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -206,6 +210,7 @@ export const generateLearningExperiences = async (plan: UnitPlan): Promise<strin
     const prompt = `
       Pour une unité du PEI intitulée "${plan.title}" avec l'énoncé de recherche "${plan.statementOfInquiry}",
       suggère 3 activités d'apprentissage spécifiques et engageantes.
+      Inclue les stratégies d'enseignement.
       Réponds en Français, format liste à puces.
     `;
     
@@ -227,20 +232,22 @@ Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critéri
 RÈGLES ABSOLUES - FORMAT JSON :
 1. Utilise UNIQUEMENT les CLÉS JSON EN ANGLAIS ci-dessous. NE LES TRADUIS PAS.
 2. Le CONTENU (les valeurs) doit être en FRANÇAIS.
-3. Ne laisse AUCUN champ vide. Remplis TOUTES les sections, y compris la réflexion (invente des pistes) et la différenciation.
+3. Ne laisse AUCUN champ vide. Remplis TOUTES les sections.
+
+CHAMPS OBLIGATOIRES ET DÉTAILLÉS :
+- "learningExperiences": Détaille les ACTIVITÉS D'APPRENTISSAGE et les STRATÉGIES D'ENSEIGNEMENT (ex: Apprentissage par enquête, travail collaboratif...).
+- "formativeAssessment": Précise les méthodes d'ÉVALUATION FORMATIVE (ex: tickets de sortie, quiz rapide, observation...).
+- "differentiation": Précise les stratégies de DIFFÉRENCIATION (Contenu, Processus, Produit) pour les élèves en difficulté et avancés.
 
 RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
 1. Pour CHAQUE aspect (strand) listé dans "strands" (ex: i, ii, iii), tu DOIS générer EXACTEMENT UN exercice correspondant.
 2. Si le critère a 3 aspects, il doit y avoir 3 exercices.
-3. VARIE les types d'exercices pour couvrir différents niveaux cognitifs :
-   - Exercice pour l'aspect i : Peut être une question de connaissance, QCM ou définition.
-   - Exercice pour l'aspect ii : Peut être une application, un calcul ou un schéma.
-   - Exercice pour l'aspect iii : Peut être une résolution de problème complexe, une analyse ou une justification.
+3. VARIE les types d'exercices pour couvrir différents niveaux cognitifs.
 4. La clé "criterionReference" de l'exercice doit correspondre EXPLICITEMENT à l'aspect (exemple: "Critère A : i. sélectionner...").
 
 GESTION DES RESSOURCES DANS LES EXERCICES :
 - Si l'exercice nécessite l'analyse d'un texte, FOURNIS LE TEXTE complet dans le champ "content".
-- Si l'exercice nécessite une image, un schéma ou un document visuel que tu ne peux pas générer, écris EXPLICITEMENT entre crochets : "[Insérer Image/Schéma ici : description détaillée de l'image requise (ex: Graphique montrant l'évolution de X...)]".
+- Si l'exercice nécessite une image, écris EXPLICITEMENT : "[Insérer Image/Schéma ici : description détaillée]".
 
 Structure JSON attendue :
 {
@@ -251,22 +258,22 @@ Structure JSON attendue :
   "globalContext": "Un contexte mondial",
   "statementOfInquiry": "Phrase complète...",
   "inquiryQuestions": {
-    "factual": ["Question 1", "Question 2"],
-    "conceptual": ["Question 1", "Question 2"],
-    "debatable": ["Question 1", "Question 2"]
+    "factual": ["Q1", "Q2"],
+    "conceptual": ["Q1", "Q2"],
+    "debatable": ["Q1", "Q2"]
   },
   "objectives": ["Critère A: ...", "Critère B: ..."],
   "atlSkills": ["Compétence 1...", "Compétence 2..."],
-  "content": "Contenu détaillé (minimum 50 mots)...",
-  "learningExperiences": "Activités détaillées (minimum 50 mots)...",
+  "content": "Contenu détaillé...",
+  "learningExperiences": "Activités ET stratégies d'enseignement détaillées...",
   "summativeAssessment": "Description de la tâche finale...",
-  "formativeAssessment": "Quiz, tickets de sortie...",
-  "differentiation": "Stratégies pour élèves...",
+  "formativeAssessment": "Description des évaluations formatives...",
+  "differentiation": "Stratégies de différenciation...",
   "resources": "Livres, liens...",
   "reflection": {
-     "prior": "Connaissances préalables suggérées...",
-     "during": "Questions sur l'engagement...",
-     "after": "Analyse des résultats..."
+     "prior": "Connaissances préalables...",
+     "during": "Engagement...",
+     "after": "Résultats..."
   },
   "assessments": [
     {
@@ -275,21 +282,16 @@ Structure JSON attendue :
        "maxPoints": 8,
        "strands": ["i. sélectionner...", "ii. appliquer...", "iii. résoudre..."],
        "rubricRows": [
-          { "level": "1-2", "descriptor": "L'élève est capable de..." },
-          { "level": "3-4", "descriptor": "L'élève est capable de..." },
-          { "level": "5-6", "descriptor": "L'élève est capable de..." },
-          { "level": "7-8", "descriptor": "L'élève est capable de..." }
+          { "level": "1-2", "descriptor": "..." },
+          { "level": "3-4", "descriptor": "..." },
+          { "level": "5-6", "descriptor": "..." },
+          { "level": "7-8", "descriptor": "..." }
        ],
        "exercises": [
           {
-             "title": "Exercice 1: Connaissance (Aspect i)",
-             "content": "Question : Définir le terme... \n [Insérer Image : Schéma d'une cellule animale]",
+             "title": "Exercice 1 (Aspect i)",
+             "content": "Question...",
              "criterionReference": "Critère A : i. sélectionner..."
-          },
-          {
-             "title": "Exercice 2: Application (Aspect ii)",
-             "content": "Lisez le texte suivant : '...texte source...'. Question : Calculez...",
-             "criterionReference": "Critère A : ii. appliquer..."
           }
        ]
     }
@@ -310,8 +312,8 @@ export const generateFullUnitPlan = async (
       Niveau: ${gradeLevel}
       Sujets à couvrir: ${topics}
       
-      Génère le plan complet et 4 évaluations critériées (A, B, C, D) en suivant strictement la règle : 1 aspect = 1 exercice.
-      N'oublie pas de fournir les textes sources ou les descriptions d'images pour les exercices.
+      Génère le plan complet et 4 évaluations critériées (A, B, C, D).
+      Assure-toi de bien remplir les sections 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'.
     `;
 
     const response = await ai.models.generateContent({
@@ -350,8 +352,7 @@ export const generateCourseFromChapters = async (
       ${SYSTEM_INSTRUCTION_FULL_PLAN}
       
       TACHE : Divise le programme fourni en 4 à 6 unités logiques.
-      Retourne une LISTE JSON (Array) d'objets UnitPlan suivant la structure ci-dessus.
-      Assure-toi que chaque unité a ses évaluations complètes (1 exercice par aspect).
+      Retourne une LISTE JSON (Array) d'objets UnitPlan.
       `;
   
       const userPrompt = `

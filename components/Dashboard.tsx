@@ -85,11 +85,21 @@ const Dashboard: React.FC<DashboardProps> = ({ teacherName, currentGrade, plans,
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       
       <header className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Planificateur PEI - {currentGrade}</h1>
-          <div className="flex items-center gap-2 text-slate-500 mt-2">
-            <User size={16} />
-            <span className="font-medium">{teacherName}</span>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-white shadow-md overflow-hidden border border-slate-100">
+             <img 
+                src="logo.png" 
+                alt="Logo" 
+                className="w-full h-full object-cover"
+                onError={(e) => e.currentTarget.style.display = 'none'}
+             />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Planificateur PEI - {currentGrade}</h1>
+            <div className="flex items-center gap-2 text-slate-500 mt-1">
+              <User size={16} />
+              <span className="font-medium">{teacherName}</span>
+            </div>
           </div>
         </div>
         <div className="flex gap-3">

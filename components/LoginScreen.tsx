@@ -21,12 +21,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-100">
-        <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-8 text-white text-center">
-           <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-              <School size={32} />
+        <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-8 text-white text-center relative">
+           <div className="bg-white w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg overflow-hidden">
+              {/* Make sure logo.png is in your public folder */}
+              <img 
+                src="logo.png" 
+                alt="Al Kawthar Logo" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.classList.add('bg-white/20', 'backdrop-blur-sm');
+                  // Show icon if image fails
+                  const icon = document.createElement('div');
+                  icon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>';
+                  e.currentTarget.parentElement?.appendChild(icon);
+                }}
+              />
            </div>
-           <h1 className="text-2xl font-bold">Bienvenue sur MYP Planner</h1>
-           <p className="text-blue-100 mt-2 text-sm">Planification et Évaluation assistées par IA</p>
+           <h1 className="text-2xl font-bold">PEI Planner</h1>
+           <p className="text-blue-100 mt-2 text-sm">Écoles Internationales Al-Kawthar</p>
         </div>
         
         <div className="p-8">
