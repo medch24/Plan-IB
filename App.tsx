@@ -10,8 +10,8 @@ const App: React.FC = () => {
   const [plans, setPlans] = useState<UnitPlan[]>([]);
   const [editingPlan, setEditingPlan] = useState<UnitPlan | undefined>(undefined);
   
-  // Session State (simulating Database connection)
-  const [session, setSession] = useState<{teacher: string, grade: string} | null>(null);
+  // Session State - Filter by subject and grade
+  const [session, setSession] = useState<{subject: string, grade: string} | null>(null);
 
   // Load plans from localStorage on mount
   useEffect(() => {
@@ -37,15 +37,16 @@ const App: React.FC = () => {
     }
   }, [plans]);
 
-  const handleLogin = (teacher: string, grade: string) => {
-      setSession({ teacher, grade });
+  const handleLogin = (subject: string, grade: string) => {
+      setSession({ subject, grade });
       setView(AppView.DASHBOARD);
   };
 
   const handleCreateNew = () => {
     setEditingPlan({
-        ...sanitizeUnitPlan({}, "", session?.grade || ""),
-        teacherName: session?.teacher || "",
+        ...sanitizeUnitPlan({}, session?.subject || "", session?.grade || ""),
+        teacherName: "",
+        subject: session?.subject || "",
         gradeLevel: session?.grade || ""
     });
     setView(AppView.EDITOR);
@@ -63,10 +64,11 @@ const App: React.FC = () => {
   };
 
   const handleSavePlan = (plan: UnitPlan) => {
-    // Ensure teacher name is attached
+    // Ensure subject and grade are attached from session
     const planToSave = { 
-        ...plan, 
-        teacherName: plan.teacherName || session?.teacher || "" 
+        ...plan,
+        subject: plan.subject || session?.subject || "",
+        gradeLevel: plan.gradeLevel || session?.grade || ""
     };
 
     if (editingPlan && editingPlan.id) {
@@ -78,10 +80,11 @@ const App: React.FC = () => {
   };
 
   const handleAddPlans = (newPlans: UnitPlan[]) => {
-    // Attach session teacher name to generated plans
+    // Attach session subject and grade to generated plans
     const signedPlans = newPlans.map(p => ({
         ...p,
-        teacherName: session?.teacher || ""
+        subject: session?.subject || "",
+        gradeLevel: session?.grade || ""
     }));
     setPlans(prev => [...signedPlans, ...prev]);
   };
@@ -90,9 +93,12 @@ const App: React.FC = () => {
     setView(AppView.DASHBOARD);
   };
   
-  // Filter plans for the current session grade/class
+  // Filter plans for the current session subject and grade
   const sessionPlans = session 
-    ? plans.filter(p => p.gradeLevel.trim().toLowerCase() === session.grade.trim().toLowerCase())
+    ? plans.filter(p => 
+        p.gradeLevel.trim().toLowerCase() === session.grade.trim().toLowerCase() &&
+        p.subject.trim().toLowerCase() === session.subject.trim().toLowerCase()
+      )
     : [];
 
   if (view === AppView.LOGIN) {
@@ -103,7 +109,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {view === AppView.DASHBOARD && session ? (
         <Dashboard 
-          teacherName={session.teacher}
+          currentSubject={session.subject}
           currentGrade={session.grade}
           plans={sessionPlans} 
           onCreateNew={handleCreateNew} 

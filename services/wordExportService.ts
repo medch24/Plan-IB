@@ -77,7 +77,36 @@ const generateDocumentBlob = (templateContent: ArrayBuffer, data: any): Blob => 
         throw error;
     }
 
-    return doc.getZip().generate({
+    // Get the generated zip
+    const generatedZip = doc.getZip();
+    
+    // Force LTR (Left-to-Right) text direction by modifying document.xml settings
+    try {
+        const documentXml = generatedZip.file("word/document.xml")?.asText();
+        if (documentXml) {
+            // Ensure bidi="0" (LTR) is set in all paragraphs
+            let modifiedXml = documentXml;
+            
+            // Add rtl="0" to paragraph properties if not present
+            // This ensures left-to-right direction
+            modifiedXml = modifiedXml.replace(
+                /<w:pPr>/g,
+                '<w:pPr><w:bidi w:val="0"/>'
+            );
+            
+            // Also add to run properties for extra safety
+            modifiedXml = modifiedXml.replace(
+                /<w:rPr>/g,
+                '<w:rPr><w:rtl w:val="0"/>'
+            );
+            
+            generatedZip.file("word/document.xml", modifiedXml);
+        }
+    } catch (dirError) {
+        console.warn("Could not modify text direction, using default:", dirError);
+    }
+
+    return generatedZip.generate({
       type: "blob",
       mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });

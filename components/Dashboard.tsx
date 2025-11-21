@@ -7,7 +7,7 @@ import { exportUnitPlanToWord, exportAssessmentsToZip } from '../services/wordEx
 import { SUBJECTS } from '../constants';
 
 interface DashboardProps {
-  teacherName: string;
+  currentSubject: string;
   currentGrade: string;
   plans: UnitPlan[];
   onCreateNew: () => void;
@@ -16,7 +16,7 @@ interface DashboardProps {
   onAddPlans: (newPlans: UnitPlan[]) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ teacherName, currentGrade, plans, onCreateNew, onEdit, onDelete, onAddPlans }) => {
+const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, plans, onCreateNew, onEdit, onDelete, onAddPlans }) => {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [bulkSubject, setBulkSubject] = useState('');
   // Pre-fill bulk grade from session
@@ -88,17 +88,17 @@ const Dashboard: React.FC<DashboardProps> = ({ teacherName, currentGrade, plans,
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white shadow-md overflow-hidden border border-slate-100">
              <img 
-                src="logo.png" 
-                alt="Logo" 
-                className="w-full h-full object-cover"
+                src="/logo-alkawtar.png" 
+                alt="Logo Al Kawthar" 
+                className="w-full h-full object-contain p-1"
                 onError={(e) => e.currentTarget.style.display = 'none'}
              />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Planificateur PEI - {currentGrade}</h1>
             <div className="flex items-center gap-2 text-slate-500 mt-1">
-              <User size={16} />
-              <span className="font-medium">{teacherName}</span>
+              <FileText size={16} />
+              <span className="font-medium">{currentSubject}</span>
             </div>
           </div>
         </div>
