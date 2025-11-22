@@ -247,26 +247,23 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
                  Entrez vos chapitres, choisissez une matière et un niveau. L'IA générera le plan complet ET les 4 évaluations critériées.
                </p>
                
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-xs font-bold text-indigo-800 mb-1">Matière</label>
-                    <select 
+                    <input 
+                      type="text" 
                       value={plan.subject}
-                      onChange={(e) => handleInputChange('subject', e.target.value)}
-                      className="w-full p-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm"
-                    >
-                      <option value="">Sélectionner la matière...</option>
-                      {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                      className="w-full p-2 border border-indigo-200 rounded-lg bg-indigo-50 font-medium text-indigo-900 text-sm"
+                      readOnly
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-indigo-800 mb-1">Niveau (Année du PEI)</label>
                     <input 
                       type="text" 
                       value={plan.gradeLevel}
-                      onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
-                      className="w-full p-2 border border-indigo-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                      placeholder="ex: PEI 3"
+                      className="w-full p-2 border border-indigo-200 rounded-lg bg-indigo-50 font-medium text-indigo-900 text-sm"
+                      readOnly
                     />
                   </div>
                </div>
@@ -332,22 +329,31 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Groupe de matières</label>
-                <select 
-                  value={plan.subject}
-                  onChange={(e) => handleInputChange('subject', e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                >
-                  <option value="">Sélectionner...</option>
-                  {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                {initialPlan?.subject || plan.subject ? (
+                  <input 
+                    type="text" 
+                    value={plan.subject}
+                    className="w-full p-3 border border-slate-300 rounded-lg bg-slate-100 font-medium text-slate-700"
+                    readOnly
+                  />
+                ) : (
+                  <select 
+                    value={plan.subject}
+                    onChange={(e) => handleInputChange('subject', e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="">Sélectionner...</option>
+                    {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Année du PEI</label>
                 <input 
                   type="text" 
                   value={plan.gradeLevel}
-                  onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-slate-300 rounded-lg bg-slate-100 font-medium text-slate-700"
+                  readOnly
                 />
               </div>
               <div>

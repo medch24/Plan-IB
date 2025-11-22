@@ -13,34 +13,41 @@ const getClient = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-// Robust JSON extractor
+// Robust JSON extractor with better error handling
 const cleanJsonText = (text: string): string => {
   if (!text) return "{}";
   
-  // Remove markdown blocks first to clean up obvious noise
-  let clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
-  
-  // Find the index of the first '{' or '['
-  const firstCurly = clean.indexOf('{');
-  const firstSquare = clean.indexOf('[');
-  
-  let start = -1;
-  let end = -1;
-  let type = 'object';
+  try {
+    // Remove markdown blocks first to clean up obvious noise
+    let clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    
+    // Remove any leading/trailing text that's not JSON
+    clean = clean.replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '');
+    
+    // Find the index of the first '{' or '['
+    const firstCurly = clean.indexOf('{');
+    const firstSquare = clean.indexOf('[');
+    
+    let start = -1;
+    let end = -1;
 
-  // Determine if it's an Object or Array based on which comes first
-  if (firstCurly !== -1 && (firstSquare === -1 || firstCurly < firstSquare)) {
-      start = firstCurly;
-      end = clean.lastIndexOf('}');
-      type = 'object';
-  } else if (firstSquare !== -1) {
-      start = firstSquare;
-      end = clean.lastIndexOf(']');
-      type = 'array';
-  }
+    // Determine if it's an Object or Array based on which comes first
+    if (firstCurly !== -1 && (firstSquare === -1 || firstCurly < firstSquare)) {
+        start = firstCurly;
+        end = clean.lastIndexOf('}');
+    } else if (firstSquare !== -1) {
+        start = firstSquare;
+        end = clean.lastIndexOf(']');
+    }
 
-  if (start !== -1 && end !== -1) {
-      return clean.substring(start, end + 1);
+    if (start !== -1 && end !== -1 && end > start) {
+        const extracted = clean.substring(start, end + 1);
+        // Validate it's parseable
+        JSON.parse(extracted);
+        return extracted;
+    }
+  } catch (e) {
+    console.warn("JSON cleaning failed:", e);
   }
 
   return "{}";
@@ -327,16 +334,32 @@ export const generateFullUnitPlan = async (
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response text");
+    if (!text) throw new Error("No response text from API");
+    
+    console.log("Raw AI response length:", text.length);
     
     const cleanedJson = cleanJsonText(text);
-    const parsed = JSON.parse(cleanedJson);
+    console.log("Cleaned JSON length:", cleanedJson.length);
+    
+    if (!cleanedJson || cleanedJson === "{}") {
+      throw new Error("Failed to extract valid JSON from AI response");
+    }
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanedJson);
+    } catch (parseError) {
+      console.error("JSON Parse Error:", parseError);
+      console.error("Problematic JSON:", cleanedJson.substring(0, 500));
+      throw new Error("Invalid JSON format from AI: " + parseError);
+    }
     
     return sanitizeUnitPlan(parsed, subject, gradeLevel);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating full plan:", error);
-    throw error;
+    const errorMsg = error?.message || "Erreur inconnue lors de la génération";
+    throw new Error(`Échec de génération: ${errorMsg}`);
   }
 };
 
@@ -373,12 +396,31 @@ export const generateCourseFromChapters = async (
       });
   
       const text = response.text;
-      if (!text) return [];
+      if (!text) {
+        console.warn("No text response from AI");
+        return [];
+      }
       
       const cleanedJson = cleanJsonText(text);
-      const plans = JSON.parse(cleanedJson);
       
-      if (!Array.isArray(plans)) return [];
+      if (!cleanedJson || cleanedJson === "{}") {
+        console.warn("Failed to extract valid JSON");
+        return [];
+      }
+      
+      let plans;
+      try {
+        plans = JSON.parse(cleanedJson);
+      } catch (parseError) {
+        console.error("JSON Parse Error in bulk generation:", parseError);
+        console.error("Problematic JSON:", cleanedJson.substring(0, 500));
+        return [];
+      }
+      
+      if (!Array.isArray(plans)) {
+        console.warn("AI did not return an array of plans");
+        return [];
+      }
 
       return plans.map((p: any, index: number) => {
         const sanitized = sanitizeUnitPlan(p, subject, gradeLevel);

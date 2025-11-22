@@ -18,8 +18,8 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, plans, onCreateNew, onEdit, onDelete, onAddPlans }) => {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [bulkSubject, setBulkSubject] = useState('');
-  // Pre-fill bulk grade from session
+  // Pre-fill subject and grade from session
+  const [bulkSubject, setBulkSubject] = useState(currentSubject);
   const [bulkGrade, setBulkGrade] = useState(currentGrade);
   const [bulkChapters, setBulkChapters] = useState('');
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
@@ -309,22 +309,19 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                  <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Matière</label>
-                        <select 
+                        <input 
+                            type="text" 
                             value={bulkSubject}
-                            onChange={(e) => setBulkSubject(e.target.value)}
-                            className="w-full p-2 border border-slate-300 rounded-lg bg-white text-sm"
-                        >
-                            <option value="">Sélectionner...</option>
-                            {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                            className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-100 font-medium"
+                            readOnly
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Niveau</label>
                         <input 
                             type="text" 
                             value={bulkGrade}
-                            onChange={(e) => setBulkGrade(e.target.value)}
-                            className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-100"
+                            className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-100 font-medium"
                             readOnly
                         />
                     </div>
