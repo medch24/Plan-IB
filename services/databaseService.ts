@@ -149,3 +149,96 @@ function savePlansToLocalStorage(subject: string, grade: string, plans: UnitPlan
   allPlanifications[key] = plans;
   saveSharedPlanifications(allPlanifications);
 }
+
+// ===== MIGRATION AUTOMATIQUE localStorage → MongoDB =====
+
+/**
+ * Migre automatiquement toutes les planifications de localStorage vers MongoDB
+ * Appelé au démarrage de l'application pour synchroniser les données locales
+ */
+export async function migrateLocalStorageToMongoDB(): Promise<{
+  success: boolean;
+  migrated: number;
+  errors: number;
+}> {
+  console.log('🔄 Vérification des données localStorage à migrer vers MongoDB...');
+  
+  const localPlanifications = loadSharedPlanifications();
+  const keys = Object.keys(localPlanifications);
+  
+  if (keys.length === 0) {
+    console.log('ℹ️ Aucune donnée localStorage à migrer');
+    return { success: true, migrated: 0, errors: 0 };
+  }
+  
+  console.log(`📦 ${keys.length} planification(s) trouvée(s) dans localStorage`);
+  
+  let migrated = 0;
+  let errors = 0;
+  
+  // Migrer chaque planification
+  for (const key of keys) {
+    try {
+      // Extraire subject et grade depuis la clé (format: "Mathématiques_PEI 3")
+      const parts = key.split('_');
+      if (parts.length < 2) {
+        console.warn(`⚠️ Clé invalide ignorée: ${key}`);
+        continue;
+      }
+      
+      const subject = parts.slice(0, -2).join('_'); // Tout sauf les 2 derniers
+      const grade = parts.slice(-2).join(' '); // Les 2 derniers (ex: "PEI 3")
+      
+      const localPlans = localPlanifications[key];
+      
+      if (!Array.isArray(localPlans) || localPlans.length === 0) {
+        console.log(`⏭️ Planification vide ignorée: ${key}`);
+        continue;
+      }
+      
+      console.log(`🔄 Migration de ${key} (${localPlans.length} plan(s))...`);
+      
+      // Vérifier si des données existent déjà dans MongoDB
+      const existingPlans = await loadPlansFromDatabase(subject, grade);
+      
+      if (existingPlans.length > 0) {
+        console.log(`ℹ️ ${key} existe déjà dans MongoDB (${existingPlans.length} plan(s)), ignoré`);
+        continue;
+      }
+      
+      // Sauvegarder dans MongoDB
+      const success = await savePlansToDatabase(subject, grade, localPlans);
+      
+      if (success) {
+        migrated++;
+        console.log(`✅ ${key} migré avec succès (${localPlans.length} plan(s))`);
+      } else {
+        errors++;
+        console.error(`❌ Échec de la migration de ${key}`);
+      }
+      
+    } catch (error) {
+      errors++;
+      console.error(`❌ Erreur lors de la migration de ${key}:`, error);
+    }
+  }
+  
+  console.log(`\n📊 Résumé de la migration:`);
+  console.log(`   ✅ Migrés: ${migrated}`);
+  console.log(`   ❌ Erreurs: ${errors}`);
+  console.log(`   ⏭️ Ignorés: ${keys.length - migrated - errors}`);
+  
+  return {
+    success: errors === 0,
+    migrated,
+    errors
+  };
+}
+
+/**
+ * Vérifie si une migration est nécessaire
+ */
+export function needsMigration(): boolean {
+  const localPlanifications = loadSharedPlanifications();
+  return Object.keys(localPlanifications).length > 0;
+}

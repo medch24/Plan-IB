@@ -4,15 +4,50 @@ import Dashboard from './components/Dashboard';
 import UnitPlanForm from './components/UnitPlanForm';
 import LoginScreen from './components/LoginScreen';
 import { sanitizeUnitPlan } from './services/geminiService';
-import { loadPlansFromDatabase, savePlansToDatabase } from './services/databaseService';
+import { loadPlansFromDatabase, savePlansToDatabase, migrateLocalStorageToMongoDB, needsMigration } from './services/databaseService';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LOGIN);
   const [currentPlans, setCurrentPlans] = useState<UnitPlan[]>([]);
   const [editingPlan, setEditingPlan] = useState<UnitPlan | undefined>(undefined);
+  const [migrationDone, setMigrationDone] = useState(false);
   
   // Session State - Filter by subject and grade
   const [session, setSession] = useState<{subject: string, grade: string} | null>(null);
+
+  // Migration automatique au démarrage de l'application
+  useEffect(() => {
+    const runMigration = async () => {
+      if (migrationDone) return;
+      
+      try {
+        // Vérifier si une migration est nécessaire
+        if (needsMigration()) {
+          console.log('🚀 Démarrage de la migration automatique localStorage → MongoDB');
+          
+          const result = await migrateLocalStorageToMongoDB();
+          
+          if (result.migrated > 0) {
+            console.log(`\n✅ Migration réussie : ${result.migrated} planification(s) migrée(s) vers MongoDB`);
+            console.log('📢 Ces données sont maintenant accessibles à tous les enseignants !');
+          }
+          
+          if (result.errors > 0) {
+            console.warn(`⚠️ ${result.errors} erreur(s) lors de la migration`);
+          }
+        } else {
+          console.log('✅ Aucune migration nécessaire (localStorage vide ou déjà migré)');
+        }
+        
+        setMigrationDone(true);
+      } catch (error) {
+        console.error('❌ Erreur lors de la migration automatique:', error);
+        setMigrationDone(true); // Marquer comme fait même en cas d'erreur pour éviter les boucles
+      }
+    };
+    
+    runMigration();
+  }, []); // Exécuter une seule fois au montage du composant
 
   // Charger les plans quand la session change (depuis MongoDB)
   useEffect(() => {
