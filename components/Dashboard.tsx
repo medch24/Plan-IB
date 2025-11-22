@@ -21,7 +21,9 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
   // Pre-fill subject and grade from session
   const [bulkSubject, setBulkSubject] = useState(currentSubject);
   const [bulkGrade, setBulkGrade] = useState(currentGrade);
+  const [bulkTeacher, setBulkTeacher] = useState('');
   const [bulkChapters, setBulkChapters] = useState('');
+  const [bulkResources, setBulkResources] = useState('');
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const [exportingId, setExportingId] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
 
   const handleBulkGenerate = async () => {
     if (!bulkSubject || !bulkGrade || !bulkChapters) {
-      alert("Veuillez remplir tous les champs.");
+      alert("Veuillez remplir les champs obligatoires (chapitres).");
       return;
     }
     
@@ -54,16 +56,27 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     try {
       const newPlans = await generateCourseFromChapters(bulkChapters, bulkSubject, bulkGrade);
       if (newPlans.length > 0) {
+        // Ajouter enseignant et ressources à chaque plan généré
+        const enrichedPlans = newPlans.map(plan => ({
+          ...plan,
+          teacherName: bulkTeacher || plan.teacherName,
+          resources: bulkResources || plan.resources
+        }));
+        
         if (onAddPlans) {
-            onAddPlans(newPlans);
+            onAddPlans(enrichedPlans);
         }
         setIsBulkModalOpen(false);
         setBulkChapters('');
+        setBulkTeacher('');
+        setBulkResources('');
       } else {
         alert("L'IA n'a pas retourné de plan valide.");
       }
-    } catch (e) {
-      alert("Erreur lors de la génération: " + e);
+    } catch (e: any) {
+      const errorMsg = e?.message || String(e);
+      alert("Erreur lors de la génération: " + errorMsg);
+      console.error("Bulk generation error:", e);
     } finally {
       setIsBulkGenerating(false);
     }
@@ -328,12 +341,33 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                  </div>
 
                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Nom de l'enseignant(e)</label>
+                    <input 
+                        type="text" 
+                        value={bulkTeacher}
+                        onChange={(e) => setBulkTeacher(e.target.value)}
+                        placeholder="ex: M. Dupont"
+                        className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none"
+                    />
+                 </div>
+
+                 <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">Liste des chapitres / Sujets</label>
                     <textarea 
                         value={bulkChapters}
                         onChange={(e) => setBulkChapters(e.target.value)}
                         placeholder="Collez ici le programme complet..."
                         className="w-full h-40 p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none"
+                    />
+                 </div>
+
+                 <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Ressources</label>
+                    <textarea 
+                        value={bulkResources}
+                        onChange={(e) => setBulkResources(e.target.value)}
+                        placeholder="ex: Manuel page 45-60, Vidéo YouTube, etc."
+                        className="w-full h-24 p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none"
                     />
                  </div>
 

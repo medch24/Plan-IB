@@ -1,15 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { UnitPlan, AssessmentData } from "../types";
 
-// Fallback key provided by user for immediate functionality
-const HARDCODED_KEY = "AIzaSyDqxNaoliLZY6YW9y0nSCxiwHNbczpanNE";
-
 const getClient = () => {
-  // Prioritize environment variable (for Vercel), fallback to hardcoded key
-  const apiKey = process.env.API_KEY || HARDCODED_KEY;
+  // Get API key from environment variable only
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
   if (!apiKey) {
-    throw new Error("API_KEY is not defined.");
+    throw new Error("⚠️ GEMINI_API_KEY non définie. Veuillez configurer la clé API dans les variables d'environnement Vercel ou dans .env.local");
   }
+  
   return new GoogleGenAI({ apiKey });
 };
 
