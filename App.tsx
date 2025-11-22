@@ -4,14 +4,7 @@ import Dashboard from './components/Dashboard';
 import UnitPlanForm from './components/UnitPlanForm';
 import LoginScreen from './components/LoginScreen';
 import { sanitizeUnitPlan } from './services/geminiService';
-
-// Clé pour les planifications partagées par matière/classe
-const SHARED_PLANNINGS_KEY = 'myp_shared_planifications';
-
-// Structure: { "Mathématiques_PEI 3": [...plans], "Sciences_PEI 2": [...plans] }
-interface SharedPlanifications {
-  [key: string]: UnitPlan[];
-}
+import { loadPlansFromDatabase, savePlansToDatabase } from './services/databaseService';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LOGIN);
@@ -21,65 +14,51 @@ const App: React.FC = () => {
   // Session State - Filter by subject and grade
   const [session, setSession] = useState<{subject: string, grade: string} | null>(null);
 
-  // Générer la clé unique pour matière + classe
-  const getPlanningKey = (subject: string, grade: string) => {
-    return `${subject}_${grade}`;
-  };
-
-  // Charger les planifications partagées depuis localStorage
-  const loadSharedPlanifications = (): SharedPlanifications => {
-    try {
-      const saved = localStorage.getItem(SHARED_PLANNINGS_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Failed to load shared planifications", e);
-    }
-    return {};
-  };
-
-  // Sauvegarder les planifications partagées dans localStorage
-  const saveSharedPlanifications = (planifications: SharedPlanifications) => {
-    try {
-      localStorage.setItem(SHARED_PLANNINGS_KEY, JSON.stringify(planifications));
-    } catch (e) {
-      console.error("Failed to save shared planifications", e);
-    }
-  };
-
-  // Charger les plans pour une matière/classe spécifique
-  const loadPlansForSubjectGrade = (subject: string, grade: string): UnitPlan[] => {
-    const allPlanifications = loadSharedPlanifications();
-    const key = getPlanningKey(subject, grade);
-    const plans = allPlanifications[key] || [];
-    
-    // Sanitize loaded plans
-    return plans.map(p => sanitizeUnitPlan(p, subject, grade));
-  };
-
-  // Sauvegarder les plans pour la session courante
-  const savePlansForCurrentSession = (plans: UnitPlan[]) => {
-    if (!session) return;
-    
-    const allPlanifications = loadSharedPlanifications();
-    const key = getPlanningKey(session.subject, session.grade);
-    allPlanifications[key] = plans;
-    saveSharedPlanifications(allPlanifications);
-  };
-
-  // Charger les plans quand la session change
+  // Charger les plans quand la session change (depuis MongoDB)
   useEffect(() => {
     if (session) {
-      const plans = loadPlansForSubjectGrade(session.subject, session.grade);
-      setCurrentPlans(plans);
+      const loadPlans = async () => {
+        try {
+          console.log(`🔄 Chargement des plans depuis MongoDB pour ${session.subject} - ${session.grade}`);
+          const plans = await loadPlansFromDatabase(session.subject, session.grade);
+          
+          // Sanitize loaded plans
+          const sanitizedPlans = plans.map(p => sanitizeUnitPlan(p, session.subject, session.grade));
+          setCurrentPlans(sanitizedPlans);
+          
+          if (sanitizedPlans.length > 0) {
+            console.log(`✅ ${sanitizedPlans.length} plan(s) chargé(s) depuis MongoDB`);
+          } else {
+            console.log('ℹ️ Aucun plan trouvé pour cette matière/classe');
+          }
+        } catch (error) {
+          console.error('❌ Erreur lors du chargement des plans:', error);
+        }
+      };
+      
+      loadPlans();
     }
   }, [session]);
 
-  // Sauvegarder automatiquement quand les plans changent
+  // Sauvegarder automatiquement quand les plans changent (vers MongoDB)
   useEffect(() => {
     if (session && currentPlans.length > 0) {
-      savePlansForCurrentSession(currentPlans);
+      const savePlans = async () => {
+        try {
+          console.log(`💾 Sauvegarde de ${currentPlans.length} plan(s) dans MongoDB...`);
+          const success = await savePlansToDatabase(session.subject, session.grade, currentPlans);
+          
+          if (success) {
+            console.log('✅ Plans sauvegardés avec succès dans MongoDB');
+          } else {
+            console.warn('⚠️ Sauvegarde dans localStorage seulement (fallback)');
+          }
+        } catch (error) {
+          console.error('❌ Erreur lors de la sauvegarde des plans:', error);
+        }
+      };
+      
+      savePlans();
     }
   }, [currentPlans, session]);
 
