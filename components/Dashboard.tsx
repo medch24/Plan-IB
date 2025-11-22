@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UnitPlan } from '../types';
-import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { generateCourseFromChapters } from '../services/geminiService';
 import { exportUnitPlanToWord, exportAssessmentsToZip } from '../services/wordExportService';
@@ -14,9 +14,10 @@ interface DashboardProps {
   onEdit: (plan: UnitPlan) => void;
   onDelete: (id: string) => void;
   onAddPlans: (newPlans: UnitPlan[]) => void;
+  onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, plans, onCreateNew, onEdit, onDelete, onAddPlans }) => {
+const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, plans, onCreateNew, onEdit, onDelete, onAddPlans, onLogout }) => {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   // Pre-fill subject and grade from session
   const [bulkSubject, setBulkSubject] = useState(currentSubject);
@@ -116,6 +117,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
           </div>
         </div>
         <div className="flex gap-3">
+             <button 
+              onClick={onLogout}
+              className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-3 rounded-lg font-semibold shadow transition"
+              title="Changer de matière/classe"
+            >
+              <ArrowLeft size={20} />
+              Retour
+            </button>
              <button 
               onClick={() => setIsBulkModalOpen(true)}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"
