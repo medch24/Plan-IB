@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { UnitPlan } from '../types';
-import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft, BookOpen } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { generateCourseFromChapters } from '../services/geminiService';
-import { exportUnitPlanToWord, exportAssessmentsToZip } from '../services/wordExportService';
+import { exportUnitPlanToWord, exportAssessmentsToZip, exportConsolidatedPlanByGrade } from '../services/wordExportService';
 import { SUBJECTS } from '../constants';
 
 interface DashboardProps {
@@ -95,6 +95,12 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     setExportingId(null);
   };
 
+  const handleExportConsolidated = async () => {
+    setExportingId('consolidated');
+    await exportConsolidatedPlanByGrade(plans, currentGrade);
+    setExportingId(null);
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       
@@ -125,6 +131,26 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <ArrowLeft size={20} />
               Retour
             </button>
+             {plans.length > 0 && (
+               <button 
+                 onClick={handleExportConsolidated}
+                 disabled={exportingId === 'consolidated'}
+                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+                 title="Exporter toutes les matières en un seul document"
+               >
+                 {exportingId === 'consolidated' ? (
+                   <>
+                     <Loader2 className="animate-spin" size={20} />
+                     Export...
+                   </>
+                 ) : (
+                   <>
+                     <BookOpen size={20} />
+                     Export Classe
+                   </>
+                 )}
+               </button>
+             )}
              <button 
               onClick={() => setIsBulkModalOpen(true)}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"

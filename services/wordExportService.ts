@@ -259,3 +259,207 @@ export const exportAssessmentsToZip = async (plan: UnitPlan) => {
 export const exportAssessmentToWord = async (plan: UnitPlan) => {
     await exportAssessmentsToZip(plan);
 };
+
+// Export consolidated document for all subjects in a grade
+export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: string) => {
+  try {
+    if (!plans || plans.length === 0) {
+      alert("Aucun plan à exporter pour cette classe.");
+      return;
+    }
+
+    // For now, we'll generate a formatted document without a template
+    // Group plans by subject
+    const plansBySubject: Record<string, UnitPlan[]> = {};
+    
+    plans.forEach(plan => {
+      const subject = plan.subject || "Sans matière";
+      if (!plansBySubject[subject]) {
+        plansBySubject[subject] = [];
+      }
+      plansBySubject[subject].push(plan);
+    });
+
+    // Create document content as HTML
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            max-width: 210mm;
+            margin: 20mm auto;
+            padding: 0 10mm;
+            line-height: 1.6;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            color: #1e40af;
+            font-size: 32px;
+            margin-bottom: 10px;
+          }
+          .header h2 {
+            color: #64748b;
+            font-size: 20px;
+            font-weight: normal;
+          }
+          .subject-section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+          }
+          .subject-title {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 15px 20px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          }
+          .unit-card {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          }
+          .unit-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 15px;
+          }
+          .field-group {
+            margin-bottom: 15px;
+          }
+          .field-label {
+            font-weight: bold;
+            color: #475569;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+          }
+          .field-value {
+            color: #334155;
+            padding-left: 10px;
+            font-size: 15px;
+          }
+          .objectives-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+          }
+          .objective-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+          }
+          @media print {
+            body {
+              margin: 0;
+              padding: 20mm;
+            }
+            .subject-section {
+              page-break-after: always;
+            }
+            .unit-card {
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📚 Planification Annuelle - Classe ${clean(grade)}</h1>
+          <h2>Programme d'éducation intermédiaire (PEI)</h2>
+        </div>
+    `;
+
+    // Generate content for each subject
+    Object.entries(plansBySubject).sort(([a], [b]) => a.localeCompare(b)).forEach(([subject, subjectPlans]) => {
+      htmlContent += `
+        <div class="subject-section">
+          <div class="subject-title">📖 ${clean(subject)}</div>
+      `;
+
+      subjectPlans.forEach(plan => {
+        // Extract objectives letters (A, B, C, D)
+        const objectives = Array.isArray(plan.objectives) 
+          ? plan.objectives 
+          : (plan.objectives || "").split(/[,\n]/).filter(Boolean);
+        
+        const objectivesHtml = objectives.map(obj => {
+          // Extract just the letter (A, B, C, D)
+          const match = obj.match(/^([A-D])/i);
+          return match ? match[1].toUpperCase() : obj.trim();
+        }).map(letter => `<span class="objective-badge">${clean(letter)}</span>`).join('');
+
+        htmlContent += `
+          <div class="unit-card">
+            <div class="unit-title">${clean(plan.title || "Unité sans titre")}</div>
+            
+            <div class="field-group">
+              <div class="field-label">📌 Énoncé de recherche</div>
+              <div class="field-value"><em>"${clean(plan.statementOfInquiry || "Non défini")}"</em></div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">🔑 Concept clé</div>
+              <div class="field-value">${clean(plan.keyConcept || "Non défini")}</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">🔗 Concepts connexes</div>
+              <div class="field-value">${clean(Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts.join(", ") : plan.relatedConcepts || "Non défini")}</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">🌍 Contexte mondial</div>
+              <div class="field-value">${clean(plan.globalContext || "Non défini")}</div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">🎯 Objectifs spécifiques</div>
+              <div class="objectives-list">${objectivesHtml || '<span class="field-value">Non défini</span>'}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      htmlContent += `
+        </div>
+      `;
+    });
+
+    htmlContent += `
+      </body>
+      </html>
+    `;
+
+    // Convert HTML to Blob and download
+    const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    
+    // Use FileSaver to download
+    const saveAs = (FileSaver as any).saveAs || FileSaver;
+    saveAs(blob, `Planification_Annuelle_${clean(grade).replace(/ /g, '_')}.doc`);
+    
+  } catch (error: any) {
+    console.error("Error generating consolidated document:", error);
+    alert("Erreur lors de la génération du document consolidé: " + error.message);
+  }
+};
