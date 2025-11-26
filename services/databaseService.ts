@@ -39,6 +39,43 @@ export async function loadPlansFromDatabase(
 }
 
 /**
+ * Récupère TOUTES les planifications pour une classe donnée (toutes les matières)
+ */
+export async function loadAllPlansForGrade(grade: string): Promise<UnitPlan[]> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/planifications?grade=${encodeURIComponent(grade)}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // L'API retourne un tableau de planifications
+    if (Array.isArray(data)) {
+      // Fusionner tous les plans
+      const allPlans: UnitPlan[] = [];
+      data.forEach((planData: PlanificationData) => {
+        if (planData.plans && Array.isArray(planData.plans)) {
+          allPlans.push(...planData.plans);
+        }
+      });
+      return allPlans;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Erreur lors du chargement de toutes les planifications:', error);
+    
+    // Fallback vers localStorage
+    console.warn('Utilisation du localStorage comme fallback');
+    return loadAllPlansForGradeFromLocalStorage(grade);
+  }
+}
+
+/**
  * Sauvegarde les planifications dans MongoDB
  */
 export async function savePlansToDatabase(
@@ -148,6 +185,23 @@ function savePlansToLocalStorage(subject: string, grade: string, plans: UnitPlan
   const key = getPlanningKey(subject, grade);
   allPlanifications[key] = plans;
   saveSharedPlanifications(allPlanifications);
+}
+
+function loadAllPlansForGradeFromLocalStorage(grade: string): UnitPlan[] {
+  const allPlanifications = loadSharedPlanifications();
+  const allPlans: UnitPlan[] = [];
+  
+  // Parcourir toutes les clés et filtrer par grade
+  Object.keys(allPlanifications).forEach(key => {
+    if (key.endsWith(`_${grade}`) || key.includes(`_${grade.replace(' ', '_')}`)) {
+      const plans = allPlanifications[key];
+      if (Array.isArray(plans)) {
+        allPlans.push(...plans);
+      }
+    }
+  });
+  
+  return allPlans;
 }
 
 // ===== MIGRATION AUTOMATIQUE localStorage → MongoDB =====

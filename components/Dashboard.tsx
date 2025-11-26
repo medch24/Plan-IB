@@ -97,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
 
   const handleExportConsolidated = async () => {
     setExportingId('consolidated');
-    await exportConsolidatedPlanByGrade(plans, currentGrade);
+    await exportConsolidatedPlanByGrade(currentGrade);
     setExportingId(null);
   };
 
@@ -131,26 +131,24 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <ArrowLeft size={20} />
               Retour
             </button>
-             {plans.length > 0 && (
-               <button 
-                 onClick={handleExportConsolidated}
-                 disabled={exportingId === 'consolidated'}
-                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
-                 title="Exporter toutes les matières en un seul document"
-               >
-                 {exportingId === 'consolidated' ? (
-                   <>
-                     <Loader2 className="animate-spin" size={20} />
-                     Export...
-                   </>
-                 ) : (
-                   <>
-                     <BookOpen size={20} />
-                     Export Classe
-                   </>
-                 )}
-               </button>
-             )}
+             <button 
+               onClick={handleExportConsolidated}
+               disabled={exportingId === 'consolidated'}
+               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+               title="Exporter toutes les matières de cette classe en un seul document"
+             >
+               {exportingId === 'consolidated' ? (
+                 <>
+                   <Loader2 className="animate-spin" size={20} />
+                   Export...
+                 </>
+               ) : (
+                 <>
+                   <BookOpen size={20} />
+                   Export Classe Complète
+                 </>
+               )}
+             </button>
              <button 
               onClick={() => setIsBulkModalOpen(true)}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"

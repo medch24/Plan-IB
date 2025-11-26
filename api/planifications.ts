@@ -46,9 +46,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       const { subject, grade } = req.query;
 
+      // Si seulement grade est fourni, retourner toutes les matières pour cette classe
+      if (!subject && grade) {
+        const planifications = await collection.find({ grade }).toArray();
+        return res.status(200).json(planifications);
+      }
+
       if (!subject || !grade) {
         return res.status(400).json({ 
-          error: 'Les paramètres subject et grade sont requis' 
+          error: 'Les paramètres subject et grade sont requis (ou seulement grade pour toutes les matières)' 
         });
       }
 

@@ -4,6 +4,7 @@ import FileSaver from "file-saver";
 import JSZip from "jszip";
 import { UnitPlan, AssessmentData } from "../types";
 import { PLAN_TEMPLATE_URL, EVAL_TEMPLATE_URL } from "../constants";
+import { loadAllPlansForGrade } from "./databaseService";
 
 // Helper function to fetch the template with retries and different proxies
 const loadFile = async (url: string): Promise<ArrayBuffer> => {
@@ -261,18 +262,20 @@ export const exportAssessmentToWord = async (plan: UnitPlan) => {
 };
 
 // Export consolidated document for all subjects in a grade
-export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: string) => {
+export const exportConsolidatedPlanByGrade = async (grade: string) => {
   try {
-    if (!plans || plans.length === 0) {
+    // Load ALL plans for this grade (all subjects)
+    const allPlans = await loadAllPlansForGrade(grade);
+    
+    if (!allPlans || allPlans.length === 0) {
       alert("Aucun plan à exporter pour cette classe.");
       return;
     }
 
-    // For now, we'll generate a formatted document without a template
     // Group plans by subject
     const plansBySubject: Record<string, UnitPlan[]> = {};
     
-    plans.forEach(plan => {
+    allPlans.forEach(plan => {
       const subject = plan.subject || "Sans matière";
       if (!plansBySubject[subject]) {
         plansBySubject[subject] = [];
@@ -394,10 +397,11 @@ export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: st
     Object.entries(plansBySubject).sort(([a], [b]) => a.localeCompare(b)).forEach(([subject, subjectPlans]) => {
       htmlContent += `
         <div class="subject-section">
-          <div class="subject-title">📖 ${clean(subject)}</div>
+          <div class="subject-title">📖 Groupe de matière : ${clean(subject)}</div>
       `;
 
-      subjectPlans.forEach(plan => {
+      // For each plan/unit in this subject
+      subjectPlans.forEach((plan, index) => {
         // Extract assessment criteria letters (A, B, C, D) from assessments
         let criteriaLetters: string[] = [];
         
@@ -431,7 +435,7 @@ export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: st
 
         htmlContent += `
           <div class="unit-card">
-            <div class="unit-title">${clean(plan.title || "Unité sans titre")}</div>
+            ${index > 0 ? '<div style="margin-top: 30px;"></div>' : ''}
             
             <div class="field-group">
               <div class="field-label">📌 Énoncé de recherche</div>
