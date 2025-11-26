@@ -398,16 +398,36 @@ export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: st
       `;
 
       subjectPlans.forEach(plan => {
-        // Extract objectives letters (A, B, C, D)
-        const objectives = Array.isArray(plan.objectives) 
-          ? plan.objectives 
-          : (plan.objectives || "").split(/[,\n]/).filter(Boolean);
+        // Extract assessment criteria letters (A, B, C, D) from assessments
+        let criteriaLetters: string[] = [];
         
-        const objectivesHtml = objectives.map(obj => {
-          // Extract just the letter (A, B, C, D)
-          const match = obj.match(/^([A-D])/i);
-          return match ? match[1].toUpperCase() : obj.trim();
-        }).map(letter => `<span class="objective-badge">${clean(letter)}</span>`).join('');
+        if (plan.assessments && plan.assessments.length > 0) {
+          // Use actual assessments
+          criteriaLetters = plan.assessments
+            .map(a => a.criterion)
+            .filter(Boolean)
+            .map(c => c.toUpperCase());
+        } else if (plan.assessmentData) {
+          // Fallback to legacy single assessment
+          criteriaLetters = [plan.assessmentData.criterion?.toUpperCase()].filter(Boolean);
+        } else {
+          // Last resort: try to extract from objectives text
+          const objectives = Array.isArray(plan.objectives) 
+            ? plan.objectives 
+            : (plan.objectives || "").split(/[,\n]/).filter(Boolean);
+          
+          criteriaLetters = objectives.map(obj => {
+            const match = obj.match(/^([A-D])/i);
+            return match ? match[1].toUpperCase() : null;
+          }).filter(Boolean) as string[];
+        }
+        
+        // Remove duplicates and sort
+        criteriaLetters = Array.from(new Set(criteriaLetters)).sort();
+        
+        const objectivesHtml = criteriaLetters.length > 0
+          ? criteriaLetters.map(letter => `<span class="objective-badge">Critère ${clean(letter)}</span>`).join('')
+          : '<span class="field-value">Non défini</span>';
 
         htmlContent += `
           <div class="unit-card">
@@ -434,8 +454,8 @@ export const exportConsolidatedPlanByGrade = async (plans: UnitPlan[], grade: st
             </div>
 
             <div class="field-group">
-              <div class="field-label">🎯 Objectifs spécifiques</div>
-              <div class="objectives-list">${objectivesHtml || '<span class="field-value">Non défini</span>'}</div>
+              <div class="field-label">🎯 Critères d'évaluation (Objectifs spécifiques)</div>
+              <div class="objectives-list">${objectivesHtml}</div>
             </div>
           </div>
         `;
