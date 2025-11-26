@@ -290,94 +290,122 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
       <head>
         <meta charset="UTF-8">
         <style>
+          @page {
+            size: landscape;
+            margin: 15mm;
+          }
+          
           body {
             font-family: 'Calibri', 'Arial', sans-serif;
-            max-width: 210mm;
-            margin: 20mm auto;
-            padding: 0 10mm;
-            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            line-height: 1.3;
             color: #333;
+            font-size: 11px;
           }
+          
           .header {
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2563eb;
           }
+          
           .header h1 {
             color: #1e40af;
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin: 0 0 5px 0;
+            padding: 0;
           }
+          
           .header h2 {
             color: #64748b;
-            font-size: 20px;
+            font-size: 14px;
             font-weight: normal;
+            margin: 0;
+            padding: 0;
           }
-          .subject-section {
-            margin-bottom: 50px;
-            page-break-inside: avoid;
+          
+          .subject-page {
+            page-break-after: always;
+            padding: 10px;
           }
+          
           .subject-title {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: #dc2626;
-            padding: 15px 20px;
-            font-size: 24px;
+            padding: 8px 15px;
+            font-size: 16px;
             font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            margin: 0 0 10px 0;
+            text-align: center;
           }
+          
+          .units-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+          }
+          
           .unit-card {
             background: #f8fafc;
-            border-left: 4px solid #3b82f6;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 2px solid #3b82f6;
+            border-radius: 6px;
+            padding: 10px;
+            break-inside: avoid;
           }
-          .unit-title {
-            font-size: 20px;
-            font-weight: bold;
+          
+          .unit-header {
+            background: #dbeafe;
             color: #1e40af;
-            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 13px;
+            padding: 5px 10px;
+            margin: -10px -10px 8px -10px;
+            border-radius: 4px 4px 0 0;
           }
+          
           .field-group {
-            margin-bottom: 15px;
+            margin-bottom: 6px;
           }
+          
           .field-label {
             font-weight: bold;
             color: #475569;
-            font-size: 14px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            margin: 0 0 2px 0;
+            padding: 0;
           }
+          
           .field-value {
             color: #334155;
-            padding-left: 10px;
-            font-size: 15px;
+            font-size: 10px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
           }
+          
           .objectives-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 5px;
+            gap: 4px;
+            margin-top: 3px;
           }
+          
           .objective-badge {
             background: #dbeafe;
             color: #1e40af;
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 2px 8px;
+            border-radius: 10px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 10px;
+            display: inline-block;
           }
+          
           @media print {
-            body {
-              margin: 0;
-              padding: 20mm;
-            }
-            .subject-section {
+            .subject-page {
               page-break-after: always;
             }
             .unit-card {
@@ -393,9 +421,15 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
         </div>
     `;
 
-    // Generate content for each subject
+    // Generate content for each subject (each subject on one page)
     Object.entries(plansBySubject).sort(([a], [b]) => a.localeCompare(b)).forEach(([subject, subjectPlans]) => {
-      // For each plan/unit in this subject
+      htmlContent += `
+        <div class="subject-page">
+          <div class="subject-title">📖 Groupe de matière : ${clean(subject)}</div>
+          <div class="units-container">
+      `;
+      
+      // Generate all units for this subject
       subjectPlans.forEach((plan, index) => {
         // Extract assessment criteria letters (A, B, C, D) from assessments
         let criteriaLetters: string[] = [];
@@ -426,44 +460,44 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
         
         const objectivesHtml = criteriaLetters.length > 0
           ? criteriaLetters.map(letter => `<span class="objective-badge">Critère ${clean(letter)}</span>`).join('')
-          : '<span class="field-value">Non défini</span>';
+          : '<span style="font-size: 10px;">Non défini</span>';
 
         htmlContent += `
-          <div class="subject-section">
-            <div class="subject-title">📖 Groupe de matière : ${clean(subject)}</div>
-            <div style="font-size: 18px; font-weight: bold; color: #1e40af; margin-top: 10px; margin-bottom: 20px;">
-              Unité ${index + 1}
+          <div class="unit-card">
+            <div class="unit-header">Unité ${index + 1} : ${clean(plan.title || "Sans titre")}</div>
+            
+            <div class="field-group">
+              <div class="field-label">📌 Énoncé de recherche</div>
+              <div class="field-value">${clean(plan.statementOfInquiry || "Non défini")}</div>
             </div>
-          
-            <div class="unit-card">
-              <div class="field-group">
-                <div class="field-label">📌 Énoncé de recherche</div>
-                <div class="field-value"><em>"${clean(plan.statementOfInquiry || "Non défini")}"</em></div>
-              </div>
 
-              <div class="field-group">
-                <div class="field-label">🔑 Concept clé</div>
-                <div class="field-value">${clean(plan.keyConcept || "Non défini")}</div>
-              </div>
+            <div class="field-group">
+              <div class="field-label">🔑 Concept clé</div>
+              <div class="field-value">${clean(plan.keyConcept || "Non défini")}</div>
+            </div>
 
-              <div class="field-group">
-                <div class="field-label">🔗 Concepts connexes</div>
-                <div class="field-value">${clean(Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts.join(", ") : plan.relatedConcepts || "Non défini")}</div>
-              </div>
+            <div class="field-group">
+              <div class="field-label">🔗 Concepts connexes</div>
+              <div class="field-value">${clean(Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts.join(", ") : plan.relatedConcepts || "Non défini")}</div>
+            </div>
 
-              <div class="field-group">
-                <div class="field-label">🌍 Contexte mondial</div>
-                <div class="field-value">${clean(plan.globalContext || "Non défini")}</div>
-              </div>
+            <div class="field-group">
+              <div class="field-label">🌍 Contexte mondial</div>
+              <div class="field-value">${clean(plan.globalContext || "Non défini")}</div>
+            </div>
 
-              <div class="field-group">
-                <div class="field-label">🎯 Critères d'évaluation (Objectifs spécifiques)</div>
-                <div class="objectives-list">${objectivesHtml}</div>
-              </div>
+            <div class="field-group">
+              <div class="field-label">🎯 Critères d'évaluation</div>
+              <div class="objectives-list">${objectivesHtml}</div>
             </div>
           </div>
         `;
       });
+      
+      htmlContent += `
+          </div>
+        </div>
+      `;
     });
 
     htmlContent += `
