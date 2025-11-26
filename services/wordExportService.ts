@@ -320,7 +320,7 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
           }
           .subject-title {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
+            color: #dc2626;
             padding: 15px 20px;
             font-size: 24px;
             font-weight: bold;
