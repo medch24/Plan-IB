@@ -395,11 +395,6 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
 
     // Generate content for each subject
     Object.entries(plansBySubject).sort(([a], [b]) => a.localeCompare(b)).forEach(([subject, subjectPlans]) => {
-      htmlContent += `
-        <div class="subject-section">
-          <div class="subject-title">📖 Groupe de matière : ${clean(subject)}</div>
-      `;
-
       // For each plan/unit in this subject
       subjectPlans.forEach((plan, index) => {
         // Extract assessment criteria letters (A, B, C, D) from assessments
@@ -434,40 +429,41 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
           : '<span class="field-value">Non défini</span>';
 
         htmlContent += `
-          <div class="unit-card">
-            ${index > 0 ? '<div style="margin-top: 30px;"></div>' : ''}
-            
-            <div class="field-group">
-              <div class="field-label">📌 Énoncé de recherche</div>
-              <div class="field-value"><em>"${clean(plan.statementOfInquiry || "Non défini")}"</em></div>
+          <div class="subject-section">
+            <div class="subject-title">📖 Groupe de matière : ${clean(subject)}</div>
+            <div style="font-size: 18px; font-weight: bold; color: #1e40af; margin-top: 10px; margin-bottom: 20px;">
+              Unité ${index + 1}
             </div>
+          
+            <div class="unit-card">
+              <div class="field-group">
+                <div class="field-label">📌 Énoncé de recherche</div>
+                <div class="field-value"><em>"${clean(plan.statementOfInquiry || "Non défini")}"</em></div>
+              </div>
 
-            <div class="field-group">
-              <div class="field-label">🔑 Concept clé</div>
-              <div class="field-value">${clean(plan.keyConcept || "Non défini")}</div>
-            </div>
+              <div class="field-group">
+                <div class="field-label">🔑 Concept clé</div>
+                <div class="field-value">${clean(plan.keyConcept || "Non défini")}</div>
+              </div>
 
-            <div class="field-group">
-              <div class="field-label">🔗 Concepts connexes</div>
-              <div class="field-value">${clean(Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts.join(", ") : plan.relatedConcepts || "Non défini")}</div>
-            </div>
+              <div class="field-group">
+                <div class="field-label">🔗 Concepts connexes</div>
+                <div class="field-value">${clean(Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts.join(", ") : plan.relatedConcepts || "Non défini")}</div>
+              </div>
 
-            <div class="field-group">
-              <div class="field-label">🌍 Contexte mondial</div>
-              <div class="field-value">${clean(plan.globalContext || "Non défini")}</div>
-            </div>
+              <div class="field-group">
+                <div class="field-label">🌍 Contexte mondial</div>
+                <div class="field-value">${clean(plan.globalContext || "Non défini")}</div>
+              </div>
 
-            <div class="field-group">
-              <div class="field-label">🎯 Critères d'évaluation (Objectifs spécifiques)</div>
-              <div class="objectives-list">${objectivesHtml}</div>
+              <div class="field-group">
+                <div class="field-label">🎯 Critères d'évaluation (Objectifs spécifiques)</div>
+                <div class="objectives-list">${objectivesHtml}</div>
+              </div>
             </div>
           </div>
         `;
       });
-
-      htmlContent += `
-        </div>
-      `;
     });
 
     htmlContent += `
