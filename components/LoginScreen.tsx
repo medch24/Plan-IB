@@ -7,7 +7,24 @@ interface LoginScreenProps {
   onLogin: (subject: string, grade: string, mode: AppMode) => void;
 }
 
-const GRADES = ['PEI 1', 'PEI 2', 'PEI 3', 'PEI 4', 'PEI 5'];
+// Classes pour PEI Planner (Programme IB)
+const PEI_GRADES = ['PEI 1', 'PEI 2', 'PEI 3', 'PEI 4', 'PEI 5'];
+
+// Classes pour Examens (Programme Français)
+const EXAM_GRADES = ['6ème', '5ème', '4ème', '3ème', 'Seconde', '1ère', 'Terminale'];
+
+// Matières pour Examens (Programme Français)
+const EXAM_SUBJECTS = [
+  'Français',
+  'Anglais',
+  'Mathématiques',
+  'SVT',
+  'Physique-Chimie',
+  'Histoire-Géographie-EMC',
+  'Technologie',
+  'Sciences Numériques et Technologiques (SNT)',
+  'Sciences Économiques et Sociales (SES)'
+];
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<AppMode | null>(null);
@@ -16,6 +33,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const handleModeSelect = (selectedMode: AppMode) => {
     setMode(selectedMode);
+    setSubject('');
+    setGrade('');
   };
 
   const handleBack = () => {
@@ -32,6 +51,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         alert("Veuillez sélectionner la matière et la classe.");
     }
   };
+
+  // Déterminer les listes selon le mode
+  const currentGrades = mode === AppMode.EXAMS ? EXAM_GRADES : PEI_GRADES;
+  const currentSubjects = mode === AppMode.EXAMS ? EXAM_SUBJECTS : SUBJECTS;
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -69,7 +92,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   </div>
                   <div className="flex-1 text-left">
                     <h3 className="font-semibold text-slate-800 text-lg">PEI Planner</h3>
-                    <p className="text-sm text-slate-600">Planification des unités PEI</p>
+                    <p className="text-sm text-slate-600">Planification des unités PEI (Programme IB)</p>
                   </div>
                   <ChevronRight className="text-slate-400 group-hover:text-blue-600" size={24} />
                 </button>
@@ -83,7 +106,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   </div>
                   <div className="flex-1 text-left">
                     <h3 className="font-semibold text-slate-800 text-lg">Examens et Évaluations</h3>
-                    <p className="text-sm text-slate-600">Génération d'examens ministériels</p>
+                    <p className="text-sm text-slate-600">Génération d'examens ministériels français</p>
                   </div>
                   <ChevronRight className="text-slate-400 group-hover:text-violet-600" size={24} />
                 </button>
@@ -111,7 +134,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 required
                             >
                                 <option value="">Sélectionner la matière...</option>
-                                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                                {currentSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                     </div>
@@ -129,13 +152,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                 required
                             >
                                 <option value="">Sélectionner la classe...</option>
-                                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                                {currentGrades.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </div>
                         <p className="text-xs text-slate-500 mt-2 ml-1">
                             {mode === AppMode.PEI_PLANNER 
-                              ? 'Affiche les unités pour cette matière et cette classe uniquement.'
-                              : 'Affiche les examens pour cette matière et cette classe uniquement.'}
+                              ? 'Affiche les unités PEI pour cette matière et cette classe.'
+                              : 'Sélectionnez la classe pour générer des examens français.'}
                         </p>
                     </div>
 
@@ -143,7 +166,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                         type="submit"
                         className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg transition transform hover:-translate-y-0.5 shadow-md"
                     >
-                        {mode === AppMode.PEI_PLANNER ? 'Accéder aux unités' : 'Accéder aux examens'}
+                        {mode === AppMode.PEI_PLANNER ? 'Accéder aux unités PEI' : 'Créer un examen'}
                         <ChevronRight size={18} />
                     </button>
                 </form>
