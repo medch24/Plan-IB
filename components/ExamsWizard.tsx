@@ -11,48 +11,50 @@ interface ExamsWizardProps {
   onBack: () => void;
 }
 
-// Grades pour le système d'examen (inclut DP1 et DP2)
+// Classes françaises (système indépendant du PEI)
 const EXAM_GRADES: { value: ExamGrade; label: string }[] = [
-  { value: ExamGrade.PEI1, label: 'PEI1 (6ème)' },
-  { value: ExamGrade.PEI2, label: 'PEI2 (5ème)' },
-  { value: ExamGrade.PEI3, label: 'PEI3 (4ème)' },
-  { value: ExamGrade.PEI4, label: 'PEI4 (3ème)' },
-  { value: ExamGrade.PEI5, label: 'PEI5 (Seconde)' },
-  { value: ExamGrade.DP1, label: 'DP1 (1ère)' },
-  { value: ExamGrade.DP2, label: 'DP2 (Terminale)' }
+  { value: ExamGrade.SIXIEME, label: '6ème' },
+  { value: ExamGrade.CINQUIEME, label: '5ème' },
+  { value: ExamGrade.QUATRIEME, label: '4ème' },
+  { value: ExamGrade.TROISIEME, label: '3ème' },
+  { value: ExamGrade.SECONDE, label: 'Seconde' },
+  { value: ExamGrade.PREMIERE, label: '1ère' },
+  { value: ExamGrade.TERMINALE, label: 'Terminale' }
 ];
 
 // Matières disponibles par niveau (Programme français)
-const TRONC_COMMUN = [
-  'Langue et littérature (Français)',
+const COLLEGE_SUBJECTS = [
+  'Français',
   'Anglais',
   'Mathématiques',
   'SVT',
   'Physique-Chimie',
-  'Individu et Sociétés (Histoire-Géographie-EMC)',
-  'Design (Technologie)'
+  'Histoire-Géographie-EMC',
+  'Technologie'
 ];
 
 const LYCEE_SUBJECTS = [
-  'Langue et littérature (Français)',
+  'Français',
   'Anglais',
   'Mathématiques',
   'SVT',
   'Physique-Chimie',
-  'Individu et Sociétés (Histoire-Géographie-EMC)',
+  'Histoire-Géographie-EMC',
   'Sciences Numériques et Technologiques (SNT)',
   'Sciences Économiques et Sociales (SES)'
 ];
 
 const getSubjectsForGrade = (grade: ExamGrade): string[] => {
-  if (grade === ExamGrade.PEI5 || grade === ExamGrade.DP1 || grade === ExamGrade.DP2) {
+  // Lycée: Seconde, 1ère, Terminale
+  if (grade === ExamGrade.SECONDE || grade === ExamGrade.PREMIERE || grade === ExamGrade.TERMINALE) {
     return LYCEE_SUBJECTS;
   }
-  // Pour PEI1, exclure Physique-Chimie
-  if (grade === ExamGrade.PEI1) {
-    return TRONC_COMMUN.filter(s => !s.includes('Physique-Chimie'));
+  // Pour 6ème, exclure Physique-Chimie
+  if (grade === ExamGrade.SIXIEME) {
+    return COLLEGE_SUBJECTS.filter(s => !s.includes('Physique-Chimie'));
   }
-  return TRONC_COMMUN;
+  // Collège: 5ème, 4ème, 3ème
+  return COLLEGE_SUBJECTS;
 };
 
 const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade, onBack }) => {

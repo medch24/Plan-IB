@@ -110,22 +110,23 @@ GESTION DES RESSOURCES :
 
 STYLE D'EXAMEN PAR NIVEAU :
 
-**PEI4 (3ème) - STYLE BREVET DES COLLÈGES** :
+**3ème - STYLE BREVET DES COLLÈGES (DNB)** :
 - Questions typiques du DNB (Diplôme National du Brevet)
 - Pour Français : Compréhension de texte (10 pts), Grammaire/Langue (10 pts), Rédaction/Expression écrite (10 pts)
 - Pour Maths : Exercices indépendants, calcul, géométrie, problèmes
-- Pour Histoire-Géo : Analyse de documents + développement construit
+- Pour Histoire-Géo-EMC : Analyse de documents + développement construit
 - Progressivité : questions simples au début, plus complexes à la fin
 
-**DP1/DP2 (1ère/Terminale) - STYLE BACCALAURÉAT** :
+**1ère/Terminale - STYLE BACCALAURÉAT** :
 - Questions typiques du Baccalauréat français
 - Pour Français : Commentaire de texte, dissertation, question de grammaire
-- Pour Philo (Terminale) : Dissertation, explication de texte
+- Pour Philosophie (Terminale) : Dissertation, explication de texte
 - Pour Sciences : Exercices de spécialité, analyse de documents scientifiques
 - Niveau supérieur avec réflexion approfondie
 
-**Autres niveaux (PEI1-PEI3, PEI5)** :
+**Autres niveaux (6ème, 5ème, 4ème, Seconde)** :
 - Style standard adapté au niveau du collège/lycée
+- Questions variées et progressives
 
 FORMAT JSON ATTENDU :
 {

@@ -88,13 +88,13 @@ export enum AppMode {
 }
 
 export enum ExamGrade {
-  PEI1 = 'PEI1 (6ème)',
-  PEI2 = 'PEI2 (5ème)',
-  PEI3 = 'PEI3 (4ème)',
-  PEI4 = 'PEI4 (3ème)',
-  PEI5 = 'PEI5 (Seconde)',
-  DP1 = 'DP1 (1ère)',
-  DP2 = 'DP2 (Terminale)'
+  SIXIEME = '6ème',
+  CINQUIEME = '5ème',
+  QUATRIEME = '4ème',
+  TROISIEME = '3ème',
+  SECONDE = 'Seconde',
+  PREMIERE = '1ère',
+  TERMINALE = 'Terminale'
 }
 
 export enum Semester {
