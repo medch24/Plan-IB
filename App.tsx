@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [migrationDone, setMigrationDone] = useState(false);
   
   // Session State - Filter by subject, grade and mode
-  const [session, setSession] = useState<{subject: string, grade: string, mode: AppMode} | null>(null);
+  const [session, setSession] = useState<{subject: string, grade: string, mode?: AppMode} | null>(null);
 
   // Migration automatique au démarrage de l'application
   useEffect(() => {
@@ -98,9 +98,15 @@ const App: React.FC = () => {
     }
   }, [currentPlans, session]);
 
-  const handleLogin = (subject: string, grade: string) => {
-    setSession({ subject, grade });
-    setView(AppView.DASHBOARD);
+  const handleLogin = (subject: string, grade: string, mode: AppMode) => {
+    setSession({ subject, grade, mode });
+    
+    // Redirection selon le mode
+    if (mode === AppMode.EXAMS) {
+      setView(AppView.EXAMS_WIZARD);
+    } else {
+      setView(AppView.DASHBOARD);
+    }
   };
 
   const handleLogout = () => {
