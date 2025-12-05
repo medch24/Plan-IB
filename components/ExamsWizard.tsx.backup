@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Exam, ExamGrade } from '../types';
-import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User, ClipboardCheck } from 'lucide-react';
+import { Exam, ExamGrade, Semester } from '../types';
+import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User } from 'lucide-react';
 import { generateExam } from '../services/examGeminiService';
 import { exportExamToWord } from '../services/examWordExportService';
+import { SUBJECTS } from '../constants';
 
 interface ExamsWizardProps {
   onBack: () => void;
@@ -59,14 +60,13 @@ const getSubjectsForGrade = (grade: ExamGrade): string[] => {
   return COLLEGE_SUBJECTS;
 };
 
-const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
+const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade, onBack }) => {
   const [step, setStep] = useState(1);
   const [grade, setGrade] = useState<ExamGrade | ''>('');
-  const [subject, setSubject] = useState('');
-  const [examType, setExamType] = useState<ExamType | ''>('');
-  const [semester, setSemester] = useState<'1' | '2' | ''>('');
+  const [subject, setSubject] = useState(initialSubject);
   const [chapters, setChapters] = useState('');
   const [teacherName, setTeacherName] = useState('');
+  const [className, setClassName] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedExam, setGeneratedExam] = useState<Exam | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -82,8 +82,8 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
       alert('Veuillez sélectionner une matière');
       return;
     }
-    if (step === 3 && (!examType || !semester)) {
-      alert('Veuillez sélectionner le type et le semestre');
+    if (step === 3 && (!semester || !chapters.trim())) {
+      alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
     setStep(step + 1);
@@ -98,8 +98,8 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
   };
 
   const handleGenerate = async () => {
-    if (!grade || !subject || !examType || !semester || !chapters.trim()) {
-      alert('Veuillez saisir les chapitres');
+    if (!grade || !subject || !chapters.trim()) {
+      alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
@@ -108,18 +108,14 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
       const exam = await generateExam({
         subject,
         grade,
-        semester: `Semestre ${semester}` as any,
+        semester: 'Semestre 1' as any, // Valeur par défaut, sera ignorée
         chapters,
         teacherName: teacherName || undefined,
-        className: grade
+        className: className || undefined
       });
       
-      // Mettre à jour le titre avec le type (Examen/Évaluation)
-      exam.title = `${examType} de ${subject} - ${grade}`;
-      exam.semester = `Semestre ${semester}` as any;
-      
       setGeneratedExam(exam);
-      setStep(5); // Aller à l'étape de prévisualisation
+      setStep(4); // Aller à l'étape de prévisualisation
     } catch (error: any) {
       alert(`Erreur lors de la génération: ${error.message}`);
       console.error(error);
@@ -146,17 +142,17 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
   const handleReset = () => {
     setStep(1);
     setGrade('');
-    setSubject('');
-    setExamType('');
+    setSubject(initialSubject);
     setSemester('');
     setChapters('');
     setTeacherName('');
+    setClassName('');
     setGeneratedExam(null);
   };
 
   // Barre de progression
   const renderProgressBar = () => {
-    const steps = ['Classe', 'Matière', 'Type & Semestre', 'Chapitres', 'Prévisualisation'];
+    const steps = ['Classe', 'Matière', 'Type & Semestre', 'Chapitres', 'Génération', 'Prévisualisation'];
     return (
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -173,13 +169,13 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                       isCompleted
                         ? 'bg-green-500 text-white'
                         : isActive
-                        ? 'bg-violet-600 text-white'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-slate-200 text-slate-500'
                     }`}
                   >
                     {isCompleted ? <Check size={20} /> : stepNumber}
                   </div>
-                  <span className={`text-xs mt-2 ${isActive ? 'text-violet-600 font-semibold' : 'text-slate-500'}`}>
+                  <span className={`text-xs mt-2 ${isActive ? 'text-blue-600 font-semibold' : 'text-slate-500'}`}>
                     {label}
                   </span>
                 </div>
@@ -206,7 +202,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
               <FileText className="text-violet-600" size={32} />
-              Générateur d'Examens et Évaluations
+              Générateur d'Examens
             </h1>
             <button
               onClick={handleBack}
@@ -225,15 +221,15 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
           {step === 1 && (
             <div>
               <h2 className="text-xl font-semibold text-slate-800 mb-4">Choisissez la classe</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {EXAM_GRADES.map((g) => (
                   <button
                     key={g.value}
                     onClick={() => setGrade(g.value)}
                     className={`p-4 border-2 rounded-lg transition-all ${
                       grade === g.value
-                        ? 'border-violet-500 bg-violet-50 text-violet-700'
-                        : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
                     }`}
                   >
                     <div className="font-semibold">{g.label}</div>
@@ -244,7 +240,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                 <button
                   onClick={handleNext}
                   disabled={!grade}
-                  className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
                   Suivant
                   <ChevronRight size={18} />
@@ -283,7 +279,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                 <button
                   onClick={handleNext}
                   disabled={!subject}
-                  className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
                   Suivant
                   <ChevronRight size={18} />
@@ -292,93 +288,13 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
             </div>
           )}
 
-          {/* Étape 3: Type et Semestre */}
+          {/* Étape 3: Configuration */}
           {step === 3 && (
             <div>
-              <h2 className="text-xl font-semibold text-slate-800 mb-6">Type et Semestre</h2>
+              <h2 className="text-xl font-semibold text-slate-800 mb-6">Configuration de l'examen</h2>
               
               <div className="space-y-6">
-                {/* Type */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-                    <ClipboardCheck size={18} />
-                    Type *
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.values(ExamType).map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setExamType(type)}
-                        className={`p-4 border-2 rounded-lg transition-all ${
-                          examType === type
-                            ? 'border-violet-500 bg-violet-50 text-violet-700'
-                            : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="font-semibold">{type}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Semestre */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-                    <Calendar size={18} />
-                    Semestre *
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => setSemester('1')}
-                      className={`p-4 border-2 rounded-lg transition-all ${
-                        semester === '1'
-                          ? 'border-violet-500 bg-violet-50 text-violet-700'
-                          : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="font-semibold">Semestre 1</div>
-                    </button>
-                    <button
-                      onClick={() => setSemester('2')}
-                      className={`p-4 border-2 rounded-lg transition-all ${
-                        semester === '2'
-                          ? 'border-violet-500 bg-violet-50 text-violet-700'
-                          : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="font-semibold">Semestre 2</div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-between">
-                <button
-                  onClick={handleBack}
-                  className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                >
-                  <ArrowLeft size={18} />
-                  Précédent
-                </button>
-                <button
-                  onClick={handleNext}
-                  disabled={!examType || !semester}
-                  className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-                >
-                  Suivant
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Étape 4: Chapitres */}
-          {step === 4 && (
-            <div>
-              <h2 className="text-xl font-semibold text-slate-800 mb-6">Chapitres et Informations</h2>
-              
-              <div className="space-y-6">
-                {/* Chapitres */}
+                {/* Chapitres/Sujets */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <BookOpen size={18} />
@@ -387,13 +303,13 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                   <textarea
                     value={chapters}
                     onChange={(e) => setChapters(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition min-h-[150px]"
-                    placeholder="Ex: Chapitre 1: Les fractions, Chapitre 2: Les équations, Chapitre 3: La géométrie..."
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition min-h-[120px]"
+                    placeholder="Ex: Chapitre 1: Les fractions, Chapitre 2: Les équations..."
                     required
                   />
                 </div>
 
-                {/* Nom de l'enseignant */}
+                {/* Nom de l'enseignant (optionnel) */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                     <User size={18} />
@@ -403,8 +319,22 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                     type="text"
                     value={teacherName}
                     onChange={(e) => setTeacherName(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                     placeholder="Nom et prénom de l'enseignant"
+                  />
+                </div>
+
+                {/* Nom de la classe (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Nom de la classe (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={className}
+                    onChange={(e) => setClassName(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    placeholder="Ex: 6ème A, 3ème B..."
                   />
                 </div>
               </div>
@@ -419,7 +349,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                 </button>
                 <button
                   onClick={handleGenerate}
-                  disabled={generating || !chapters.trim()}
+                  disabled={generating || !semester || !chapters.trim()}
                   className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
                   {generating ? (
@@ -429,7 +359,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                     </>
                   ) : (
                     <>
-                      Générer l'{examType?.toLowerCase() || 'examen'}
+                      Générer l'examen
                       <FileText size={18} />
                     </>
                   )}
@@ -438,17 +368,17 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
             </div>
           )}
 
-          {/* Étape 5: Prévisualisation */}
-          {step === 5 && generatedExam && (
+          {/* Étape 4: Prévisualisation */}
+          {step === 4 && generatedExam && (
             <div>
-              <h2 className="text-xl font-semibold text-slate-800 mb-6">Prévisualisation de l'{examType?.toLowerCase() || 'examen'}</h2>
+              <h2 className="text-xl font-semibold text-slate-800 mb-6">Prévisualisation de l'examen</h2>
               
               <div className="space-y-6">
-                {/* En-tête */}
+                {/* En-tête de l'examen */}
                 <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
                   <h3 className="text-lg font-semibold text-slate-800 mb-4">{generatedExam.title}</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>Classe:</strong> {generatedExam.grade}</div>
+                    <div><strong>Classe:</strong> {generatedExam.className || generatedExam.grade}</div>
                     <div><strong>Durée:</strong> {generatedExam.duration}</div>
                     <div><strong>Enseignant:</strong> {generatedExam.teacherName || '..............................'}</div>
                     <div><strong>Semestre:</strong> {generatedExam.semester}</div>
@@ -457,14 +387,17 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                   </div>
                 </div>
 
-                {/* Ressources */}
+                {/* Ressources générales */}
                 {generatedExam.resources && generatedExam.resources.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-slate-800 mb-3">📚 Ressources</h4>
+                    <h4 className="font-semibold text-slate-800 mb-3">📚 Ressources générales</h4>
                     {generatedExam.resources.map((resource, index) => (
                       <div key={index} className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="font-semibold text-blue-800 mb-2">{resource.title}</div>
                         <div className="text-sm text-slate-700 whitespace-pre-wrap">{resource.content}</div>
+                        {resource.imageDescription && (
+                          <div className="mt-2 text-xs text-slate-500 italic">[Image: {resource.imageDescription}]</div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -480,10 +413,17 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                           Question {index + 1}: {question.title}
                           {question.isDifferentiation && <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">⭐ Différenciation</span>}
                         </div>
-                        <span className="text-sm font-semibold text-violet-600">{question.points} pts</span>
+                        <span className="text-sm font-semibold text-blue-600">{question.points} pts</span>
                       </div>
                       <div className="text-sm text-slate-600 mb-2">Type: {question.type}</div>
                       <div className="text-slate-700 whitespace-pre-wrap">{question.content}</div>
+                      {question.options && (
+                        <div className="mt-3">
+                          {question.options.map((opt, i) => (
+                            <div key={i} className="text-sm text-slate-600">☐ {String.fromCharCode(65 + i)}. {opt}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -494,7 +434,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                   onClick={handleReset}
                   className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                 >
-                  Créer un nouvel {examType?.toLowerCase() || 'examen'}
+                  Créer un nouvel examen
                 </button>
                 <button
                   onClick={handleExport}
@@ -520,6 +460,15 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
       </div>
     </div>
   );
+};
+
+export default ExamsWizard;
+/div>
+    </div>
+  );
+};
+
+export default ExamsWizard;
 };
 
 export default ExamsWizard;

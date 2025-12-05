@@ -188,11 +188,9 @@ const App: React.FC = () => {
   }
 
   // Mode Examens
-  if (view === AppView.EXAMS_WIZARD && session) {
+  if (view === AppView.EXAMS_WIZARD) {
     return (
       <ExamsWizard 
-        initialSubject={session.subject}
-        initialGrade={session.grade}
         onBack={handleLogout}
       />
     );
