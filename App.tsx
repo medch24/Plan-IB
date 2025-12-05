@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UnitPlan, AppView } from './types';
+import { UnitPlan, AppView, AppMode } from './types';
 import Dashboard from './components/Dashboard';
 import UnitPlanForm from './components/UnitPlanForm';
 import LoginScreen from './components/LoginScreen';
+import ExamsWizard from './components/ExamsWizard';
 import { sanitizeUnitPlan } from './services/geminiService';
 import { loadPlansFromDatabase, savePlansToDatabase, migrateLocalStorageToMongoDB, needsMigration } from './services/databaseService';
 
@@ -12,8 +13,8 @@ const App: React.FC = () => {
   const [editingPlan, setEditingPlan] = useState<UnitPlan | undefined>(undefined);
   const [migrationDone, setMigrationDone] = useState(false);
   
-  // Session State - Filter by subject and grade
-  const [session, setSession] = useState<{subject: string, grade: string} | null>(null);
+  // Session State - Filter by subject, grade and mode
+  const [session, setSession] = useState<{subject: string, grade: string, mode: AppMode} | null>(null);
 
   // Migration automatique au démarrage de l'application
   useEffect(() => {
@@ -186,6 +187,18 @@ const App: React.FC = () => {
       return <LoginScreen onLogin={handleLogin} />;
   }
 
+  // Mode Examens
+  if (view === AppView.EXAMS_WIZARD && session) {
+    return (
+      <ExamsWizard 
+        initialSubject={session.subject}
+        initialGrade={session.grade}
+        onBack={handleLogout}
+      />
+    );
+  }
+
+  // Mode PEI Planner
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {view === AppView.DASHBOARD && session ? (

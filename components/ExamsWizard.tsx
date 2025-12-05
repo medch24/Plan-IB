@@ -1,0 +1,479 @@
+import React, { useState } from 'react';
+import { Exam, ExamGrade, Semester } from '../types';
+import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User } from 'lucide-react';
+import { generateExam } from '../services/examGeminiService';
+import { exportExamToWord } from '../services/examWordExportService';
+import { SUBJECTS } from '../constants';
+
+interface ExamsWizardProps {
+  initialSubject: string;
+  initialGrade: string;
+  onBack: () => void;
+}
+
+// Grades pour le système d'examen (inclut DP1 et DP2)
+const EXAM_GRADES: { value: ExamGrade; label: string }[] = [
+  { value: ExamGrade.PEI1, label: 'PEI1 (6ème)' },
+  { value: ExamGrade.PEI2, label: 'PEI2 (5ème)' },
+  { value: ExamGrade.PEI3, label: 'PEI3 (4ème)' },
+  { value: ExamGrade.PEI4, label: 'PEI4 (3ème)' },
+  { value: ExamGrade.PEI5, label: 'PEI5 (Seconde)' },
+  { value: ExamGrade.DP1, label: 'DP1 (1ère)' },
+  { value: ExamGrade.DP2, label: 'DP2 (Terminale)' }
+];
+
+// Matières disponibles par niveau
+const TRONC_COMMUN = [
+  'Langue et littérature (Français)',
+  'Anglais',
+  'Mathématiques',
+  'SVT',
+  'Physique-Chimie',
+  'Individu et Sociétés (Histoire-Géographie)',
+  'Design (Technologie)'
+];
+
+const LYCEE_SUBJECTS = [
+  'Langue et littérature (Français)',
+  'Anglais',
+  'Mathématiques',
+  'SVT',
+  'Physique-Chimie',
+  'Histoire-Géographie',
+  'Sciences Numériques et Technologiques (SNT)',
+  'Sciences Économiques et Sociales (SES)'
+];
+
+const getSubjectsForGrade = (grade: ExamGrade): string[] => {
+  if (grade === ExamGrade.PEI5 || grade === ExamGrade.DP1 || grade === ExamGrade.DP2) {
+    return LYCEE_SUBJECTS;
+  }
+  // Pour PEI1, exclure Physique-Chimie
+  if (grade === ExamGrade.PEI1) {
+    return TRONC_COMMUN.filter(s => !s.includes('Physique-Chimie'));
+  }
+  return TRONC_COMMUN;
+};
+
+const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade, onBack }) => {
+  const [step, setStep] = useState(1);
+  const [grade, setGrade] = useState<ExamGrade | ''>('');
+  const [subject, setSubject] = useState(initialSubject);
+  const [semester, setSemester] = useState<Semester | ''>('');
+  const [chapters, setChapters] = useState('');
+  const [teacherName, setTeacherName] = useState('');
+  const [className, setClassName] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedExam, setGeneratedExam] = useState<Exam | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const availableSubjects = grade ? getSubjectsForGrade(grade) : [];
+
+  const handleNext = () => {
+    if (step === 1 && !grade) {
+      alert('Veuillez sélectionner une classe');
+      return;
+    }
+    if (step === 2 && !subject) {
+      alert('Veuillez sélectionner une matière');
+      return;
+    }
+    if (step === 3 && (!semester || !chapters.trim())) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step === 1) {
+      onBack();
+    } else {
+      setStep(step - 1);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!grade || !subject || !semester || !chapters.trim()) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const exam = await generateExam({
+        subject,
+        grade,
+        semester,
+        chapters,
+        teacherName: teacherName || undefined,
+        className: className || undefined
+      });
+      
+      setGeneratedExam(exam);
+      setStep(4); // Aller à l'étape de prévisualisation
+    } catch (error: any) {
+      alert(`Erreur lors de la génération: ${error.message}`);
+      console.error(error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!generatedExam) return;
+
+    setExporting(true);
+    try {
+      await exportExamToWord(generatedExam);
+      alert('✅ Examen exporté avec succès!');
+    } catch (error: any) {
+      alert(`Erreur lors de l'export: ${error.message}`);
+      console.error(error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setStep(1);
+    setGrade('');
+    setSubject(initialSubject);
+    setSemester('');
+    setChapters('');
+    setTeacherName('');
+    setClassName('');
+    setGeneratedExam(null);
+  };
+
+  // Barre de progression
+  const renderProgressBar = () => {
+    const steps = ['Classe', 'Matière', 'Configuration', 'Prévisualisation'];
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          {steps.map((label, index) => {
+            const stepNumber = index + 1;
+            const isActive = step === stepNumber;
+            const isCompleted = step > stepNumber;
+            
+            return (
+              <React.Fragment key={stepNumber}>
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                      isCompleted
+                        ? 'bg-green-500 text-white'
+                        : isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {isCompleted ? <Check size={20} /> : stepNumber}
+                  </div>
+                  <span className={`text-xs mt-2 ${isActive ? 'text-blue-600 font-semibold' : 'text-slate-500'}`}>
+                    {label}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mx-2 rounded ${
+                      step > stepNumber ? 'bg-green-500' : 'bg-slate-200'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <FileText className="text-violet-600" size={32} />
+              Générateur d'Examens
+            </h1>
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+            >
+              <ArrowLeft size={18} />
+              Retour
+            </button>
+          </div>
+          {renderProgressBar()}
+        </div>
+
+        {/* Step Content */}
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          {/* Étape 1: Choix de la classe */}
+          {step === 1 && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Choisissez la classe</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {EXAM_GRADES.map((g) => (
+                  <button
+                    key={g.value}
+                    onClick={() => setGrade(g.value)}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      grade === g.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="font-semibold">{g.label}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={handleNext}
+                  disabled={!grade}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                >
+                  Suivant
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 2: Choix de la matière */}
+          {step === 2 && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">Choisissez la matière</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availableSubjects.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSubject(s)}
+                    className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      subject === s
+                        ? 'border-violet-500 bg-violet-50 text-violet-700'
+                        : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="font-semibold">{s}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-between">
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                >
+                  <ArrowLeft size={18} />
+                  Précédent
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!subject}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                >
+                  Suivant
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 3: Configuration */}
+          {step === 3 && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-6">Configuration de l'examen</h2>
+              
+              <div className="space-y-6">
+                {/* Semestre */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                    <Calendar size={18} />
+                    Semestre *
+                  </label>
+                  <select
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value as Semester)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    required
+                  >
+                    <option value="">Sélectionner le semestre...</option>
+                    <option value={Semester.SEMESTER_1}>Semestre 1</option>
+                    <option value={Semester.SEMESTER_2}>Semestre 2</option>
+                  </select>
+                </div>
+
+                {/* Chapitres/Sujets */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                    <BookOpen size={18} />
+                    Chapitres / Sujets à couvrir *
+                  </label>
+                  <textarea
+                    value={chapters}
+                    onChange={(e) => setChapters(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition min-h-[120px]"
+                    placeholder="Ex: Chapitre 1: Les fractions, Chapitre 2: Les équations..."
+                    required
+                  />
+                </div>
+
+                {/* Nom de l'enseignant (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                    <User size={18} />
+                    Nom de l'enseignant (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={teacherName}
+                    onChange={(e) => setTeacherName(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    placeholder="Nom et prénom de l'enseignant"
+                  />
+                </div>
+
+                {/* Nom de la classe (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Nom de la classe (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={className}
+                    onChange={(e) => setClassName(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    placeholder="Ex: 6ème A, 3ème B..."
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-between">
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                >
+                  <ArrowLeft size={18} />
+                  Précédent
+                </button>
+                <button
+                  onClick={handleGenerate}
+                  disabled={generating || !semester || !chapters.trim()}
+                  className="flex items-center gap-2 px-6 py-3 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Génération en cours...
+                    </>
+                  ) : (
+                    <>
+                      Générer l'examen
+                      <FileText size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 4: Prévisualisation */}
+          {step === 4 && generatedExam && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-6">Prévisualisation de l'examen</h2>
+              
+              <div className="space-y-6">
+                {/* En-tête de l'examen */}
+                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">{generatedExam.title}</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div><strong>Classe:</strong> {generatedExam.className || generatedExam.grade}</div>
+                    <div><strong>Durée:</strong> {generatedExam.duration}</div>
+                    <div><strong>Enseignant:</strong> {generatedExam.teacherName || '..............................'}</div>
+                    <div><strong>Semestre:</strong> {generatedExam.semester}</div>
+                    <div><strong>Total:</strong> /{generatedExam.totalPoints} points</div>
+                    <div><strong>Difficulté:</strong> {generatedExam.difficulty}</div>
+                  </div>
+                </div>
+
+                {/* Ressources générales */}
+                {generatedExam.resources && generatedExam.resources.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-slate-800 mb-3">📚 Ressources générales</h4>
+                    {generatedExam.resources.map((resource, index) => (
+                      <div key={index} className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="font-semibold text-blue-800 mb-2">{resource.title}</div>
+                        <div className="text-sm text-slate-700 whitespace-pre-wrap">{resource.content}</div>
+                        {resource.imageDescription && (
+                          <div className="mt-2 text-xs text-slate-500 italic">[Image: {resource.imageDescription}]</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Questions */}
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-3">📝 Questions ({generatedExam.questions.length})</h4>
+                  {generatedExam.questions.map((question, index) => (
+                    <div key={question.id} className="mb-6 p-5 bg-white rounded-lg border-2 border-slate-200">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="font-semibold text-slate-800">
+                          Question {index + 1}: {question.title}
+                          {question.isDifferentiation && <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">⭐ Différenciation</span>}
+                        </div>
+                        <span className="text-sm font-semibold text-blue-600">{question.points} pts</span>
+                      </div>
+                      <div className="text-sm text-slate-600 mb-2">Type: {question.type}</div>
+                      <div className="text-slate-700 whitespace-pre-wrap">{question.content}</div>
+                      {question.options && (
+                        <div className="mt-3">
+                          {question.options.map((opt, i) => (
+                            <div key={i} className="text-sm text-slate-600">☐ {String.fromCharCode(65 + i)}. {opt}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-between">
+                <button
+                  onClick={handleReset}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                >
+                  Créer un nouvel examen
+                </button>
+                <button
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                >
+                  {exporting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Export en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      Télécharger (.docx)
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ExamsWizard;

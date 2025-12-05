@@ -1,21 +1,33 @@
 import React, { useState } from 'react';
-import { School, BookOpen, ChevronRight } from 'lucide-react';
+import { School, BookOpen, ChevronRight, FileText } from 'lucide-react';
 import { SUBJECTS } from '../constants';
+import { AppMode } from '../types';
 
 interface LoginScreenProps {
-  onLogin: (subject: string, grade: string) => void;
+  onLogin: (subject: string, grade: string, mode: AppMode) => void;
 }
 
 const GRADES = ['PEI 1', 'PEI 2', 'PEI 3', 'PEI 4', 'PEI 5'];
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+  const [mode, setMode] = useState<AppMode | null>(null);
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
 
+  const handleModeSelect = (selectedMode: AppMode) => {
+    setMode(selectedMode);
+  };
+
+  const handleBack = () => {
+    setMode(null);
+    setSubject('');
+    setGrade('');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (subject.trim() && grade.trim()) {
-      onLogin(subject, grade);
+    if (subject.trim() && grade.trim() && mode) {
+      onLogin(subject, grade, mode);
     } else {
         alert("Veuillez sélectionner la matière et la classe.");
     }
@@ -39,59 +51,104 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 }}
               />
            </div>
-           <h1 className="text-2xl font-bold">PEI Planner</h1>
+           <h1 className="text-2xl font-bold">{mode ? (mode === AppMode.PEI_PLANNER ? 'PEI Planner' : 'Examens et Évaluations') : 'Plateforme Pédagogique'}</h1>
            <p className="text-blue-100 mt-2 text-sm">Les Écoles Internationales Al-Kawthar</p>
         </div>
         
         <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Matière</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <BookOpen className="text-slate-400" size={20} />
-                        </div>
-                        <select 
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none bg-white"
-                            required
-                        >
-                            <option value="">Sélectionner la matière...</option>
-                            {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                </div>
+            {!mode ? (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-slate-800 mb-4 text-center">Choisissez votre module</h2>
                 
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Classe / Niveau</label>
-                    <div className="relative">
-                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <School className="text-slate-400" size={20} />
-                        </div>
-                        <select 
-                            value={grade}
-                            onChange={(e) => setGrade(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none bg-white"
-                            required
-                        >
-                            <option value="">Sélectionner la classe...</option>
-                            {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                        </select>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2 ml-1">
-                        Affiche les unités pour cette matière et cette classe uniquement.
-                    </p>
-                </div>
-
-                <button 
-                    type="submit"
-                    className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg transition transform hover:-translate-y-0.5 shadow-md"
+                <button
+                  onClick={() => handleModeSelect(AppMode.PEI_PLANNER)}
+                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
                 >
-                    Accéder aux unités
-                    <ChevronRight size={18} />
+                  <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-colors">
+                    <BookOpen className="text-blue-600 group-hover:text-white" size={28} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-slate-800 text-lg">PEI Planner</h3>
+                    <p className="text-sm text-slate-600">Planification des unités PEI</p>
+                  </div>
+                  <ChevronRight className="text-slate-400 group-hover:text-blue-600" size={24} />
                 </button>
-            </form>
+
+                <button
+                  onClick={() => handleModeSelect(AppMode.EXAMS)}
+                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all group"
+                >
+                  <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-colors">
+                    <FileText className="text-violet-600 group-hover:text-white" size={28} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-slate-800 text-lg">Examens et Évaluations</h3>
+                    <p className="text-sm text-slate-600">Génération d'examens ministériels</p>
+                  </div>
+                  <ChevronRight className="text-slate-400 group-hover:text-violet-600" size={24} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleBack}
+                  className="mb-4 flex items-center gap-2 text-slate-600 hover:text-slate-800 transition"
+                >
+                  <ChevronRight className="rotate-180" size={18} />
+                  <span className="text-sm">Retour</span>
+                </button>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Matière</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BookOpen className="text-slate-400" size={20} />
+                            </div>
+                            <select 
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
+                                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none bg-white"
+                                required
+                            >
+                                <option value="">Sélectionner la matière...</option>
+                                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Classe / Niveau</label>
+                        <div className="relative">
+                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <School className="text-slate-400" size={20} />
+                            </div>
+                            <select 
+                                value={grade}
+                                onChange={(e) => setGrade(e.target.value)}
+                                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none bg-white"
+                                required
+                            >
+                                <option value="">Sélectionner la classe...</option>
+                                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 ml-1">
+                            {mode === AppMode.PEI_PLANNER 
+                              ? 'Affiche les unités pour cette matière et cette classe uniquement.'
+                              : 'Affiche les examens pour cette matière et cette classe uniquement.'}
+                        </p>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg transition transform hover:-translate-y-0.5 shadow-md"
+                    >
+                        {mode === AppMode.PEI_PLANNER ? 'Accéder aux unités' : 'Accéder aux examens'}
+                        <ChevronRight size={18} />
+                    </button>
+                </form>
+              </>
+            )}
         </div>
       </div>
     </div>

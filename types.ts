@@ -63,6 +63,8 @@ export enum AppView {
   LOGIN = 'LOGIN',
   DASHBOARD = 'DASHBOARD',
   EDITOR = 'EDITOR',
+  EXAMS_DASHBOARD = 'EXAMS_DASHBOARD',
+  EXAMS_WIZARD = 'EXAMS_WIZARD'
 }
 
 export enum GlobalContext {
@@ -76,4 +78,107 @@ export enum GlobalContext {
 
 export interface AIRequestConfig {
   temperature?: number;
+}
+
+// ===== EXAM SYSTEM TYPES =====
+
+export enum AppMode {
+  PEI_PLANNER = 'PEI_PLANNER',
+  EXAMS = 'EXAMS'
+}
+
+export enum ExamGrade {
+  PEI1 = 'PEI1 (6ème)',
+  PEI2 = 'PEI2 (5ème)',
+  PEI3 = 'PEI3 (4ème)',
+  PEI4 = 'PEI4 (3ème)',
+  PEI5 = 'PEI5 (Seconde)',
+  DP1 = 'DP1 (1ère)',
+  DP2 = 'DP2 (Terminale)'
+}
+
+export enum Semester {
+  SEMESTER_1 = 'Semestre 1',
+  SEMESTER_2 = 'Semestre 2'
+}
+
+// Type de question d'examen
+export enum QuestionType {
+  QCM = 'QCM',
+  VRAI_FAUX = 'Vrai/Faux',
+  TEXTE_A_TROUS = 'Textes à trous',
+  LEGENDER = 'Légender',
+  DEFINITIONS = 'Définitions',
+  ANALYSE_DOCUMENTS = 'Analyse de documents',
+  REPONSE_LONGUE = 'Réponse longue',
+  PROBLEME = 'Résolution de problème'
+}
+
+// Ressource utilisée dans l'examen
+export interface ExamResource {
+  type: 'text' | 'image' | 'table' | 'graph';
+  title: string;
+  content: string; // Pour text/table, ou description pour image/graph
+  imageDescription?: string; // Description détaillée pour les images à insérer
+}
+
+// Question individuelle dans l'examen
+export interface ExamQuestion {
+  id: string;
+  type: QuestionType;
+  title: string;
+  content: string;
+  points: number;
+  hasResource?: boolean;
+  resource?: ExamResource;
+  
+  // Pour QCM
+  options?: string[];
+  
+  // Pour Vrai/Faux
+  statements?: { statement: string; isTrue?: boolean }[];
+  
+  // Pour réponse longue/problème
+  expectedLines?: number; // Nombre de lignes de réponse attendues
+  
+  // Différenciation explicite
+  isDifferentiation?: boolean;
+}
+
+// Données complètes d'un examen
+export interface Exam {
+  id: string;
+  subject: string;
+  grade: ExamGrade;
+  semester: Semester;
+  teacherName: string;
+  className: string;
+  duration: string; // Ex: "2H"
+  totalPoints: number; // Toujours 30
+  date?: string;
+  
+  // Contenu de l'examen
+  title: string;
+  questions: ExamQuestion[];
+  resources: ExamResource[]; // Ressources générales (textes, tableaux, etc.)
+  
+  // Métadonnées
+  difficulty: 'Facile' | 'Moyen' | 'Difficile';
+  style?: 'Brevet' | 'Bac' | 'Standard'; // Pour PEI4, DP1, DP2
+  chapters?: string; // Chapitres/sujets couverts
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Configuration pour la génération d'examen
+export interface ExamGenerationConfig {
+  subject: string;
+  grade: ExamGrade;
+  semester: Semester;
+  chapters: string;
+  teacherName?: string;
+  className?: string;
+  includeTextResource?: boolean; // Pour Français/Anglais
+  includeGraphResource?: boolean; // Pour Sciences/Maths
 }
