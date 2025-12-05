@@ -71,16 +71,23 @@ const needsGraphResource = (subject: string): boolean => {
          normalized.includes('sciences');
 };
 
+// Vérifier si c'est un examen d'anglais
+const isEnglishExam = (subject: string): boolean => {
+  const normalized = subject.toLowerCase();
+  return normalized.includes('anglais') || normalized === 'english';
+};
+
 // Prompt système pour la génération d'examens
 const SYSTEM_INSTRUCTION_EXAM = `
-Tu es un expert pédagogique français spécialisé dans la création d'examens ministériels.
-Tu dois générer un examen complet et structuré selon les normes du programme français.
+Tu es un expert pédagogique spécialisé dans la création d'examens selon les normes du programme français.
+Tu dois générer un examen complet et structuré.
 
 RÈGLES ABSOLUES :
 1. L'examen doit être sur EXACTEMENT 30 points.
 2. Niveau de difficulté : MOYEN à FACILE (adapté au niveau demandé).
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
-4. Types de questions VARIÉS OBLIGATOIRES (minimum 4 types différents par examen) :
+4. Barème ÉQUILIBRÉ : répartir les points de manière logique selon la difficulté des questions.
+5. Types de questions VARIÉS OBLIGATOIRES (minimum 4 types différents par examen) :
    - QCM (Questions à Choix Multiples)
    - Vrai/Faux
    - Textes à trous
@@ -88,20 +95,37 @@ RÈGLES ABSOLUES :
    - Définitions
    - Analyse de documents
    - Réponse longue / Développement
+   - Résolution de problème
 
 RÈGLES SPÉCIFIQUES PAR MATIÈRE :
-- Pour Français et Anglais : OBLIGATOIREMENT inclure un texte de compréhension de MINIMUM 20 lignes.
-- Pour Sciences/Maths : OBLIGATOIREMENT inclure des descriptions de graphiques, courbes ou tableaux de données.
+- Pour Français : OBLIGATOIREMENT inclure un texte littéraire de MINIMUM 20 lignes pour la compréhension.
+- Pour Anglais : L'EXAMEN COMPLET doit être en ANGLAIS (questions, instructions, texte). Inclure un texte de MINIMUM 20 lignes.
+- Pour Sciences/Maths : OBLIGATOIREMENT inclure des graphiques, courbes ou tableaux de données avec description détaillée.
+- Pour Histoire-Géo-EMC : Inclure des documents historiques/géographiques à analyser.
 
 GESTION DES RESSOURCES :
 - Si une question nécessite un texte : fournis-le INTÉGRALEMENT dans le champ "content".
 - Si une question nécessite une image/schéma : écris "[Insérer Image : description détaillée]".
 - Si une question nécessite un tableau : fournis le tableau complet en format texte.
 
-STYLE D'EXAMEN :
-- PEI4 (3ème) : Style "Brevet des collèges"
-- DP1/DP2 (1ère/Terminale) : Style "Baccalauréat"
-- Autres niveaux : Style standard adapté au niveau
+STYLE D'EXAMEN PAR NIVEAU :
+
+**PEI4 (3ème) - STYLE BREVET DES COLLÈGES** :
+- Questions typiques du DNB (Diplôme National du Brevet)
+- Pour Français : Compréhension de texte (10 pts), Grammaire/Langue (10 pts), Rédaction/Expression écrite (10 pts)
+- Pour Maths : Exercices indépendants, calcul, géométrie, problèmes
+- Pour Histoire-Géo : Analyse de documents + développement construit
+- Progressivité : questions simples au début, plus complexes à la fin
+
+**DP1/DP2 (1ère/Terminale) - STYLE BACCALAURÉAT** :
+- Questions typiques du Baccalauréat français
+- Pour Français : Commentaire de texte, dissertation, question de grammaire
+- Pour Philo (Terminale) : Dissertation, explication de texte
+- Pour Sciences : Exercices de spécialité, analyse de documents scientifiques
+- Niveau supérieur avec réflexion approfondie
+
+**Autres niveaux (PEI1-PEI3, PEI5)** :
+- Style standard adapté au niveau du collège/lycée
 
 FORMAT JSON ATTENDU :
 {
@@ -147,16 +171,59 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     const style = getExamStyle(config.grade);
     const needsText = needsComprehensionText(config.subject);
     const needsGraph = needsGraphResource(config.subject);
+    const isEnglish = isEnglishExam(config.subject);
     
-    const userPrompt = `
+    // Détails spécifiques selon le style d'examen
+    let styleGuidelines = '';
+    if (style === 'Brevet') {
+      styleGuidelines = `
+      IMPORTANT - FORMAT BREVET (DNB) :
+      - Structure en 3 parties équilibrées
+      - Questions progressives (facile → moyen → difficile)
+      - Compréhension (10 pts) + Compétences spécifiques (10 pts) + Production/Analyse (10 pts)
+      - Inclure des questions de maîtrise de la langue pour Français
+      `;
+    } else if (style === 'Bac') {
+      styleGuidelines = `
+      IMPORTANT - FORMAT BACCALAURÉAT :
+      - Exercices indépendants de niveau lycée
+      - Analyse approfondie et réflexion critique
+      - Questions de cours (5-10 pts) + Exercices d'application (10-15 pts) + Problème/Synthèse (10-15 pts)
+      - Niveau de rigueur académique supérieur
+      `;
+    }
+    
+    const userPrompt = isEnglish ? `
+    Generate a complete English exam for:
+    
+    Subject: ${config.subject}
+    Grade Level: ${config.grade}
+    Topics to cover: ${config.chapters}
+    
+    Exam Style: ${style}
+    ${styleGuidelines}
+    ${needsText ? 'IMPORTANT: Include a comprehension text of MINIMUM 20 lines.' : ''}
+    
+    Duration: 2H
+    Total: EXACTLY 30 points
+    Difficulty: Medium to Easy
+    
+    Make sure to:
+    - Vary question types (minimum 4 different types)
+    - Include EXACTLY 1 differentiation question
+    - Provide complete resources (texts, descriptions)
+    - ALL questions and instructions must be in ENGLISH
+    - Follow ${style} exam format and standards
+    - Use balanced scoring (points well distributed)
+    ` : `
     Génère un examen complet pour :
     
     Matière : ${config.subject}
     Niveau : ${config.grade}
-    Semestre : ${config.semester}
     Chapitres/Sujets à couvrir : ${config.chapters}
     
     Style d'examen : ${style}
+    ${styleGuidelines}
     ${needsText ? 'IMPORTANT : Inclus un texte de compréhension de MINIMUM 20 lignes dans les ressources.' : ''}
     ${needsGraph ? 'IMPORTANT : Inclus des descriptions de graphiques, courbes ou tableaux de données.' : ''}
     
@@ -169,6 +236,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     - Inclure EXACTEMENT 1 question de différenciation
     - Fournir des ressources complètes (textes, tableaux, descriptions d'images)
     - Respecter les contraintes spécifiques à la matière
+    - Suivre le format ${style === 'Brevet' ? 'Brevet des collèges' : style === 'Bac' ? 'Baccalauréat' : 'standard'}
+    - Barème équilibré et logique
     `;
 
     const response = await ai.models.generateContent({

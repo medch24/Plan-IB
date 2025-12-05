@@ -293,15 +293,26 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                             </div>
                         </div>
                         
-                        <div className="flex-grow">
+                        <div className="flex-grow space-y-3">
                             {plan.statementOfInquiry ? (
-                                <div className="bg-slate-50 p-3 rounded-lg mb-4">
+                                <div className="bg-slate-50 p-3 rounded-lg">
                                     <p className="text-xs font-bold text-slate-400 uppercase mb-1">Énoncé de recherche</p>
                                     <p className="text-sm text-slate-700 italic line-clamp-2">"{plan.statementOfInquiry}"</p>
                                 </div>
                             ) : (
-                                <div className="h-16 bg-slate-50 rounded-lg mb-4 flex items-center justify-center text-xs text-slate-400 italic">
+                                <div className="h-16 bg-slate-50 rounded-lg flex items-center justify-center text-xs text-slate-400 italic">
                                     Pas d'énoncé défini
+                                </div>
+                            )}
+                            
+                            {/* Affichage des chapitres */}
+                            {plan.content && (
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
+                                        <BookOpen size={12} />
+                                        Chapitres inclus
+                                    </p>
+                                    <p className="text-xs text-slate-700 line-clamp-3">{plan.content}</p>
                                 </div>
                             )}
                         </div>

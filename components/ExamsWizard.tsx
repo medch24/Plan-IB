@@ -22,14 +22,14 @@ const EXAM_GRADES: { value: ExamGrade; label: string }[] = [
   { value: ExamGrade.DP2, label: 'DP2 (Terminale)' }
 ];
 
-// Matières disponibles par niveau
+// Matières disponibles par niveau (Programme français)
 const TRONC_COMMUN = [
   'Langue et littérature (Français)',
   'Anglais',
   'Mathématiques',
   'SVT',
   'Physique-Chimie',
-  'Individu et Sociétés (Histoire-Géographie)',
+  'Individu et Sociétés (Histoire-Géographie-EMC)',
   'Design (Technologie)'
 ];
 
@@ -39,7 +39,7 @@ const LYCEE_SUBJECTS = [
   'Mathématiques',
   'SVT',
   'Physique-Chimie',
-  'Histoire-Géographie',
+  'Individu et Sociétés (Histoire-Géographie-EMC)',
   'Sciences Numériques et Technologiques (SNT)',
   'Sciences Économiques et Sociales (SES)'
 ];
@@ -59,7 +59,6 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade,
   const [step, setStep] = useState(1);
   const [grade, setGrade] = useState<ExamGrade | ''>('');
   const [subject, setSubject] = useState(initialSubject);
-  const [semester, setSemester] = useState<Semester | ''>('');
   const [chapters, setChapters] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [className, setClassName] = useState('');
@@ -94,7 +93,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade,
   };
 
   const handleGenerate = async () => {
-    if (!grade || !subject || !semester || !chapters.trim()) {
+    if (!grade || !subject || !chapters.trim()) {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -104,7 +103,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade,
       const exam = await generateExam({
         subject,
         grade,
-        semester,
+        semester: 'Semestre 1' as any, // Valeur par défaut, sera ignorée
         chapters,
         teacherName: teacherName || undefined,
         className: className || undefined
@@ -290,24 +289,6 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ initialSubject, initialGrade,
               <h2 className="text-xl font-semibold text-slate-800 mb-6">Configuration de l'examen</h2>
               
               <div className="space-y-6">
-                {/* Semestre */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
-                    <Calendar size={18} />
-                    Semestre *
-                  </label>
-                  <select
-                    value={semester}
-                    onChange={(e) => setSemester(e.target.value as Semester)}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    required
-                  >
-                    <option value="">Sélectionner le semestre...</option>
-                    <option value={Semester.SEMESTER_1}>Semestre 1</option>
-                    <option value={Semester.SEMESTER_2}>Semestre 2</option>
-                  </select>
-                </div>
-
                 {/* Chapitres/Sujets */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
