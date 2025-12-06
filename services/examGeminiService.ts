@@ -86,7 +86,11 @@ RÈGLES ABSOLUES :
 1. L'examen doit être sur EXACTEMENT 30 points.
 2. Niveau de difficulté : MOYEN à FACILE (adapté au niveau demandé).
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
-4. Barème ÉQUILIBRÉ : répartir les points de manière logique selon la difficulté des questions.
+4. BARÈME ÉQUILIBRÉ ET DIVISIBLE :
+   - Pour QCM : 1 point par choix OU points divisibles (2pts, 3pts, 5pts)
+   - Pour Vrai/Faux : OBLIGATOIREMENT 1 point par affirmation
+   - Pour exercices : points logiques et divisibles (2, 3, 4, 5, 6, 8, 10)
+   - Répartir les points de manière progressive
 5. Types de questions VARIÉS OBLIGATOIRES (minimum 4 types différents par examen) :
    - QCM (Questions à Choix Multiples)
    - Vrai/Faux
@@ -97,16 +101,63 @@ RÈGLES ABSOLUES :
    - Réponse longue / Développement
    - Résolution de problème
 
-RÈGLES SPÉCIFIQUES PAR MATIÈRE :
-- Pour Français : OBLIGATOIREMENT inclure un texte littéraire de MINIMUM 20 lignes pour la compréhension.
-- Pour Anglais : L'EXAMEN COMPLET doit être en ANGLAIS (questions, instructions, texte). Inclure un texte de MINIMUM 20 lignes.
-- Pour Sciences/Maths : OBLIGATOIREMENT inclure des graphiques, courbes ou tableaux de données avec description détaillée.
-- Pour Histoire-Géo-EMC : Inclure des documents historiques/géographiques à analyser.
+ORGANISATION DE L'EXAMEN PAR SECTIONS :
 
-GESTION DES RESSOURCES :
-- Si une question nécessite un texte : fournis-le INTÉGRALEMENT dans le champ "content".
-- Si une question nécessite une image/schéma : écris "[Insérer Image : description détaillée]".
-- Si une question nécessite un tableau : fournis le tableau complet en format texte.
+**MATHÉMATIQUES** - Structure obligatoire :
+- PARTIE I : ALGÈBRE (15 points)
+  * Calculs, équations, fonctions
+  * Exercices progressifs
+- PARTIE II : GÉOMÉTRIE (15 points)
+  * Figures, théorèmes, constructions
+  * Inclure schémas/figures à légender
+
+**HISTOIRE-GÉOGRAPHIE-EMC** - Structure obligatoire :
+- PARTIE I : HISTOIRE (10 points)
+  * Analyse de documents historiques
+  * Questions de cours et développement
+- PARTIE II : GÉOGRAPHIE (10 points)
+  * Cartes, croquis, documents géographiques
+  * Analyse spatiale
+- PARTIE III : EMC (Enseignement Moral et Civique) (10 points)
+  * Valeurs républicaines, citoyenneté
+  * Réflexion éthique
+
+**FRANÇAIS** - Structure obligatoire :
+- PARTIE I : COMPRÉHENSION DE TEXTE (10 points)
+  * Texte littéraire de MINIMUM 20 lignes fourni
+  * Questions de compréhension
+- PARTIE II : LANGUE (Grammaire, Conjugaison, Orthographe, Vocabulaire) (10 points)
+  * Exercices variés de maîtrise de la langue
+- PARTIE III : PRODUCTION ÉCRITE (10 points)
+  * Rédaction/Expression écrite
+
+**ANGLAIS** - Structure obligatoire (TOUT EN ANGLAIS) :
+- PART I : READING COMPREHENSION (10 points)
+  * Text of MINIMUM 20 lines provided
+  * Comprehension questions
+- PART II : LANGUAGE (Grammar, Vocabulary) (10 points)
+  * Varied language exercises
+- PART III : WRITING (10 points)
+  * Written expression
+
+**SCIENCES (SVT, Physique-Chimie)** - Inclure obligatoirement :
+- Graphiques, courbes, tableaux de données avec descriptions détaillées
+- Schémas à légender
+- Protocoles expérimentaux
+
+**AUTRES MATIÈRES** - Structure adaptée mais équilibrée
+
+GESTION DES RESSOURCES (TRÈS IMPORTANT) :
+- **Textes** : Fournis le texte COMPLET (minimum 20 lignes pour compréhension)
+- **Tableaux** : Fournis le tableau complet en format texte structuré
+  Exemple : | Colonne 1 | Colonne 2 | Colonne 3 | avec lignes séparées
+- **Graphiques/Courbes** : Description DÉTAILLÉE permettant de visualiser
+  Exemple : Graphique représentant l'évolution de la température en fonction du temps.
+  Axe X : Temps (0 à 10 minutes, graduations tous les 2 min)
+  Axe Y : Température (0°C à 100°C, graduations tous les 10°C)
+  Courbe : Croissance linéaire de 20°C à 80°C entre 0 et 8 min, puis stabilisation
+- **Images/Schémas** : Description précise pour insertion
+  Exemple : [Insérer Image : Schéma du système digestif humain avec œsophage, estomac, intestin grêle, gros intestin à légender]
 
 STYLE D'EXAMEN PAR NIVEAU :
 
@@ -146,10 +197,12 @@ FORMAT JSON ATTENDU :
   "questions": [
     {
       "id": "q1",
+      "section": "Partie I : ALGÈBRE" (indiquer la section pour organisation),
       "type": "QCM" | "Vrai/Faux" | "Textes à trous" | "Légender" | "Définitions" | "Analyse de documents" | "Réponse longue",
-      "title": "Titre de la question",
-      "content": "Énoncé complet de la question",
+      "title": "Titre de l'exercice",
+      "content": "Énoncé complet de l'exercice",
       "points": 3,
+      "pointsPerStatement": 1 (OBLIGATOIRE pour Vrai/Faux : 1 point par affirmation),
       "hasResource": true/false,
       "resource": { ... } (si applicable),
       "options": ["option1", "option2", ...] (pour QCM),

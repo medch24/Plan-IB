@@ -3,12 +3,20 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import { Exam, QuestionType } from '../types';
 
-// Charger le template Word
+// Charger le template Word (nouveau template avec marges 1.5cm et interligne 1.5)
 const loadTemplate = async (): Promise<ArrayBuffer> => {
-  const response = await fetch('/Template_Examen_Ministere.docx');
+  // Essayer d'abord le nouveau template
+  let response = await fetch('/Template_Examen_Ministere_New.docx');
+  
+  // Fallback vers l'ancien template si le nouveau n'existe pas
   if (!response.ok) {
-    throw new Error('Impossible de charger le template d\'examen');
+    console.warn('⚠️ Nouveau template introuvable, utilisation de l\'ancien');
+    response = await fetch('/Template_Examen_Ministere.docx');
+    if (!response.ok) {
+      throw new Error('Impossible de charger le template d\'examen');
+    }
   }
+  
   return await response.arrayBuffer();
 };
 
@@ -17,14 +25,16 @@ const generateAnswerLines = (numberOfLines: number): string => {
   return Array(numberOfLines).fill('.....................................').join('\n');
 };
 
-// Formater une question selon son type
+// Formater un exercice selon son type
 const formatQuestion = (question: any, index: number): string => {
-  let formatted = `\n${index + 1}. ${question.title} (${question.points} points)\n`;
+  // En-tête de l'exercice avec énoncé en GRAS (simulé avec MAJUSCULES pour Word)
+  let formatted = `\nEXERCICE ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${question.points > 1 ? 'points' : 'point'})\n`;
   
   if (question.isDifferentiation) {
-    formatted += `⭐ Question de différenciation\n`;
+    formatted += `⭐ Exercice de différenciation\n`;
   }
   
+  // Énoncé de l'exercice
   formatted += `\n${question.content}\n`;
   
   // Ajouter la ressource si présente
@@ -55,7 +65,8 @@ const formatQuestion = (question: any, index: number): string => {
       if (question.statements && Array.isArray(question.statements)) {
         formatted += `\n`;
         question.statements.forEach((stmt: any, i: number) => {
-          formatted += `${i + 1}. ${stmt.statement}\n   ☐ Vrai   ☐ Faux\n`;
+          const pointsPerStatement = question.pointsPerStatement || 1;
+          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n   ☐ Vrai   ☐ Faux\n\n`;
         });
       }
       break;
@@ -90,15 +101,30 @@ const formatQuestion = (question: any, index: number): string => {
   return formatted;
 };
 
-// Formater toutes les questions de l'examen
+// Organiser les questions par sections
+const organizeQuestionsBySection = (questions: any[]): Map<string, any[]> => {
+  const sections = new Map<string, any[]>();
+  
+  questions.forEach(question => {
+    const section = question.section || 'Exercices';
+    if (!sections.has(section)) {
+      sections.set(section, []);
+    }
+    sections.get(section)!.push(question);
+  });
+  
+  return sections;
+};
+
+// Formater toutes les questions de l'examen organisées par sections
 const formatExercises = (exam: Exam): string => {
   let exercisesText = '';
   
-  // Ajouter les ressources générales en premier
+  // Ajouter les ressources générales en premier (sans traits)
   if (exam.resources && exam.resources.length > 0) {
-    exercisesText += `\n━━━━━━━━━━━━ RESSOURCES GÉNÉRALES ━━━━━━━━━━━━\n`;
+    exercisesText += `\nRESOURCES GÉNÉRALES\n\n`;
     exam.resources.forEach((resource, index) => {
-      exercisesText += `\nRessource ${index + 1} : ${resource.title}\n`;
+      exercisesText += `Ressource ${index + 1} : ${resource.title}\n`;
       if (resource.type === 'text') {
         exercisesText += `${resource.content}\n`;
       } else if (resource.type === 'image' || resource.type === 'graph') {
@@ -108,14 +134,26 @@ const formatExercises = (exam: Exam): string => {
       }
       exercisesText += `\n`;
     });
-    exercisesText += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    exercisesText += `\n`;
   }
   
-  // Ajouter toutes les questions
+  // Organiser les questions par sections
   if (exam.questions && exam.questions.length > 0) {
-    exam.questions.forEach((question, index) => {
-      exercisesText += formatQuestion(question, index);
-      exercisesText += `\n${'─'.repeat(60)}\n`;
+    const sections = organizeQuestionsBySection(exam.questions);
+    let globalIndex = 0;
+    
+    sections.forEach((questions, sectionName) => {
+      // Titre de la section en MAJUSCULES
+      if (sectionName !== 'Exercices') {
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
+      }
+      
+      // Questions de cette section
+      questions.forEach((question) => {
+        exercisesText += formatQuestion(question, globalIndex);
+        exercisesText += `\n`;
+        globalIndex++;
+      });
     });
   }
   
@@ -133,6 +171,7 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      // Options pour améliorer le formatage
     });
     
     // Préparer les données pour le template
