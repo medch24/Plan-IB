@@ -273,6 +273,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     }
     
     const userPrompt = isEnglish ? `
+    ⚠️ CRITICAL: This is an ENGLISH exam - EVERYTHING must be in ENGLISH (no French at all)
+    
     Generate a complete English exam for:
     
     Subject: ${config.subject}
@@ -281,17 +283,24 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     
     Exam Style: ${style}
     ${styleGuidelines}
-    ${needsText ? 'IMPORTANT: Include a comprehension text of MINIMUM 20 lines.' : ''}
+    ${needsText ? 'IMPORTANT: Include a comprehension text of MINIMUM 20 lines IN ENGLISH.' : ''}
     
     Duration: 2H
     Total: EXACTLY 30 points
     Difficulty: Medium to Easy
     
+    ⚠️ MANDATORY RULES FOR ENGLISH EXAM:
+    - ALL text must be in ENGLISH (titles, questions, instructions, content)
+    - NO French words or phrases allowed
+    - Section names in ENGLISH (e.g., "PART I: READING COMPREHENSION")
+    - Question types in ENGLISH (e.g., "Multiple Choice", "True/False", "Fill in the blanks")
+    - Instructions in ENGLISH (e.g., "Read the following text", "Answer the questions")
+    - Sources in ENGLISH format: (Author, Title, Publisher, Year)
+    
     Make sure to:
     - Vary question types (minimum 4 different types)
     - Include EXACTLY 1 differentiation question
-    - Provide complete resources (texts, descriptions)
-    - ALL questions and instructions must be in ENGLISH
+    - Provide complete resources (texts, descriptions) IN ENGLISH
     - Follow ${style} exam format and standards
     - Use balanced scoring (points well distributed)
     ` : `

@@ -12,18 +12,25 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   return await response.arrayBuffer();
 };
 
-// Générer les lignes pointillées pour les réponses
+// Générer les lignes pointillées pour les réponses (plus courtes pour rester dans les marges)
 const generateAnswerLines = (numberOfLines: number): string => {
-  return Array(numberOfLines).fill('.....................................').join('\n');
+  // Lignes plus courtes pour rester dans les marges (comme dans l'image Word)
+  return Array(numberOfLines).fill('...............................................').join('\n');
 };
 
 // Formater un exercice selon son type
-const formatQuestion = (question: any, index: number): string => {
+const formatQuestion = (question: any, index: number, isEnglish: boolean = false): string => {
   // En-tête de l'exercice avec énoncé en GRAS (simulé avec MAJUSCULES pour Word)
-  let formatted = `\nEXERCICE ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${question.points > 1 ? 'points' : 'point'})\n`;
+  const pointsLabel = isEnglish 
+    ? (question.points > 1 ? 'points' : 'point')
+    : (question.points > 1 ? 'points' : 'point');
+  
+  const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
-    formatted += `⭐ Exercice de différenciation\n`;
+    const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
+    formatted += `${diffLabel}\n`;
   }
   
   // Énoncé de l'exercice
@@ -57,7 +64,8 @@ const formatQuestion = (question: any, index: number): string => {
       break;
       
     case QuestionType.LEGENDER:
-      formatted += `\n[Espace pour légender le schéma/image]\n`;
+      const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
+      formatted += `\n${labelText}\n`;
       formatted += `${generateAnswerLines(3)}\n`;
       break;
       
@@ -101,6 +109,10 @@ const organizeQuestionsBySection = (questions: any[]): Map<string, any[]> => {
 const formatExercises = (exam: Exam): string => {
   let exercisesText = '';
   
+  // Détecter si c'est un examen d'anglais (tout doit être en anglais)
+  const isEnglish = exam.subject.toLowerCase().includes('anglais') || 
+                    exam.subject.toLowerCase() === 'english';
+  
   // Plus de ressources générales séparées - tout est intégré dans les exercices
   
   // Organiser les questions par sections
@@ -116,7 +128,7 @@ const formatExercises = (exam: Exam): string => {
       
       // Questions de cette section
       questions.forEach((question) => {
-        exercisesText += formatQuestion(question, globalIndex);
+        exercisesText += formatQuestion(question, globalIndex, isEnglish);
         exercisesText += `\n`;
         globalIndex++;
       });
@@ -141,9 +153,10 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     });
     
     // Préparer les données pour le template avec les balises correctes
+    // IMPORTANT: Utiliser exam.subject (jamais exam.title qui peut être undefined)
     const data = {
-      Matiere: exam.subject || 'Mathématiques',
-      Classe: exam.className || exam.grade,
+      Matiere: exam.subject || '',  // Toujours utiliser exam.subject
+      Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
