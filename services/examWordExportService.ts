@@ -3,20 +3,12 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import { Exam, QuestionType } from '../types';
 
-// Charger le template Word (nouveau template avec marges 1.5cm et interligne 1.5)
+// Charger le template Word original
 const loadTemplate = async (): Promise<ArrayBuffer> => {
-  // Essayer d'abord le nouveau template
-  let response = await fetch('/Template_Examen_Ministere_New.docx');
-  
-  // Fallback vers l'ancien template si le nouveau n'existe pas
+  const response = await fetch('/Template_Examen_Ministere.docx');
   if (!response.ok) {
-    console.warn('⚠️ Nouveau template introuvable, utilisation de l\'ancien');
-    response = await fetch('/Template_Examen_Ministere.docx');
-    if (!response.ok) {
-      throw new Error('Impossible de charger le template d\'examen');
-    }
+    throw new Error('Impossible de charger le template d\'examen');
   }
-  
   return await response.arrayBuffer();
 };
 
@@ -37,18 +29,7 @@ const formatQuestion = (question: any, index: number): string => {
   // Énoncé de l'exercice
   formatted += `\n${question.content}\n`;
   
-  // Ajouter la ressource si présente
-  if (question.hasResource && question.resource) {
-    formatted += `\n--- Ressource ---\n`;
-    if (question.resource.type === 'text') {
-      formatted += question.resource.content + '\n';
-    } else if (question.resource.type === 'image') {
-      formatted += `[Insérer Image : ${question.resource.imageDescription || question.resource.title}]\n`;
-    } else if (question.resource.type === 'table' || question.resource.type === 'graph') {
-      formatted += question.resource.content + '\n';
-    }
-    formatted += `--- Fin Ressource ---\n`;
-  }
+  // Les ressources sont maintenant intégrées directement dans le content de la question
   
   // Formater selon le type de question
   switch (question.type) {
@@ -120,22 +101,7 @@ const organizeQuestionsBySection = (questions: any[]): Map<string, any[]> => {
 const formatExercises = (exam: Exam): string => {
   let exercisesText = '';
   
-  // Ajouter les ressources générales en premier (sans traits)
-  if (exam.resources && exam.resources.length > 0) {
-    exercisesText += `\nRESOURCES GÉNÉRALES\n\n`;
-    exam.resources.forEach((resource, index) => {
-      exercisesText += `Ressource ${index + 1} : ${resource.title}\n`;
-      if (resource.type === 'text') {
-        exercisesText += `${resource.content}\n`;
-      } else if (resource.type === 'image' || resource.type === 'graph') {
-        exercisesText += `[Insérer ${resource.type === 'image' ? 'Image' : 'Graphique'} : ${resource.imageDescription || resource.content}]\n`;
-      } else if (resource.type === 'table') {
-        exercisesText += `${resource.content}\n`;
-      }
-      exercisesText += `\n`;
-    });
-    exercisesText += `\n`;
-  }
+  // Plus de ressources générales séparées - tout est intégré dans les exercices
   
   // Organiser les questions par sections
   if (exam.questions && exam.questions.length > 0) {
@@ -174,14 +140,14 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       // Options pour améliorer le formatage
     });
     
-    // Préparer les données pour le template
+    // Préparer les données pour le template avec les balises correctes
     const data = {
-      Matiere: exam.title || `Examen de ${exam.subject}`,
+      Matiere: exam.subject || 'Mathématiques',
       Classe: exam.className || exam.grade,
-      Duree: exam.duration || '2H',
-      Enseignant: exam.teacherName || '..............................',
-      Semestre: exam.semester || '..............................',
-      Date: exam.date || '....',
+      Duree: '2H',
+      Enseignant: exam.teacherName || '',
+      Semestre: exam.semester || '',
+      Date: '',
       Exercices: formatExercises(exam)
     };
     
