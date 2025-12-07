@@ -70,6 +70,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
   const [generating, setGenerating] = useState(false);
   const [generatedExam, setGeneratedExam] = useState<Exam | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportingCorrection, setExportingCorrection] = useState(false);
 
   const availableSubjects = grade ? getSubjectsForGrade(grade) : [];
 
@@ -140,6 +141,21 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
       console.error(error);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportCorrection = async () => {
+    if (!generatedExam) return;
+
+    setExportingCorrection(true);
+    try {
+      await exportExamCorrectionToWord(generatedExam);
+      alert('✅ Correction exportée avec succès!');
+    } catch (error: any) {
+      alert(`Erreur lors de l'export de la correction: ${error.message}`);
+      console.error(error);
+    } finally {
+      setExportingCorrection(false);
     }
   };
 
@@ -489,30 +505,51 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-between">
+              <div className="mt-8 flex justify-between items-center">
                 <button
                   onClick={handleReset}
                   className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                 >
                   Créer un nouvel {examType?.toLowerCase() || 'examen'}
                 </button>
-                <button
-                  onClick={handleExport}
-                  disabled={exporting}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-                >
-                  {exporting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={18} />
-                      Export en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Download size={18} />
-                      Télécharger (.docx)
-                    </>
-                  )}
-                </button>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleExport}
+                    disabled={exporting || exportingCorrection}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                  >
+                    {exporting ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Export en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={18} />
+                        Télécharger l'examen
+                      </>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={handleExportCorrection}
+                    disabled={exporting || exportingCorrection}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                  >
+                    {exportingCorrection ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Export correction...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={18} />
+                        Télécharger la correction
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

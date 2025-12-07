@@ -224,8 +224,13 @@ FORMAT JSON ATTENDU :
       "pointsPerStatement": 1 (OBLIGATOIRE pour Vrai/Faux : 1 point par affirmation),
 
       "options": ["option1", "option2", ...] (pour QCM),
+      "correctAnswer": "A" (OBLIGATOIRE pour QCM : lettre de la bonne réponse),
+      
       "statements": [{"statement": "...", "isTrue": true/false}] (pour Vrai/Faux),
+      
       "expectedLines": 5 (pour réponse longue),
+      "answer": "Réponse détaillée et complète du corrigé" (OBLIGATOIRE pour toutes les questions),
+      
       "isDifferentiation": false (true pour UNE seule question)
     }
   ]
@@ -239,6 +244,15 @@ FORMAT JSON ATTENDU :
   * Texte littéraire : (Victor Hugo, Les Misérables, Gallimard, 1862)
   * Article : (Le Monde, "Titre de l'article", 15 novembre 2023)
   * Document historique : (Lettre de Voltaire à D'Alembert, 1757)
+
+⚠️ CORRECTION / RÉPONSES (OBLIGATOIRE) :
+- CHAQUE question DOIT avoir son champ "answer" avec la réponse complète
+- Pour QCM : "correctAnswer" avec la lettre (ex: "A", "B", "C")
+- Pour Vrai/Faux : "isTrue" rempli pour chaque affirmation
+- Pour questions ouvertes : "answer" avec réponse détaillée et justification
+- Pour problèmes : "answer" avec solution complète étape par étape
+- Les réponses doivent être claires, précises et pédagogiques
+
 - Retourne UNIQUEMENT le JSON valide, sans texte d'introduction
 - Somme des points = 30 EXACTEMENT
 - Varie les types de questions (minimum 4 types différents)

@@ -134,15 +134,21 @@ export interface ExamQuestion {
   
   // Pour QCM
   options?: string[];
+  correctAnswer?: string; // Réponse correcte pour QCM (ex: "A", "B", "C")
   
   // Pour Vrai/Faux
   statements?: { statement: string; isTrue?: boolean }[];
   
   // Pour réponse longue/problème
   expectedLines?: number; // Nombre de lignes de réponse attendues
+  answer?: string; // Réponse détaillée/corrigé pour la correction
   
   // Différenciation explicite
   isDifferentiation?: boolean;
+  
+  // Section pour organisation
+  section?: string;
+  pointsPerStatement?: number; // Pour Vrai/Faux
 }
 
 // Données complètes d'un examen

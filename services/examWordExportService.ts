@@ -185,6 +185,144 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
   }
 };
 
+// Formater un exercice avec sa CORRECTION (réponses en rouge)
+const formatQuestionWithCorrection = (question: any, index: number, isEnglish: boolean = false): string => {
+  const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
+  const pointsLabel = isEnglish 
+    ? (question.points > 1 ? 'points' : 'point')
+    : (question.points > 1 ? 'points' : 'point');
+  
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${pointsLabel})\n`;
+  
+  if (question.isDifferentiation) {
+    const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
+    formatted += `${diffLabel}\n`;
+  }
+  
+  formatted += `\n${question.content}\n`;
+  
+  // Ajouter les RÉPONSES en fonction du type de question
+  switch (question.type) {
+    case QuestionType.QCM:
+      if (question.options && Array.isArray(question.options)) {
+        formatted += `\n`;
+        question.options.forEach((opt: string, i: number) => {
+          const letter = String.fromCharCode(65 + i);
+          const isCorrect = question.correctAnswer === letter;
+          // Marquer la bonne réponse avec ✓ et en rouge (simulé avec >>> <<<)
+          const marker = isCorrect ? '>>> ✓ RÉPONSE CORRECTE <<<' : '';
+          formatted += `☐ ${letter}. ${opt} ${marker}\n`;
+        });
+        // Explication de la réponse
+        if (question.answer) {
+          formatted += `\n>>> EXPLICATION: ${question.answer} <<<\n`;
+        }
+      }
+      break;
+      
+    case QuestionType.VRAI_FAUX:
+      if (question.statements && Array.isArray(question.statements)) {
+        formatted += `\n`;
+        question.statements.forEach((stmt: any, i: number) => {
+          const pointsPerStatement = question.pointsPerStatement || 1;
+          const correctAnswer = stmt.isTrue ? 'Vrai' : 'Faux';
+          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n`;
+          formatted += `   ☐ Vrai   ☐ Faux\n`;
+          formatted += `   >>> RÉPONSE: ${correctAnswer} <<<\n\n`;
+        });
+      }
+      break;
+      
+    case QuestionType.LEGENDER:
+      const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
+      formatted += `\n${labelText}\n`;
+      if (question.answer) {
+        formatted += `\n>>> CORRECTION:\n${question.answer}\n<<<\n`;
+      }
+      break;
+      
+    default:
+      // Pour toutes les autres questions (réponses longues, définitions, etc.)
+      if (question.answer) {
+        formatted += `\n>>> CORRECTION:\n${question.answer}\n<<<\n`;
+      }
+  }
+  
+  return formatted;
+};
+
+// Formater toutes les questions avec corrections
+const formatExercisesWithCorrections = (exam: Exam): string => {
+  let exercisesText = '';
+  
+  const isEnglish = exam.subject.toLowerCase().includes('anglais') || 
+                    exam.subject.toLowerCase() === 'english';
+  
+  if (exam.questions && exam.questions.length > 0) {
+    const sections = organizeQuestionsBySection(exam.questions);
+    let globalIndex = 0;
+    
+    sections.forEach((questions, sectionName) => {
+      if (sectionName !== 'Exercices') {
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
+      }
+      
+      questions.forEach((question) => {
+        exercisesText += formatQuestionWithCorrection(question, globalIndex, isEnglish);
+        exercisesText += `\n`;
+        globalIndex++;
+      });
+    });
+  }
+  
+  return exercisesText;
+};
+
+// Exporter la CORRECTION de l'examen vers Word (réponses en rouge)
+export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
+  try {
+    console.log('📄 Chargement du template pour la correction...');
+    const templateBuffer = await loadTemplate();
+    
+    console.log('📝 Génération du document de correction...');
+    const zip = new PizZip(templateBuffer);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+    
+    // Préparer les données pour le template
+    const data = {
+      Matiere: `${exam.subject} - CORRECTION`,  // Indiquer que c'est la correction
+      Classe: exam.className || exam.grade || '',
+      Duree: '2H',
+      Enseignant: exam.teacherName || '',
+      Semestre: exam.semester || '',
+      Date: '',
+      Exercices: formatExercisesWithCorrections(exam)  // Utiliser la fonction avec corrections
+    };
+    
+    console.log('🔧 Remplissage du template avec les corrections...');
+    doc.render(data);
+    
+    console.log('💾 Génération du fichier Word de correction...');
+    const output = doc.getZip().generate({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    
+    // Nom de fichier avec "CORRECTION"
+    const fileName = `CORRECTION_${exam.subject.replace(/\s+/g, '_')}_${exam.grade}_${exam.semester.replace(/\s+/g, '_')}.docx`;
+    
+    console.log(`✅ Téléchargement: ${fileName}`);
+    saveAs(output, fileName);
+    
+  } catch (error: any) {
+    console.error('❌ Erreur lors de l\'export de la correction:', error);
+    throw new Error(`Échec de l'export de la correction: ${error?.message || 'Erreur inconnue'}`);
+  }
+};
+
 // Exporter plusieurs examens en ZIP
 export const exportMultipleExamsToZip = async (exams: Exam[]): Promise<void> => {
   try {
