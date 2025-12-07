@@ -22,29 +22,39 @@ const generateAnswerLines = (numberOfLines: number): string => {
 const applyBoldFormatting = (zip: PizZip): void => {
   try {
     const documentXml = zip.files['word/document.xml'];
-    if (!documentXml) return;
+    if (!documentXml) {
+      console.warn('⚠️ [BOLD] document.xml introuvable');
+      return;
+    }
     
     let content = documentXml.asText();
+    console.log('📝 [BOLD] Traitement des markers BOLD...');
     
-    // Regex pour trouver les markers BOLD:texte:END
-    const boldRegex = /BOLD:(.*?):END/g;
+    // Regex pour trouver les markers BOLD:texte:END (avec support des sauts de ligne)
+    const boldRegex = /BOLD:([\s\S]*?):END/g;
     
+    let matchCount = 0;
     // Remplacer chaque marker par du XML Word avec formatage gras
     content = content.replace(boldRegex, (match, text) => {
-      // Échapper les caractères XML
+      matchCount++;
+      
+      // Échapper les caractères XML spéciaux
       const escapedText = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<w:br/>'); // Conserver les sauts de ligne
       
       // Retourner le texte en gras (XML Word)
-      return `<w:r><w:rPr><w:b/></w:rPr><w:t>${escapedText}</w:t></w:r>`;
+      return `<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${escapedText}</w:t></w:r>`;
     });
+    
+    console.log(`✅ [BOLD] ${matchCount} marker(s) BOLD traité(s)`);
     
     // Mettre à jour le contenu
     zip.file('word/document.xml', content);
   } catch (error) {
-    console.warn('Impossible d\'appliquer le formatage gras:', error);
+    console.error('❌ [BOLD] Erreur lors de l\'application du formatage gras:', error);
   }
 };
 
@@ -64,8 +74,8 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
     formatted += `${diffLabel}\n`;
   }
   
-  // Énoncé de l'exercice (contenu)
-  formatted += `\n${question.content}\n`;
+  // CORRECTION: Mettre l'énoncé en gras aussi
+  formatted += `\nBOLD:${question.content}:END\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -247,7 +257,8 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     formatted += `${diffLabel}\n`;
   }
   
-  formatted += `\n${question.content}\n`;
+  // CORRECTION: Mettre l'énoncé en gras aussi
+  formatted += `\nBOLD:${question.content}:END\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
