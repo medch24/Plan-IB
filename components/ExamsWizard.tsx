@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Exam, ExamGrade } from '../types';
 import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User, ClipboardCheck } from 'lucide-react';
 import { generateExam } from '../services/examGeminiService';
-import { exportExamToWord } from '../services/examWordExportService';
+import { exportExamToWord, exportExamCorrectionToWord } from '../services/examWordExportService';
+import { saveExamToDatabase } from '../services/examDatabaseService';
 
 interface ExamsWizardProps {
   onBack: () => void;
@@ -115,9 +116,22 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
         className: grade
       });
       
-      // Mettre à jour le titre avec le type (Examen/Évaluation)
+      // CORRECTION: S'assurer que subject et grade sont correctement assignés
       exam.title = `${examType} de ${subject} - ${grade}`;
+      exam.subject = subject; // IMPORTANT: Assigner explicitement
+      exam.grade = grade; // IMPORTANT: Assigner explicitement
       exam.semester = `Semestre ${semester}` as any;
+      exam.teacherName = teacherName || '';
+      exam.className = grade;
+      
+      // NOUVEAU: Sauvegarder automatiquement dans la base de données
+      try {
+        console.log('💾 Sauvegarde automatique de l\'examen généré...');
+        await saveExamToDatabase(exam);
+        console.log('✅ Examen sauvegardé automatiquement');
+      } catch (saveError) {
+        console.error('⚠️ Erreur lors de la sauvegarde automatique (non bloquant):', saveError);
+      }
       
       setGeneratedExam(exam);
       setStep(5); // Aller à l'étape de prévisualisation
