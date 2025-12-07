@@ -18,46 +18,6 @@ const generateAnswerLines = (numberOfLines: number): string => {
   return Array(numberOfLines).fill('..............................').join('\n');
 };
 
-// Appliquer le formatage gras en modifiant directement le XML Word
-const applyBoldFormatting = (zip: PizZip): void => {
-  try {
-    const documentXml = zip.files['word/document.xml'];
-    if (!documentXml) {
-      console.warn('⚠️ [BOLD] document.xml introuvable');
-      return;
-    }
-    
-    let content = documentXml.asText();
-    console.log('📝 [BOLD] Traitement des markers BOLD...');
-    
-    // Regex pour trouver les markers BOLD:texte:END (avec support des sauts de ligne)
-    const boldRegex = /BOLD:([\s\S]*?):END/g;
-    
-    let matchCount = 0;
-    // Remplacer chaque marker par du XML Word avec formatage gras
-    content = content.replace(boldRegex, (match, text) => {
-      matchCount++;
-      
-      // Échapper les caractères XML spéciaux
-      const escapedText = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<w:br/>'); // Conserver les sauts de ligne
-      
-      // Retourner le texte en gras (XML Word)
-      return `<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${escapedText}</w:t></w:r>`;
-    });
-    
-    console.log(`✅ [BOLD] ${matchCount} marker(s) BOLD traité(s)`);
-    
-    // Mettre à jour le contenu
-    zip.file('word/document.xml', content);
-  } catch (error) {
-    console.error('❌ [BOLD] Erreur lors de l\'application du formatage gras:', error);
-  }
-};
-
 // Formater un exercice selon son type
 const formatQuestion = (question: any, index: number, isEnglish: boolean = false): string => {
   const pointsLabel = isEnglish 
@@ -66,16 +26,17 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
   
-  // Utiliser des markers pour le gras qui seront convertis en XML
-  let formatted = `\nBOLD:${exerciseLabel} ${index + 1} : ${question.title}:END (${question.points} ${pointsLabel})\n`;
+  // CORRECTION: Pas de markers BOLD - utiliser du texte normal
+  // Le formatage sera fait via le template Word lui-même
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // CORRECTION: Mettre l'énoncé en gras aussi
-  formatted += `\nBOLD:${question.content}:END\n`;
+  // Énoncé de l'exercice (contenu)
+  formatted += `\n${question.content}\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -158,9 +119,9 @@ const formatExercises = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de la section en GRAS
+      // Titre de la section (sans markers BOLD)
       if (sectionName !== 'Exercices') {
-        exercisesText += `\nBOLD:${sectionName.toUpperCase()}:END\n\n`;
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
       }
       
       // Questions de cette section
@@ -222,10 +183,6 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     doc.render(data);
     console.log('✅ [EXPORT] Template rempli');
     
-    // Appliquer le formatage gras
-    applyBoldFormatting(zip);
-    console.log('✅ [EXPORT] Formatage gras appliqué');
-    
     const output = zip.generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -250,15 +207,16 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
-  let formatted = `\nBOLD:${exerciseLabel} ${index + 1} : ${question.title}:END (${question.points} ${pointsLabel})\n`;
+  // CORRECTION: Pas de markers BOLD
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // CORRECTION: Mettre l'énoncé en gras aussi
-  formatted += `\nBOLD:${question.content}:END\n`;
+  // Énoncé de l'exercice
+  formatted += `\n${question.content}\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
@@ -320,7 +278,7 @@ const formatExercisesWithCorrections = (exam: Exam): string => {
     
     sections.forEach((questions, sectionName) => {
       if (sectionName !== 'Exercices') {
-        exercisesText += `\nBOLD:${sectionName.toUpperCase()}:END\n\n`;
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
       }
       
       questions.forEach((question) => {
@@ -374,10 +332,6 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
     
     doc.render(data);
     console.log('✅ [CORRECTION] Template rempli');
-    
-    // Appliquer le formatage gras
-    applyBoldFormatting(zip);
-    console.log('✅ [CORRECTION] Formatage gras appliqué');
     
     const output = zip.generate({
       type: 'blob',
