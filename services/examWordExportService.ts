@@ -14,18 +14,19 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
 
 // Générer les lignes pointillées pour les réponses (plus courtes pour rester dans les marges)
 const generateAnswerLines = (numberOfLines: number): string => {
-  // Lignes plus courtes pour rester dans les marges (comme dans l'image Word)
-  return Array(numberOfLines).fill('...............................................').join('\n');
+  // Lignes courtes pour rester dans les marges de la page (30 points)
+  return Array(numberOfLines).fill('..............................').join('\n');
 };
 
 // Formater un exercice selon son type
 const formatQuestion = (question: any, index: number, isEnglish: boolean = false): string => {
-  // En-tête de l'exercice avec énoncé en GRAS (simulé avec MAJUSCULES pour Word)
+  // En-tête de l'exercice avec énoncé en GRAS (simulé avec MAJUSCULES + soulignement)
   const pointsLabel = isEnglish 
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
+  // Utiliser MAJUSCULES pour simuler le gras dans Word
   let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
@@ -155,7 +156,7 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     // Préparer les données pour le template avec les balises correctes
     // IMPORTANT: Utiliser exam.subject (jamais exam.title qui peut être undefined)
     const data = {
-      Matiere: exam.subject || '',  // Toujours utiliser exam.subject
+      Matiere: exam.subject || 'Non définie',  // Toujours utiliser exam.subject avec fallback clair
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
@@ -163,6 +164,9 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       Date: '',
       Exercices: formatExercises(exam)
     };
+    
+    // Debug log pour vérifier les données
+    console.log('📊 Données exportées:', { Matiere: data.Matiere, Classe: data.Classe, Semestre: data.Semestre });
     
     console.log('🔧 Remplissage du template avec les données...');
     doc.render(data);
@@ -192,6 +196,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
+  // Utiliser MAJUSCULES pour simuler le gras
   let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title.toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
@@ -293,7 +298,7 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
     
     // Préparer les données pour le template
     const data = {
-      Matiere: `${exam.subject} - CORRECTION`,  // Indiquer que c'est la correction
+      Matiere: `${exam.subject || 'Non définie'} - CORRECTION`,  // Indiquer que c'est la correction avec fallback
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
@@ -301,6 +306,9 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       Date: '',
       Exercices: formatExercisesWithCorrections(exam)  // Utiliser la fonction avec corrections
     };
+    
+    // Debug log
+    console.log('📊 Données de correction exportées:', { Matiere: data.Matiere, Classe: data.Classe });
     
     console.log('🔧 Remplissage du template avec les corrections...');
     doc.render(data);
