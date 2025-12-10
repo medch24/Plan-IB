@@ -26,6 +26,7 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
     objectives: [],
     atlSkills: [],
     content: '',
+    lessons: [], // NOUVEAU: Leçons/Chapitres
     learningExperiences: '',
     summativeAssessment: '',
     formativeAssessment: '',
@@ -172,7 +173,13 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
             </button>
           </div>
           <button 
-            onClick={() => onSave(plan)}
+            onClick={() => {
+              if (plan.objectives.length < 2) {
+                alert('⚠️ Veuillez sélectionner au moins 2 critères d\'évaluation avant de sauvegarder.');
+                return;
+              }
+              onSave(plan);
+            }}
             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition shadow-md"
           >
             <Save size={18} />
@@ -516,13 +523,41 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Objectifs spécifiques</label>
-                    <textarea 
-                        value={Array.isArray(plan.objectives) ? plan.objectives.join('\n') : plan.objectives}
-                        onChange={(e) => handleInputChange('objectives', e.target.value.split('\n'))}
-                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32"
-                        placeholder="- Critère A..."
-                    />
+                    <label className="block text-sm font-medium text-slate-600 mb-2">
+                      Critères d'évaluation (minimum 2 requis)
+                    </label>
+                    <div className="space-y-2 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                      {['A', 'B', 'C', 'D'].map(criterion => {
+                        const criterionNames: { [key: string]: string } = {
+                          'A': 'Connaissances et compréhension',
+                          'B': 'Recherche',
+                          'C': 'Communication',
+                          'D': 'Pensée critique'
+                        };
+                        const isSelected = plan.objectives.includes(criterion);
+                        return (
+                          <label key={criterion} className="flex items-center space-x-2 cursor-pointer hover:bg-slate-100 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const newObjectives = e.target.checked
+                                  ? [...plan.objectives, criterion]
+                                  : plan.objectives.filter(obj => obj !== criterion);
+                                handleInputChange('objectives', newObjectives);
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-sm">
+                              <strong>Critère {criterion}:</strong> {criterionNames[criterion]}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {plan.objectives.length < 2 && (
+                      <p className="text-xs text-red-600 mt-1">⚠️ Sélectionnez au moins 2 critères</p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-600 mb-1">Évaluation sommative (Aperçu)</label>
@@ -555,6 +590,19 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
                     onChange={(e) => handleInputChange('content', e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 text-sm mb-4"
                   />
+               </div>
+               <div>
+                 <label className="text-sm font-medium text-slate-700 mb-2 block">
+                   Leçons / Chapitres de l'unité
+                   <span className="text-xs text-slate-500 ml-2">(une leçon par ligne)</span>
+                 </label>
+                 <textarea 
+                    value={plan.lessons?.join('\n') || ''}
+                    onChange={(e) => handleInputChange('lessons', e.target.value.split('\n').filter(l => l.trim()))}
+                    className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32 text-sm"
+                    placeholder="- Leçon 1: Introduction aux fractions&#10;- Leçon 2: Addition de fractions&#10;- Leçon 3: Soustraction de fractions"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Ces leçons seront affichées sous forme de tirets dans le descriptif</p>
                </div>
                <div>
                   <div className="flex justify-between items-center mb-2">

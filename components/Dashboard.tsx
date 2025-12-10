@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UnitPlan } from '../types';
-import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft, BookOpen, Printer } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { generateCourseFromChapters } from '../services/geminiService';
 import { exportUnitPlanToWord, exportAssessmentsToZip, exportConsolidatedPlanByGrade } from '../services/wordExportService';
@@ -93,6 +93,174 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     setExportingId(`eval-${plan.id}`);
     await exportAssessmentsToZip(plan);
     setExportingId(null);
+  };
+
+  // NOUVEAU: Fonction d'impression d'une carte d'unité
+  const handlePrintUnit = (plan: UnitPlan) => {
+    // Créer une fenêtre d'impression avec le contenu formaté
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Veuillez autoriser les pop-ups pour imprimer');
+      return;
+    }
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Unité: ${plan.title || 'Sans titre'}</title>
+        <style>
+          @media print {
+            @page { margin: 2cm; }
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+          }
+          .subject-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+          }
+          h1 {
+            color: #1e293b;
+            font-size: 24px;
+            margin: 10px 0;
+          }
+          .meta {
+            color: #64748b;
+            font-size: 14px;
+            margin: 5px 0;
+          }
+          .section {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+          }
+          .section-title {
+            font-weight: bold;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .section-content {
+            font-size: 14px;
+            color: #1e293b;
+          }
+          .lessons-list {
+            list-style: none;
+            padding-left: 0;
+          }
+          .lessons-list li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+          }
+          .lessons-list li:before {
+            content: "•";
+            color: #8b5cf6;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+          }
+          .criteria {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+          }
+          .criterion-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <span class="subject-badge">${plan.subject || 'Sans matière'}</span>
+          <h1>${plan.title || 'Unité sans titre'}</h1>
+          <div class="meta">
+            ${plan.gradeLevel || ''} ${plan.duration ? '• ' + plan.duration : ''}
+            ${plan.teacherName ? '• Enseignant(e): ' + plan.teacherName : ''}
+          </div>
+        </div>
+        
+        ${plan.statementOfInquiry ? `
+          <div class="section">
+            <div class="section-title">📍 Énoncé de recherche</div>
+            <div class="section-content"><em>"${plan.statementOfInquiry}"</em></div>
+          </div>
+        ` : ''}
+        
+        ${plan.content ? `
+          <div class="section">
+            <div class="section-title">📚 Chapitres inclus</div>
+            <div class="section-content">${plan.content}</div>
+          </div>
+        ` : ''}
+        
+        ${plan.lessons && plan.lessons.length > 0 ? `
+          <div class="section">
+            <div class="section-title">📖 Leçons de l'unité</div>
+            <ul class="lessons-list">
+              ${plan.lessons.map(lesson => `<li>${lesson}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        ${plan.objectives && plan.objectives.length > 0 ? `
+          <div class="section">
+            <div class="section-title">🎯 Critères d'évaluation</div>
+            <div class="criteria">
+              ${plan.objectives.map(obj => `<span class="criterion-badge">Critère ${obj}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        ${plan.summativeAssessment ? `
+          <div class="section">
+            <div class="section-title">✅ Évaluation sommative</div>
+            <div class="section-content">${plan.summativeAssessment}</div>
+          </div>
+        ` : ''}
+        
+        <script>
+          window.onload = () => {
+            window.print();
+            // Optionnel: fermer la fenêtre après impression
+            // window.onafterprint = () => window.close();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
   };
 
   const handleExportConsolidated = async () => {
@@ -315,10 +483,33 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                     <p className="text-xs text-slate-700 line-clamp-3">{plan.content}</p>
                                 </div>
                             )}
+                            
+                            {/* NOUVEAU: Affichage des leçons */}
+                            {plan.lessons && plan.lessons.length > 0 && (
+                                <div className="bg-violet-50 p-3 rounded-lg border border-violet-100">
+                                    <p className="text-xs font-bold text-violet-700 uppercase mb-2 flex items-center gap-1">
+                                        <Layers size={12} />
+                                        Leçons de l'unité
+                                    </p>
+                                    <ul className="space-y-1">
+                                        {plan.lessons.slice(0, 5).map((lesson, idx) => (
+                                            <li key={idx} className="text-xs text-slate-700 flex items-start gap-1">
+                                                <span className="text-violet-500">•</span>
+                                                <span className="line-clamp-1">{lesson}</span>
+                                            </li>
+                                        ))}
+                                        {plan.lessons.length > 5 && (
+                                            <li className="text-xs text-violet-600 italic">
+                                                +{plan.lessons.length - 5} leçons supplémentaires...
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <button 
                                     onClick={() => handleExportPlan(plan)}
                                     className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-100 transition"
@@ -335,6 +526,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                 >
                                     {exportingId === `eval-${plan.id}` ? <Loader2 className="animate-spin" size={14}/> : <FileArchive size={14}/>}
                                     Exams (Zip)
+                                </button>
+                                <button 
+                                    onClick={() => handlePrintUnit(plan)}
+                                    className="flex items-center gap-1 bg-violet-50 text-violet-700 px-2 py-1 rounded hover:bg-violet-100 transition"
+                                    title="Imprimer cette unité"
+                                >
+                                    <Printer size={14}/>
+                                    Imprimer
                                 </button>
                             </div>
                         </div>
