@@ -35,10 +35,13 @@ export interface UnitPlan {
   };
 
   // Action Section
-  objectives: string[]; // e.g., A, B, C, D
+  objectives: string[]; // e.g., A, B, C, D (minimum 2 critères requis)
   atlSkills: string[];
   content: string;
   learningExperiences: string;
+  
+  // NOUVEAU: Leçons/Chapitres de l'unité
+  lessons?: string[]; // Liste des leçons/chapitres (affichés sous forme de tirets)
 
   // Assessment
   summativeAssessment: string; // Description of the task
@@ -56,7 +59,7 @@ export interface UnitPlan {
   // Full Document for Criterion Referenced Assessment
   generatedAssessmentDocument: string; // Text view
   assessmentData?: AssessmentData; // Legacy single assessment
-  assessments: AssessmentData[]; // New: Multiple assessments (A, B, C, D)
+  assessments: AssessmentData[]; // Selected assessments (minimum 2, not necessarily all 4)
 }
 
 export enum AppView {

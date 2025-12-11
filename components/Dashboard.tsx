@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UnitPlan } from '../types';
-import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Calendar, Layers, Loader2, Download, X, FileCheck, Filter, FileArchive, User, LogOut, ArrowLeft, BookOpen, Printer } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { generateCourseFromChapters } from '../services/geminiService';
 import { exportUnitPlanToWord, exportAssessmentsToZip, exportConsolidatedPlanByGrade } from '../services/wordExportService';
@@ -95,6 +95,174 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     setExportingId(null);
   };
 
+  // NOUVEAU: Fonction d'impression d'une carte d'unité
+  const handlePrintUnit = (plan: UnitPlan) => {
+    // Créer une fenêtre d'impression avec le contenu formaté
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Veuillez autoriser les pop-ups pour imprimer');
+      return;
+    }
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Unité: ${plan.title || 'Sans titre'}</title>
+        <style>
+          @media print {
+            @page { margin: 2cm; }
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+          }
+          .subject-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+          }
+          h1 {
+            color: #1e293b;
+            font-size: 24px;
+            margin: 10px 0;
+          }
+          .meta {
+            color: #64748b;
+            font-size: 14px;
+            margin: 5px 0;
+          }
+          .section {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+          }
+          .section-title {
+            font-weight: bold;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .section-content {
+            font-size: 14px;
+            color: #1e293b;
+          }
+          .lessons-list {
+            list-style: none;
+            padding-left: 0;
+          }
+          .lessons-list li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+          }
+          .lessons-list li:before {
+            content: "•";
+            color: #8b5cf6;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+          }
+          .criteria {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+          }
+          .criterion-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <span class="subject-badge">${plan.subject || 'Sans matière'}</span>
+          <h1>${plan.title || 'Unité sans titre'}</h1>
+          <div class="meta">
+            ${plan.gradeLevel || ''} ${plan.duration ? '• ' + plan.duration : ''}
+            ${plan.teacherName ? '• Enseignant(e): ' + plan.teacherName : ''}
+          </div>
+        </div>
+        
+        ${plan.statementOfInquiry ? `
+          <div class="section">
+            <div class="section-title">📍 Énoncé de recherche</div>
+            <div class="section-content"><em>"${plan.statementOfInquiry}"</em></div>
+          </div>
+        ` : ''}
+        
+        ${plan.content ? `
+          <div class="section">
+            <div class="section-title">📚 Chapitres inclus</div>
+            <div class="section-content">${plan.content}</div>
+          </div>
+        ` : ''}
+        
+        ${plan.lessons && plan.lessons.length > 0 ? `
+          <div class="section">
+            <div class="section-title">📖 Leçons de l'unité</div>
+            <ul class="lessons-list">
+              ${plan.lessons.map(lesson => `<li>${lesson}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        ${plan.objectives && plan.objectives.length > 0 ? `
+          <div class="section">
+            <div class="section-title">🎯 Critères d'évaluation</div>
+            <div class="criteria">
+              ${plan.objectives.map(obj => `<span class="criterion-badge">Critère ${obj}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        ${plan.summativeAssessment ? `
+          <div class="section">
+            <div class="section-title">✅ Évaluation sommative</div>
+            <div class="section-content">${plan.summativeAssessment}</div>
+          </div>
+        ` : ''}
+        
+        <script>
+          window.onload = () => {
+            window.print();
+            // Optionnel: fermer la fenêtre après impression
+            // window.onafterprint = () => window.close();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   const handleExportConsolidated = async () => {
     setExportingId('consolidated');
     await exportConsolidatedPlanByGrade(currentGrade);
@@ -102,9 +270,44 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <>
+      {/* Styles d'impression */}
+      <style>{`
+        @media print {
+          /* Masquer les boutons et éléments non nécessaires */
+          button, .no-print {
+            display: none !important;
+          }
+          
+          /* Ajuster les marges pour l'impression */
+          body {
+            margin: 0;
+            padding: 20px;
+          }
+          
+          /* Optimiser l'affichage des cartes */
+          .print-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          
+          /* Garder les couleurs pour l'impression */
+          * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          /* Réduire les ombres pour économiser l'encre */
+          .shadow-sm, .shadow-md, .shadow-lg {
+            box-shadow: none !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+        }
+      `}</style>
       
-      <header className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        
+        <header className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white shadow-md overflow-hidden border border-slate-100">
              <img 
@@ -122,7 +325,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
              <button 
               onClick={onLogout}
               className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-3 rounded-lg font-semibold shadow transition"
@@ -131,6 +334,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <ArrowLeft size={20} />
               Retour
             </button>
+             <button 
+               onClick={() => window.print()}
+               className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"
+               title="Imprimer cette page complète"
+             >
+               <Printer size={20} />
+               Imprimer la page
+             </button>
              <button 
                onClick={handleExportConsolidated}
                disabled={exportingId === 'consolidated'}
@@ -266,7 +477,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
         ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {filteredPlans.map(plan => (
-                    <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition group flex flex-col h-full">
+                    <div key={plan.id} className="print-card bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition group flex flex-col h-full">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="inline-block px-2 py-1 text-xs font-bold bg-blue-100 text-blue-700 rounded mb-2">
@@ -305,8 +516,62 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                 </div>
                             )}
                             
-                            {/* Affichage des chapitres */}
-                            {plan.content && (
+                            {/* NOUVEAU: Affichage des critères d'évaluation */}
+                            {plan.objectives && plan.objectives.length > 0 && (
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <p className="text-xs font-bold text-amber-800 uppercase mb-2 flex items-center gap-1">
+                                        <FileCheck size={12} />
+                                        Critères d'évaluation
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {plan.objectives.map((criterion) => {
+                                            const criterionNames: { [key: string]: string } = {
+                                                'A': 'Connaissances et compréhension',
+                                                'B': 'Recherche',
+                                                'C': 'Communication',
+                                                'D': 'Pensée critique'
+                                            };
+                                            return (
+                                                <span 
+                                                    key={criterion}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-semibold"
+                                                    title={criterionNames[criterion] || criterion}
+                                                >
+                                                    <span className="font-bold">Critère {criterion}</span>
+                                                    <span className="text-amber-600">•</span>
+                                                    <span className="text-amber-700">{criterionNames[criterion] || criterion}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* NOUVEAU: Affichage des leçons sous forme de tirets */}
+                            {plan.lessons && plan.lessons.length > 0 && (
+                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <p className="text-xs font-bold text-green-800 uppercase mb-2 flex items-center gap-1">
+                                        <BookOpen size={12} />
+                                        Leçons / Chapitres inclus
+                                    </p>
+                                    <ul className="space-y-1">
+                                        {plan.lessons.slice(0, 8).map((lesson, idx) => (
+                                            <li key={idx} className="text-xs text-slate-700 flex items-start gap-2">
+                                                <span className="text-green-600 font-bold">-</span>
+                                                <span>{lesson}</span>
+                                            </li>
+                                        ))}
+                                        {plan.lessons.length > 8 && (
+                                            <li className="text-xs text-green-700 italic font-medium">
+                                                +{plan.lessons.length - 8} leçons supplémentaires...
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+                            
+                            {/* Affichage des chapitres (si pas de leçons définies) */}
+                            {!plan.lessons && plan.content && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                     <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
                                         <BookOpen size={12} />
@@ -318,7 +583,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                         </div>
 
                         <div className="flex items-center justify-between text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <button 
                                     onClick={() => handleExportPlan(plan)}
                                     className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-100 transition"
@@ -335,6 +600,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                 >
                                     {exportingId === `eval-${plan.id}` ? <Loader2 className="animate-spin" size={14}/> : <FileArchive size={14}/>}
                                     Exams (Zip)
+                                </button>
+                                <button 
+                                    onClick={() => handlePrintUnit(plan)}
+                                    className="flex items-center gap-1 bg-violet-50 text-violet-700 px-2 py-1 rounded hover:bg-violet-100 transition"
+                                    title="Imprimer cette unité"
+                                >
+                                    <Printer size={14}/>
+                                    Imprimer
                                 </button>
                             </div>
                         </div>
@@ -437,6 +710,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
         </div>
       )}
     </div>
+    </>
   );
 };
 
