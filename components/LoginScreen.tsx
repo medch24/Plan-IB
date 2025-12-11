@@ -57,26 +57,54 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const currentSubjects = mode === AppMode.EXAMS ? EXAM_SUBJECTS : SUBJECTS;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-100">
-        <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-8 text-white text-center relative">
-           <div className="bg-white w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg overflow-hidden">
-              <img 
-                src="/logo-alkawtar.png" 
-                alt="Al Kawthar Logo" 
-                className="w-full h-full object-contain p-1"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.classList.add('bg-white/20', 'backdrop-blur-sm');
-                  const icon = document.createElement('div');
-                  icon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>';
-                  e.currentTarget.parentElement?.appendChild(icon);
-                }}
-              />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-violet-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-fadeIn">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 text-white text-center relative overflow-hidden">
+           {/* Animated background pattern */}
+           <div className="absolute inset-0 opacity-10">
+             <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16 animate-pulse"></div>
+             <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20 animate-pulse delay-700"></div>
            </div>
-           <h1 className="text-2xl font-bold">{mode ? (mode === AppMode.PEI_PLANNER ? 'PEI Planner' : 'Examens et Évaluations') : 'Plateforme Pédagogique'}</h1>
-           <p className="text-blue-100 mt-2 text-sm">Les Écoles Internationales Al-Kawthar</p>
+           
+           <div className="relative z-10">
+             <div className="bg-white w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl overflow-hidden transform hover:scale-110 transition-transform duration-300">
+                <img 
+                  src="/logo-alkawtar.png" 
+                  alt="Al Kawthar Logo" 
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement?.classList.add('bg-white/20', 'backdrop-blur-sm');
+                    const icon = document.createElement('div');
+                    icon.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2"/><path d="M18 5v17"/><path d="m4 6 8-4 8 4"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/></svg>';
+                    e.currentTarget.parentElement?.appendChild(icon);
+                  }}
+                />
+             </div>
+             <h1 className="text-3xl font-bold mb-2 animate-slideDown">{mode ? (mode === AppMode.PEI_PLANNER ? '📚 PEI Planner' : '📝 Examens & Évaluations') : '🎓 Plateforme Pédagogique'}</h1>
+             <p className="text-blue-100 text-sm tracking-wide">Les Écoles Internationales Al-Kawthar</p>
+           </div>
         </div>
+        
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+          }
+          .animate-slideDown {
+            animation: slideDown 0.6s ease-out;
+          }
+          .delay-700 {
+            animation-delay: 0.7s;
+          }
+        `}</style>
         
         <div className="p-8">
             {!mode ? (
@@ -85,30 +113,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 
                 <button
                   onClick={() => handleModeSelect(AppMode.PEI_PLANNER)}
-                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 >
-                  <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-colors">
-                    <BookOpen className="text-blue-600 group-hover:text-white" size={28} />
+                  <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-all duration-300 group-hover:rotate-3">
+                    <BookOpen className="text-blue-600 group-hover:text-white transition-colors" size={28} />
                   </div>
                   <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-slate-800 text-lg">PEI Planner</h3>
+                    <h3 className="font-semibold text-slate-800 text-lg group-hover:text-blue-600 transition-colors">📚 PEI Planner</h3>
                     <p className="text-sm text-slate-600">Planification des unités PEI (Programme IB)</p>
                   </div>
-                  <ChevronRight className="text-slate-400 group-hover:text-blue-600" size={24} />
+                  <ChevronRight className="text-slate-400 group-hover:text-blue-600 transition-all group-hover:translate-x-1" size={24} />
                 </button>
 
                 <button
                   onClick={() => handleModeSelect(AppMode.EXAMS)}
-                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all group"
+                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 >
-                  <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-colors">
-                    <FileText className="text-violet-600 group-hover:text-white" size={28} />
+                  <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-all duration-300 group-hover:rotate-3">
+                    <FileText className="text-violet-600 group-hover:text-white transition-colors" size={28} />
                   </div>
                   <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-slate-800 text-lg">Examens et Évaluations</h3>
+                    <h3 className="font-semibold text-slate-800 text-lg group-hover:text-violet-600 transition-colors">📝 Examens & Évaluations</h3>
                     <p className="text-sm text-slate-600">Génération d'examens ministériels français</p>
                   </div>
-                  <ChevronRight className="text-slate-400 group-hover:text-violet-600" size={24} />
+                  <ChevronRight className="text-slate-400 group-hover:text-violet-600 transition-all group-hover:translate-x-1" size={24} />
                 </button>
               </div>
             ) : (

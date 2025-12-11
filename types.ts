@@ -22,6 +22,7 @@ export interface UnitPlan {
   subject: string;
   gradeLevel: string;
   duration: string;
+  chapters?: string; // Liste des chapitres/leçons de cette unité
   
   // Inquiry Section
   keyConcept: string;

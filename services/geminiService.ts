@@ -116,6 +116,7 @@ export const sanitizeUnitPlan = (plan: any, subject: string, gradeLevel: string)
     subject: subject || plan.subject || plan.matiere || "",
     gradeLevel: gradeLevel || plan.gradeLevel || plan.niveau || "",
     duration: plan.duration || plan.duree || "10 heures",
+    chapters: plan.chapters || plan.chapitres || "",
     
     keyConcept: plan.keyConcept || plan.concept_cle || "",
     relatedConcepts: Array.isArray(plan.relatedConcepts) ? plan.relatedConcepts : 
@@ -321,6 +322,7 @@ Structure JSON attendue :
 {
   "title": "Titre en Français",
   "duration": "XX heures",
+  "chapters": "- Chapitre 1: ...\n- Chapitre 2: ...\n- Chapitre 3: ...",
   "keyConcept": "Un concept clé",
   "relatedConcepts": ["Concept 1", "Concept 2"],
   "globalContext": "Un contexte mondial",
@@ -396,6 +398,7 @@ Expected JSON Structure:
 {
   "title": "Title in English",
   "duration": "XX hours",
+  "chapters": "- Chapter 1: ...\n- Chapter 2: ...\n- Chapter 3: ...",
   "keyConcept": "A key concept",
   "relatedConcepts": ["Concept 1", "Concept 2"],
   "globalContext": "A global context",
@@ -464,16 +467,24 @@ export const generateFullUnitPlan = async (
         Grade Level: ${gradeLevel}
         Topics to cover: ${topics}
         
-        Generate the complete plan and 4 criterion-based assessments (A, B, C, D).
-        Make sure to fill in the 'Activities/Strategies', 'Formative Assessment' and 'Differentiation' sections.
+        Generate the complete plan and criterion-based assessments (choose appropriate criteria: A, B, C, D based on subject).
+        Make sure to:
+        1. Fill in ALL sections including 'Activities/Strategies', 'Formative Assessment' and 'Differentiation'
+        2. Include a "chapters" field listing the chapters/lessons covered in this unit (bullet points format)
+        3. Select ONLY the relevant assessment criteria for this subject (not necessarily all 4)
+        4. Return a valid, complete JSON structure
       `
       : `
         Matière: ${subject}
         Niveau: ${gradeLevel}
         Sujets à couvrir: ${topics}
         
-        Génère le plan complet et 4 évaluations critériées (A, B, C, D).
-        Assure-toi de bien remplir les sections 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'.
+        Génère le plan complet et les évaluations critériées (choisis les critères appropriés: A, B, C, D selon la matière).
+        Assure-toi de:
+        1. Bien remplir TOUTES les sections incluant 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'
+        2. Inclure un champ "chapters" listant les chapitres/leçons couverts dans cette unité (format tirets)
+        3. Sélectionner UNIQUEMENT les critères d'évaluation pertinents pour cette matière (pas forcément les 4)
+        4. Retourner une structure JSON valide et complète
       `;
 
     const response = await ai.models.generateContent({
@@ -487,32 +498,51 @@ export const generateFullUnitPlan = async (
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response text from API");
+    if (!text || text.trim() === "") {
+      throw new Error("L'IA n'a retourné aucune réponse. Veuillez réessayer.");
+    }
     
-    console.log("Raw AI response length:", text.length);
+    console.log("✓ Réponse AI reçue, longueur:", text.length);
     
     const cleanedJson = cleanJsonText(text);
-    console.log("Cleaned JSON length:", cleanedJson.length);
+    console.log("✓ JSON nettoyé, longueur:", cleanedJson.length);
     
     if (!cleanedJson || cleanedJson === "{}") {
-      throw new Error("Failed to extract valid JSON from AI response");
+      console.error("Échec du nettoyage JSON. Texte brut:", text.substring(0, 200));
+      throw new Error("L'IA n'a pas retourné de plan valide. Le format JSON est invalide.");
     }
     
     let parsed;
     try {
       parsed = JSON.parse(cleanedJson);
     } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      console.error("Problematic JSON:", cleanedJson.substring(0, 500));
-      throw new Error("Invalid JSON format from AI: " + parseError);
+      console.error("❌ Erreur de parsing JSON:", parseError);
+      console.error("JSON problématique:", cleanedJson.substring(0, 500));
+      throw new Error("Le plan généré contient des erreurs de format. Veuillez réessayer.");
     }
     
-    return sanitizeUnitPlan(parsed, subject, gradeLevel);
+    // Vérifier que le plan contient des données essentielles
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error("Le plan généré est incomplet. Veuillez réessayer.");
+    }
+    
+    const sanitized = sanitizeUnitPlan(parsed, subject, gradeLevel);
+    console.log("✓ Plan sanitarisé avec succès");
+    
+    return sanitized;
 
   } catch (error: any) {
-    console.error("Error generating full plan:", error);
+    console.error("❌ Erreur génération plan complet:", error);
     const errorMsg = error?.message || "Erreur inconnue lors de la génération";
-    throw new Error(`Échec de génération: ${errorMsg}`);
+    
+    // Message d'erreur plus clair pour l'utilisateur
+    if (errorMsg.includes("API") || errorMsg.includes("key")) {
+      throw new Error("Erreur de connexion à l'IA. Vérifiez votre clé API.");
+    } else if (errorMsg.includes("JSON") || errorMsg.includes("format")) {
+      throw new Error("L'IA n'a pas retourné de plan valide. Veuillez réessayer avec des chapitres plus précis.");
+    }
+    
+    throw new Error(errorMsg);
   }
 };
 

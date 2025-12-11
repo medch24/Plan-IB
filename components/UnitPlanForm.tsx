@@ -373,6 +373,18 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
                 />
               </div>
             </div>
+            
+            {/* Chapitres/Leçons */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-600 mb-1">Chapitres / Leçons inclus dans cette unité</label>
+              <textarea 
+                value={plan.chapters || ''}
+                onChange={(e) => handleInputChange('chapters', e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24"
+                placeholder="- Chapitre 1: Introduction...&#10;- Chapitre 2: Développement...&#10;- Chapitre 3: Applications..."
+              />
+              <p className="text-xs text-slate-500 mt-1 ml-1">💡 Listez les chapitres/leçons sous forme de tirets (un par ligne)</p>
+            </div>
           </section>
 
           {/* Section 2: Inquiry */}

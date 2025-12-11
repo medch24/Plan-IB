@@ -12,10 +12,10 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   return await response.arrayBuffer();
 };
 
-// Générer les lignes pointillées pour les réponses (courtes pour rester dans les marges)
+// Générer les lignes pointillées pour les réponses (~18 cm de longueur)
 const generateAnswerLines = (numberOfLines: number): string => {
-  // 30 points pour rester dans les marges de 1.5cm
-  return Array(numberOfLines).fill('..............................').join('\n');
+  // ~90 points pour atteindre environ 18 cm (selon la police)
+  return Array(numberOfLines).fill('.....................................................................................................').join('\n');
 };
 
 // Formater un exercice selon son type
@@ -292,7 +292,7 @@ const formatExercisesWithCorrections = (exam: Exam): string => {
   return exercisesText;
 };
 
-// Exporter la CORRECTION de l'examen vers Word
+// Exporter la CORRECTION de l'examen vers Word (avec texte en rouge)
 export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
   try {
     console.log('📄 [CORRECTION] Début de l\'export correction');
@@ -333,7 +333,33 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
     doc.render(data);
     console.log('✅ [CORRECTION] Template rempli');
     
-    const output = zip.generate({
+    // Obtenir le zip généré
+    const generatedZip = doc.getZip();
+    
+    // Modifier le XML pour ajouter la couleur rouge aux corrections
+    try {
+      const documentXml = generatedZip.file("word/document.xml")?.asText();
+      if (documentXml) {
+        // Ajouter la couleur rouge aux textes de correction (contenant ✓✓✓)
+        // On cherche les runs de texte contenant les markers de correction
+        let modifiedXml = documentXml;
+        
+        // Pattern pour identifier les corrections
+        // On remplace les balises de texte contenant ✓✓✓ par des balises avec couleur rouge
+        modifiedXml = modifiedXml.replace(
+          /(<w:r>)(<w:t[^>]*>)([^<]*✓✓✓[^<]*<\/w:t>)/g,
+          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
+        );
+        
+        generatedZip.file("word/document.xml", modifiedXml);
+        console.log('✅ [CORRECTION] Couleur rouge appliquée aux corrections');
+      }
+    } catch (colorError) {
+      console.warn('⚠️ Impossible d\'appliquer la couleur rouge:', colorError);
+      // Continue sans la couleur
+    }
+    
+    const output = generatedZip.generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });

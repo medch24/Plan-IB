@@ -365,16 +365,16 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     // Créer l'objet Exam complet (sans resources - tout est intégré dans les questions)
     const exam: Exam = {
       id: Date.now().toString(),
-      subject: config.subject,
+      subject: config.subject || "Matière non spécifiée", // Protection contre undefined
       grade: config.grade,
       semester: config.semester,
       teacherName: config.teacherName || "",
-      className: config.className || "",
+      className: config.className || config.grade || "",
       duration: parsed.duration || "2H",
       totalPoints: 30, // Force 30 points
       title: parsed.title || `Examen de ${config.subject}`,
       questions: parsed.questions || [],
-      // Plus de champ resources - tout est dans le content des questions
+      resources: [], // Tableau vide - tout est dans le content des questions
       difficulty: parsed.difficulty || "Moyen",
       style: style,
       chapters: config.chapters,

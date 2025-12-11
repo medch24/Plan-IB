@@ -99,12 +99,12 @@ const App: React.FC = () => {
   }, [currentPlans, session]);
 
   const handleLogin = (subject: string, grade: string, mode: AppMode) => {
-    setSession({ subject, grade, mode });
-    
-    // Redirection selon le mode
+    // Pour le mode examens, passer directement à l'assistant sans stocker la session
     if (mode === AppMode.EXAMS) {
+      setSession({ subject: '', grade: '', mode });
       setView(AppView.EXAMS_WIZARD);
     } else {
+      setSession({ subject, grade, mode });
       setView(AppView.DASHBOARD);
     }
   };
