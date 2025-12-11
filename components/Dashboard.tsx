@@ -270,9 +270,44 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <>
+      {/* Styles d'impression */}
+      <style>{`
+        @media print {
+          /* Masquer les boutons et éléments non nécessaires */
+          button, .no-print {
+            display: none !important;
+          }
+          
+          /* Ajuster les marges pour l'impression */
+          body {
+            margin: 0;
+            padding: 20px;
+          }
+          
+          /* Optimiser l'affichage des cartes */
+          .print-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          
+          /* Garder les couleurs pour l'impression */
+          * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          /* Réduire les ombres pour économiser l'encre */
+          .shadow-sm, .shadow-md, .shadow-lg {
+            box-shadow: none !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+        }
+      `}</style>
       
-      <header className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        
+        <header className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 pb-6 gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white shadow-md overflow-hidden border border-slate-100">
              <img 
@@ -290,7 +325,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
              <button 
               onClick={onLogout}
               className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-3 rounded-lg font-semibold shadow transition"
@@ -299,6 +334,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <ArrowLeft size={20} />
               Retour
             </button>
+             <button 
+               onClick={() => window.print()}
+               className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"
+               title="Imprimer cette page complète"
+             >
+               <Printer size={20} />
+               Imprimer la page
+             </button>
              <button 
                onClick={handleExportConsolidated}
                disabled={exportingId === 'consolidated'}
@@ -434,7 +477,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
         ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {filteredPlans.map(plan => (
-                    <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition group flex flex-col h-full">
+                    <div key={plan.id} className="print-card bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition group flex flex-col h-full">
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="inline-block px-2 py-1 text-xs font-bold bg-blue-100 text-blue-700 rounded mb-2">
@@ -473,37 +516,68 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                 </div>
                             )}
                             
-                            {/* Affichage des chapitres */}
-                            {plan.content && (
+                            {/* NOUVEAU: Affichage des critères d'évaluation */}
+                            {plan.objectives && plan.objectives.length > 0 && (
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <p className="text-xs font-bold text-amber-800 uppercase mb-2 flex items-center gap-1">
+                                        <FileCheck size={12} />
+                                        Critères d'évaluation
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {plan.objectives.map((criterion) => {
+                                            const criterionNames: { [key: string]: string } = {
+                                                'A': 'Connaissances et compréhension',
+                                                'B': 'Recherche',
+                                                'C': 'Communication',
+                                                'D': 'Pensée critique'
+                                            };
+                                            return (
+                                                <span 
+                                                    key={criterion}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-semibold"
+                                                    title={criterionNames[criterion] || criterion}
+                                                >
+                                                    <span className="font-bold">Critère {criterion}</span>
+                                                    <span className="text-amber-600">•</span>
+                                                    <span className="text-amber-700">{criterionNames[criterion] || criterion}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* NOUVEAU: Affichage des leçons sous forme de tirets */}
+                            {plan.lessons && plan.lessons.length > 0 && (
+                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                    <p className="text-xs font-bold text-green-800 uppercase mb-2 flex items-center gap-1">
+                                        <BookOpen size={12} />
+                                        Leçons / Chapitres inclus
+                                    </p>
+                                    <ul className="space-y-1">
+                                        {plan.lessons.slice(0, 8).map((lesson, idx) => (
+                                            <li key={idx} className="text-xs text-slate-700 flex items-start gap-2">
+                                                <span className="text-green-600 font-bold">-</span>
+                                                <span>{lesson}</span>
+                                            </li>
+                                        ))}
+                                        {plan.lessons.length > 8 && (
+                                            <li className="text-xs text-green-700 italic font-medium">
+                                                +{plan.lessons.length - 8} leçons supplémentaires...
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+                            
+                            {/* Affichage des chapitres (si pas de leçons définies) */}
+                            {!plan.lessons && plan.content && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                     <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
                                         <BookOpen size={12} />
                                         Chapitres inclus
                                     </p>
                                     <p className="text-xs text-slate-700 line-clamp-3">{plan.content}</p>
-                                </div>
-                            )}
-                            
-                            {/* NOUVEAU: Affichage des leçons */}
-                            {plan.lessons && plan.lessons.length > 0 && (
-                                <div className="bg-violet-50 p-3 rounded-lg border border-violet-100">
-                                    <p className="text-xs font-bold text-violet-700 uppercase mb-2 flex items-center gap-1">
-                                        <Layers size={12} />
-                                        Leçons de l'unité
-                                    </p>
-                                    <ul className="space-y-1">
-                                        {plan.lessons.slice(0, 5).map((lesson, idx) => (
-                                            <li key={idx} className="text-xs text-slate-700 flex items-start gap-1">
-                                                <span className="text-violet-500">•</span>
-                                                <span className="line-clamp-1">{lesson}</span>
-                                            </li>
-                                        ))}
-                                        {plan.lessons.length > 5 && (
-                                            <li className="text-xs text-violet-600 italic">
-                                                +{plan.lessons.length - 5} leçons supplémentaires...
-                                            </li>
-                                        )}
-                                    </ul>
                                 </div>
                             )}
                         </div>
@@ -636,6 +710,7 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
         </div>
       )}
     </div>
+    </>
   );
 };
 
