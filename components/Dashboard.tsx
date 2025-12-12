@@ -55,29 +55,33 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     
     setIsBulkGenerating(true);
     try {
+      console.log('🚀 Génération planification annuelle pour:', { subject: bulkSubject, grade: bulkGrade });
       const newPlans = await generateCourseFromChapters(bulkChapters, bulkSubject, bulkGrade);
-      if (newPlans.length > 0) {
-        // Ajouter enseignant et ressources à chaque plan généré
-        const enrichedPlans = newPlans.map(plan => ({
-          ...plan,
-          teacherName: bulkTeacher || plan.teacherName,
-          resources: bulkResources || plan.resources
-        }));
-        
-        if (onAddPlans) {
-            onAddPlans(enrichedPlans);
-        }
-        setIsBulkModalOpen(false);
-        setBulkChapters('');
-        setBulkTeacher('');
-        setBulkResources('');
-      } else {
-        alert("L'IA n'a pas retourné de plan valide.");
+      
+      if (!newPlans || newPlans.length === 0) {
+        throw new Error("L'IA n'a pas retourné de plan valide. Vérifiez que vous avez bien entré les chapitres du programme.");
       }
+      
+      console.log(`✅ ${newPlans.length} unité(s) générée(s) avec succès`);
+      
+      // Ajouter enseignant et ressources à chaque plan généré
+      const enrichedPlans = newPlans.map(plan => ({
+        ...plan,
+        teacherName: bulkTeacher || plan.teacherName,
+        resources: bulkResources || plan.resources
+      }));
+      
+      if (onAddPlans) {
+          onAddPlans(enrichedPlans);
+      }
+      setIsBulkModalOpen(false);
+      setBulkChapters('');
+      setBulkTeacher('');
+      setBulkResources('');
     } catch (e: any) {
       const errorMsg = e?.message || String(e);
-      alert("Erreur lors de la génération: " + errorMsg);
-      console.error("Bulk generation error:", e);
+      console.error("❌ Erreur génération planification:", e);
+      alert(`❌ Erreur lors de la génération:\n\n${errorMsg}\n\nConseils:\n- Vérifiez que vous avez bien copié tout le programme\n- Assurez-vous que le texte est clair et structuré\n- Réessayez dans quelques instants`);
     } finally {
       setIsBulkGenerating(false);
     }
@@ -215,17 +219,8 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
         
         ${plan.chapters ? `
           <div class="section">
-            <div class="section-title">📖 Chapitres de l'unité</div>
+            <div class="section-title">📖 Chapitres et leçons</div>
             <div class="chapters-text">${plan.chapters}</div>
-          </div>
-        ` : ''}
-        
-        ${plan.objectives && plan.objectives.length > 0 ? `
-          <div class="section">
-            <div class="section-title">🎯 Critères d'évaluation</div>
-            <div class="criteria">
-              ${plan.objectives.map(obj => `<span class="criterion-badge">Critère ${obj}</span>`).join('')}
-            </div>
           </div>
         ` : ''}
         
@@ -381,17 +376,6 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <div class="section">
                 <div class="section-label">🌍 Contexte mondial</div>
                 <div class="section-content">${plan.globalContext}</div>
-              </div>
-            ` : ''}
-            
-            ${plan.assessments && plan.assessments.length > 0 ? `
-              <div class="section">
-                <div class="section-label">🎯 Critères d'évaluation</div>
-                <div class="criteria-badges">
-                  ${plan.assessments.map(a => `
-                    <span class="criteria-badge">Critère ${a.criterion}: ${a.criterionName} (${a.maxPoints}pts)</span>
-                  `).join('')}
-                </div>
               </div>
             ` : ''}
             
@@ -672,64 +656,14 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                             )}
                             
                             {/* NOUVEAU: Affichage des critères d'évaluation */}
-                            {plan.objectives && plan.objectives.length > 0 && (
-                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                                    <p className="text-xs font-bold text-amber-800 uppercase mb-2 flex items-center gap-1">
-                                        <FileCheck size={12} />
-                                        Critères d'évaluation
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {plan.objectives.map((criterion) => {
-                                            const criterionNames: { [key: string]: string } = {
-                                                'A': 'Connaissances et compréhension',
-                                                'B': 'Recherche',
-                                                'C': 'Communication',
-                                                'D': 'Pensée critique'
-                                            };
-                                            return (
-                                                <span 
-                                                    key={criterion}
-                                                    className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-semibold"
-                                                    title={criterionNames[criterion] || criterion}
-                                                >
-                                                    <span className="font-bold">Critère {criterion}</span>
-                                                    <span className="text-amber-600">•</span>
-                                                    <span className="text-amber-700">{criterionNames[criterion] || criterion}</span>
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* NOUVEAU: Affichage des leçons sous forme de tirets */}
-                            {/* Affichage des chapitres */}
+                            {/* Affichage des chapitres et leçons */}
                             {plan.chapters && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                     <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
                                         <BookOpen size={12} />
-                                        Chapitres inclus
+                                        📖 Chapitres et leçons
                                     </p>
-                                    <div className="text-xs text-slate-700 whitespace-pre-line line-clamp-3">{plan.chapters}</div>
-                                </div>
-                            )}
-                            
-                            {/* Affichage des critères d'évaluation */}
-                            {plan.assessments && plan.assessments.length > 0 && (
-                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                                    <p className="text-xs font-bold text-purple-700 uppercase mb-1.5">Critères d'évaluation</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {plan.assessments.map((assessment, idx) => (
-                                            <div 
-                                                key={idx} 
-                                                className="inline-flex items-center bg-white border border-purple-200 rounded-full px-2 py-0.5"
-                                                title={assessment.criterionName}
-                                            >
-                                                <span className="text-xs font-bold text-purple-600">Critère {assessment.criterion}</span>
-                                                <span className="text-[10px] text-slate-500 ml-1">({assessment.maxPoints}pts)</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <div className="text-xs text-slate-700 whitespace-pre-line">{plan.chapters}</div>
                                 </div>
                             )}
                         </div>

@@ -487,8 +487,15 @@ export const exportConsolidatedPlanByGrade = async (grade: string) => {
             </div>
 
             <div class="field-group">
-              <div class="field-label">🎯 Critères d'évaluation</div>
-              <div class="objectives-list">${objectivesHtml}</div>
+              <div class="field-label">📖 Chapitres et leçons</div>
+              <div class="field-value" style="padding-left: 10px;">
+                ${plan.chapters 
+                  ? plan.chapters.split('\n')
+                      .filter((line: string) => line.trim())
+                      .map((line: string) => line.trim().startsWith('-') ? line.trim() : `- ${line.trim()}`)
+                      .join('<br/>')
+                  : 'Non défini'}
+              </div>
             </div>
           </div>
         `;
