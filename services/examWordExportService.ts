@@ -12,6 +12,58 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   return await response.arrayBuffer();
 };
 
+// Convertir les formules LaTeX simples en texte lisible
+const convertLaTeXToText = (text: string): string => {
+  if (!text) return text;
+  
+  let converted = text;
+  
+  // Convertir les formules LaTeX inline: $...$ 
+  // Exemples: $f$ → f, $x^2$ → x², $\mathbb{R}$ → ℝ
+  
+  // Conversions de symboles mathématiques courants
+  const mathSymbols: { [key: string]: string } = {
+    '\\mathbb{R}': 'ℝ',
+    '\\mathbb{N}': 'ℕ',
+    '\\mathbb{Z}': 'ℤ',
+    '\\mathbb{Q}': 'ℚ',
+    '\\mathbb{C}': 'ℂ',
+    '\\times': '×',
+    '\\div': '÷',
+    '\\pm': '±',
+    '\\leq': '≤',
+    '\\geq': '≥',
+    '\\neq': '≠',
+    '\\approx': '≈',
+    '\\infty': '∞',
+    '\\sqrt': '√',
+    '\\alpha': 'α',
+    '\\beta': 'β',
+    '\\gamma': 'γ',
+    '\\Delta': 'Δ',
+    '\\pi': 'π',
+    '\\theta': 'θ'
+  };
+  
+  // Remplacer les symboles LaTeX
+  for (const [latex, symbol] of Object.entries(mathSymbols)) {
+    converted = converted.replace(new RegExp(latex.replace(/\\/g, '\\\\'), 'g'), symbol);
+  }
+  
+  // Convertir les exposants: x^2 → x², x^3 → x³
+  converted = converted.replace(/\^2/g, '²');
+  converted = converted.replace(/\^3/g, '³');
+  converted = converted.replace(/\^(\d+)/g, '⁽$1⁾');
+  
+  // Supprimer les dollars $ autour des formules simples
+  converted = converted.replace(/\$([a-zA-Z0-9_\s\+\-\*\/\(\)\[\]²³⁰¹⁴⁵⁶⁷⁸⁹]+)\$/g, '$1');
+  
+  // Nettoyer les commandes LaTeX restantes
+  converted = converted.replace(/\\/g, '');
+  
+  return converted;
+};
+
 // Générer les lignes pointillées pour les réponses (~24 cm de longueur avec interligne 1,5)
 const generateAnswerLines = (numberOfLines: number): string => {
   // ~120 points pour atteindre environ 24 cm (selon la police)
@@ -30,15 +82,15 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   
   // CORRECTION: Pas de markers BOLD - utiliser du texte normal
   // Le formatage sera fait via le template Word lui-même
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title} (${question.points} ${pointsLabel})\n`;
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // Énoncé de l'exercice (contenu)
-  formatted += `\n${question.content}\n`;
+  // Énoncé de l'exercice (contenu) - Convertir LaTeX
+  formatted += `\n${convertLaTeXToText(question.content)}\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -46,7 +98,7 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
       if (question.options && Array.isArray(question.options)) {
         formatted += `\n`;
         question.options.forEach((opt: string, i: number) => {
-          formatted += `☐ ${String.fromCharCode(65 + i)}. ${opt}\n`;
+          formatted += `☐ ${String.fromCharCode(65 + i)}. ${convertLaTeXToText(opt)}\n`;
         });
       }
       break;
@@ -182,10 +234,20 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     
     console.log('📋 [EXPORT] Données pour template:', {
       Matiere: data.Matiere,
+      'Matiere (type)': typeof data.Matiere,
+      'exam.subject': exam.subject,
+      'exam.subject (type)': typeof exam.subject,
       Classe: data.Classe,
       Semestre: data.Semestre,
       ExercicesLength: data.Exercices.length
     });
+    
+    // Vérification finale avant render
+    if (!data.Matiere || data.Matiere === 'undefined') {
+      console.error('❌ [EXPORT] ATTENTION: Matiere est undefined ou vide!');
+      console.error('exam complet:', JSON.stringify(exam, null, 2));
+      throw new Error(`Le sujet de l'examen est vide ou undefined. Veuillez renseigner la matière.`);
+    }
     
     doc.render(data);
     console.log('✅ [EXPORT] Template rempli');
@@ -215,15 +277,15 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     : (question.points > 1 ? 'points' : 'point');
   
   // CORRECTION: Pas de markers BOLD
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${question.title} (${question.points} ${pointsLabel})\n`;
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // Énoncé de l'exercice
-  formatted += `\n${question.content}\n`;
+  // Énoncé de l'exercice - Convertir LaTeX
+  formatted += `\n${convertLaTeXToText(question.content)}\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
@@ -234,10 +296,10 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
           const letter = String.fromCharCode(65 + i);
           const isCorrect = question.correctAnswer === letter;
           const marker = isCorrect ? '✓✓✓ RÉPONSE CORRECTE ✓✓✓' : '';
-          formatted += `☐ ${letter}. ${opt} ${marker}\n`;
+          formatted += `☐ ${letter}. ${convertLaTeXToText(opt)} ${marker}\n`;
         });
         if (question.answer) {
-          formatted += `\n✓✓✓ EXPLICATION: ${question.answer}\n`;
+          formatted += `\n✓✓✓ EXPLICATION: ${convertLaTeXToText(question.answer)}\n`;
         }
       }
       break;
@@ -357,9 +419,21 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
         let modifiedXml = documentXml;
         
         // Pattern pour identifier les corrections
-        // On remplace les balises de texte contenant ✓✓✓ par des balises avec couleur rouge
+        // 1. Mettre en rouge et gras TOUT texte contenant ✓✓✓
         modifiedXml = modifiedXml.replace(
           /(<w:r>)(<w:t[^>]*>)([^<]*✓✓✓[^<]*<\/w:t>)/g,
+          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
+        );
+        
+        // 2. Mettre en rouge le texte des réponses correctes (lignes avec RÉPONSE CORRECTE, RÉPONSE:, CORRECTION:, EXPLICATION:)
+        modifiedXml = modifiedXml.replace(
+          /(<w:r>)(<w:t[^>]*>)([^<]*(?:RÉPONSE CORRECTE|RÉPONSE:|CORRECTION:|EXPLICATION:)[^<]*<\/w:t>)/gi,
+          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
+        );
+        
+        // 3. Mettre en rouge les lignes avec "La bonne réponse est"
+        modifiedXml = modifiedXml.replace(
+          /(<w:r>)(<w:t[^>]*>)([^<]*La bonne réponse est[^<]*<\/w:t>)/gi,
           '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
         );
         
