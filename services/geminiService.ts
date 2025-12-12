@@ -161,9 +161,9 @@ export const generateStatementOfInquiry = async (
   globalContext: string,
   subject?: string
 ): Promise<string[]> => {
+  const lang = subject ? getGenerationLanguage(subject) : 'fr';
   try {
     const ai = getClient();
-    const lang = subject ? getGenerationLanguage(subject) : 'fr';
     const relatedStr = relatedConcepts.join(", ");
     
     const prompt = lang === 'en'
@@ -536,13 +536,15 @@ export const generateFullUnitPlan = async (
     const errorMsg = error?.message || "Erreur inconnue lors de la génération";
     
     // Message d'erreur plus clair pour l'utilisateur
-    if (errorMsg.includes("API") || errorMsg.includes("key")) {
-      throw new Error("Erreur de connexion à l'IA. Vérifiez votre clé API.");
-    } else if (errorMsg.includes("JSON") || errorMsg.includes("format")) {
-      throw new Error("L'IA n'a pas retourné de plan valide. Veuillez réessayer avec des chapitres plus précis.");
+    if (errorMsg.includes("API") || errorMsg.includes("key") || errorMsg.includes("GEMINI_API_KEY")) {
+      throw new Error("❌ Erreur de connexion à l'IA. Vérifiez votre clé API dans les paramètres Vercel.");
+    } else if (errorMsg.includes("JSON") || errorMsg.includes("format") || errorMsg.includes("parse")) {
+      throw new Error("❌ L'IA n'a pas retourné de plan valide. Veuillez réessayer avec des sujets plus précis.\n\nConseils:\n- Soyez plus spécifique dans les chapitres\n- Essayez avec moins de sujets à la fois\n- Attendez quelques instants et réessayez");
+    } else if (errorMsg.includes("quota") || errorMsg.includes("limit")) {
+      throw new Error("❌ Limite d'utilisation de l'IA atteinte. Veuillez réessayer dans quelques minutes.");
     }
     
-    throw new Error(errorMsg);
+    throw new Error(`❌ Erreur: ${errorMsg}`);
   }
 };
 
@@ -595,31 +597,42 @@ export const generateCourseFromChapters = async (
       });
   
       const text = response.text;
-      if (!text) {
-        console.warn("No text response from AI");
-        return [];
+      if (!text || text.trim() === "") {
+        console.error("❌ L'IA n'a retourné aucune réponse");
+        throw new Error("L'IA n'a pas retourné de plan valide. Veuillez réessayer.");
       }
+      
+      console.log("✓ Réponse AI reçue pour planification, longueur:", text.length);
       
       const cleanedJson = cleanJsonText(text);
       
-      if (!cleanedJson || cleanedJson === "{}") {
-        console.warn("Failed to extract valid JSON");
-        return [];
+      if (!cleanedJson || cleanedJson === "{}" || cleanedJson === "[]") {
+        console.error("❌ Échec du nettoyage JSON. Texte brut:", text.substring(0, 200));
+        throw new Error("L'IA n'a pas retourné de plan valide. Le format JSON est invalide. Veuillez vérifier que les chapitres sont bien formatés et réessayer.");
       }
+      
+      console.log("✓ JSON nettoyé pour planification, longueur:", cleanedJson.length);
       
       let plans;
       try {
         plans = JSON.parse(cleanedJson);
       } catch (parseError) {
-        console.error("JSON Parse Error in bulk generation:", parseError);
-        console.error("Problematic JSON:", cleanedJson.substring(0, 500));
-        return [];
+        console.error("❌ Erreur de parsing JSON:", parseError);
+        console.error("JSON problématique:", cleanedJson.substring(0, 500));
+        throw new Error("Le format des plans générés est invalide. Veuillez réessayer avec des chapitres plus clairs.");
       }
       
       if (!Array.isArray(plans)) {
-        console.warn("AI did not return an array of plans");
-        return [];
+        console.error("❌ L'IA n'a pas retourné un tableau de plans");
+        throw new Error("L'IA n'a pas retourné de plan valide. Veuillez réessayer.");
       }
+      
+      if (plans.length === 0) {
+        console.error("❌ L'IA a retourné un tableau vide");
+        throw new Error("Aucun plan n'a été généré. Veuillez vérifier que les chapitres sont bien renseignés et réessayer.");
+      }
+      
+      console.log(`✓ ${plans.length} plan(s) validé(s) avec succès`);
 
       return plans.map((p: any, index: number) => {
         const sanitized = sanitizeUnitPlan(p, subject, gradeLevel);
@@ -629,8 +642,17 @@ export const generateCourseFromChapters = async (
         };
       });
   
-    } catch (error) {
-      console.error("Error generating course:", error);
-      return [];
+    } catch (error: any) {
+      console.error("❌ Erreur génération planification complète:", error);
+      const errorMsg = error?.message || String(error);
+      
+      // Propager l'erreur pour la gestion au niveau du Dashboard
+      if (errorMsg.includes("API") || errorMsg.includes("key") || errorMsg.includes("GEMINI_API_KEY")) {
+        throw new Error("❌ Erreur de connexion à l'IA. Vérifiez votre clé API.");
+      } else if (errorMsg.includes("quota") || errorMsg.includes("limit")) {
+        throw new Error("❌ Limite d'utilisation de l'IA atteinte. Réessayez dans quelques minutes.");
+      }
+      
+      throw new Error(`❌ Erreur lors de la génération de la planification: ${errorMsg}`);
     }
   };
