@@ -74,7 +74,16 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
 
     setIsFullGenerating(true);
     try {
+      console.log('🚀 Génération du plan pour:', { subject: plan.subject, grade: plan.gradeLevel, topics: topicsInput });
       const generatedData = await generateFullUnitPlan(topicsInput, plan.subject, plan.gradeLevel);
+      
+      // Vérifier que les données sont valides
+      if (!generatedData || typeof generatedData !== 'object') {
+        throw new Error("L'IA n'a pas retourné de plan valide. Les données sont vides.");
+      }
+      
+      console.log('✅ Plan généré avec succès:', generatedData);
+      
       setPlan(prev => ({
         ...prev,
         ...generatedData,
@@ -88,12 +97,14 @@ const UnitPlanForm: React.FC<UnitPlanFormProps> = ({ initialPlan, onSave, onCanc
         },
         reflection: prev.reflection // Keep existing reflection if any
       }));
+      
       if (generatedData.assessments && generatedData.assessments.length > 0) {
-        // alert("Plan et évaluations générés avec succès !");
+        console.log(`✅ ${generatedData.assessments.length} évaluation(s) générée(s)`);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Échec de la génération du plan. Veuillez réessayer.");
+    } catch (error: any) {
+      console.error('❌ Erreur génération:', error);
+      const errorMessage = error?.message || String(error);
+      alert(`❌ Échec de la génération du plan:\n\n${errorMessage}\n\nVeuillez réessayer avec des chapitres plus précis.`);
     } finally {
       setIsFullGenerating(false);
     }
