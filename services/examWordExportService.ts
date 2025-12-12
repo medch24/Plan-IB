@@ -12,10 +12,12 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   return await response.arrayBuffer();
 };
 
-// Générer les lignes pointillées pour les réponses (~18 cm de longueur)
+// Générer les lignes pointillées pour les réponses (~24 cm de longueur avec interligne 1,5)
 const generateAnswerLines = (numberOfLines: number): string => {
-  // ~90 points pour atteindre environ 18 cm (selon la police)
-  return Array(numberOfLines).fill('.....................................................................................................').join('\n');
+  // ~120 points pour atteindre environ 24 cm (selon la police)
+  // Ajout de ligne vide entre chaque ligne pour simuler interligne 1,5
+  const longLine = '............................................................................................................................';
+  return Array(numberOfLines).fill(longLine).join('\n\n');
 };
 
 // Formater un exercice selon son type
@@ -163,8 +165,13 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     });
     
     // Préparer les données pour le template
+    // Support de TOUTES les variantes possibles de balises (avec/sans accents)
     const data = {
-      Matiere: exam.subject,  // CRITIQUE: Utiliser directement exam.subject
+      Matiere: exam.subject || 'Matière non spécifiée',  // Avec accent è
+      Matiere_sans_accent: exam.subject || 'Matiere non specifiee',  // Sans accent
+      Subject: exam.subject || 'Subject not specified',  // Anglais
+      matiere: exam.subject || 'Matière non spécifiée',  // Minuscule avec accent
+      subject: exam.subject || 'Matière non spécifiée',  // Minuscule sans accent
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
@@ -315,8 +322,13 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       linebreaks: true,
     });
     
+    // Support de TOUTES les variantes possibles de balises (avec/sans accents)
     const data = {
-      Matiere: `${exam.subject} - CORRECTION`,
+      Matiere: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Avec accent è
+      Matiere_sans_accent: `${exam.subject || 'Matiere non specifiee'} - CORRECTION`,  // Sans accent
+      Subject: `${exam.subject || 'Subject not specified'} - CORRECTION`,  // Anglais
+      matiere: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Minuscule avec accent
+      subject: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Minuscule sans accent
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
