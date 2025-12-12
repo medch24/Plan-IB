@@ -655,15 +655,39 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                                 </div>
                             )}
                             
-                            {/* NOUVEAU: Affichage des critères d'évaluation */}
-                            {/* Affichage des chapitres et leçons */}
+                            {/* Affichage des chapitres inclus */}
                             {plan.chapters && (
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
-                                        <BookOpen size={12} />
-                                        📖 Chapitres et leçons
+                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <p className="text-xs font-bold text-amber-900 mb-2 flex items-center gap-1">
+                                        <BookOpen size={14} />
+                                        Chapitres inclus
                                     </p>
-                                    <div className="text-xs text-slate-700 whitespace-pre-line">{plan.chapters}</div>
+                                    <ul className="text-xs text-slate-800 space-y-1 ml-4">
+                                        {plan.chapters.split('\n').filter(line => line.trim()).map((chapter, idx) => (
+                                            <li key={idx} className="list-disc">
+                                                {chapter.trim().replace(/^-\s*/, '')}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            
+                            {/* Affichage des critères d'évaluation */}
+                            {plan.assessments && plan.assessments.length > 0 && (
+                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                    <p className="text-xs font-bold text-purple-900 uppercase mb-2">Critères d'évaluation</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {plan.assessments.map((assessment, idx) => (
+                                            <span 
+                                                key={idx}
+                                                className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold"
+                                                title={assessment.criterionName}
+                                            >
+                                                Critère {assessment.criterion}
+                                                <span className="text-purple-600">({assessment.maxPoints}pts)</span>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
