@@ -167,21 +167,11 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
             font-size: 14px;
             color: #1e293b;
           }
-          .lessons-list {
-            list-style: none;
-            padding-left: 0;
+          .chapters-text {
+            white-space: pre-line;
+            font-size: 14px;
+            color: #1e293b;
           }
-          .lessons-list li {
-            padding: 4px 0;
-            padding-left: 16px;
-            position: relative;
-          }
-          .lessons-list li:before {
-            content: "•";
-            color: #8b5cf6;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
           }
           .criteria {
             display: flex;
@@ -223,12 +213,10 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
           </div>
         ` : ''}
         
-        ${plan.lessons && plan.lessons.length > 0 ? `
+        ${plan.chapters ? `
           <div class="section">
-            <div class="section-title">📖 Leçons de l'unité</div>
-            <ul class="lessons-list">
-              ${plan.lessons.map(lesson => `<li>${lesson}</li>`).join('')}
-            </ul>
+            <div class="section-title">📖 Chapitres de l'unité</div>
+            <div class="chapters-text">${plan.chapters}</div>
           </div>
         ` : ''}
         
@@ -267,6 +255,171 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
     setExportingId('consolidated');
     await exportConsolidatedPlanByGrade(currentGrade);
     setExportingId(null);
+  };
+
+  const handlePrintSubjectUnits = () => {
+    // Préparer le contenu HTML pour l'impression
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Descriptifs des Unités - ${currentSubject} - ${currentGrade}</title>
+        <style>
+          @page { margin: 20mm; }
+          body {
+            font-family: 'Calibri', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            font-size: 11pt;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3b82f6;
+          }
+          .header h1 {
+            color: #1e40af;
+            margin: 0 0 5px 0;
+            font-size: 22pt;
+          }
+          .header h2 {
+            color: #64748b;
+            margin: 0;
+            font-size: 14pt;
+            font-weight: normal;
+          }
+          .unit {
+            page-break-inside: avoid;
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            background: #f8fafc;
+          }
+          .unit-title {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 12px;
+            margin: -15px -15px 15px -15px;
+            border-radius: 6px 6px 0 0;
+            font-size: 14pt;
+            font-weight: bold;
+          }
+          .section {
+            margin-bottom: 12px;
+          }
+          .section-label {
+            font-weight: bold;
+            color: #475569;
+            font-size: 10pt;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+          }
+          .section-content {
+            color: #334155;
+            padding-left: 10px;
+          }
+          .criteria-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+          }
+          .criteria-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 9pt;
+            font-weight: bold;
+          }
+          .chapters {
+            white-space: pre-line;
+            font-size: 10pt;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📚 Descriptifs des Unités</h1>
+          <h2>${currentSubject} - ${currentGrade}</h2>
+        </div>
+        ${filteredPlans.map((plan, index) => `
+          <div class="unit">
+            <div class="unit-title">Unité ${index + 1} : ${plan.title || 'Sans titre'}</div>
+            
+            ${plan.statementOfInquiry ? `
+              <div class="section">
+                <div class="section-label">📌 Énoncé de recherche</div>
+                <div class="section-content">"${plan.statementOfInquiry}"</div>
+              </div>
+            ` : ''}
+            
+            ${plan.chapters ? `
+              <div class="section">
+                <div class="section-label">📖 Chapitres inclus</div>
+                <div class="section-content chapters">${plan.chapters}</div>
+              </div>
+            ` : ''}
+            
+            <div class="section">
+              <div class="section-label">🔑 Concept clé</div>
+              <div class="section-content">${plan.keyConcept || 'Non défini'}</div>
+            </div>
+            
+            ${plan.relatedConcepts && plan.relatedConcepts.length > 0 ? `
+              <div class="section">
+                <div class="section-label">🔗 Concepts connexes</div>
+                <div class="section-content">${plan.relatedConcepts.join(', ')}</div>
+              </div>
+            ` : ''}
+            
+            ${plan.globalContext ? `
+              <div class="section">
+                <div class="section-label">🌍 Contexte mondial</div>
+                <div class="section-content">${plan.globalContext}</div>
+              </div>
+            ` : ''}
+            
+            ${plan.assessments && plan.assessments.length > 0 ? `
+              <div class="section">
+                <div class="section-label">🎯 Critères d'évaluation</div>
+                <div class="criteria-badges">
+                  ${plan.assessments.map(a => `
+                    <span class="criteria-badge">Critère ${a.criterion}: ${a.criterionName} (${a.maxPoints}pts)</span>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${plan.duration ? `
+              <div class="section">
+                <div class="section-label">⏱️ Durée</div>
+                <div class="section-content">${plan.duration}</div>
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </body>
+      </html>
+    `;
+
+    // Créer une fenêtre d'impression
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    } else {
+      alert('Impossible d\'ouvrir la fenêtre d\'impression. Veuillez autoriser les pop-ups.');
+    }
   };
 
   return (
@@ -334,14 +487,16 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <ArrowLeft size={20} />
               Retour
             </button>
-             <button 
-               onClick={() => window.print()}
-               className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"
-               title="Imprimer cette page complète"
-             >
-               <Printer size={20} />
-               Imprimer la page
-             </button>
+             {filteredPlans.length > 0 && (
+               <button 
+                 onClick={handlePrintSubjectUnits}
+                 className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-0.5"
+                 title="Imprimer les descriptifs des unités"
+               >
+                 <Printer size={20} />
+                 Imprimer Descriptifs
+               </button>
+             )}
              <button 
                onClick={handleExportConsolidated}
                disabled={exportingId === 'consolidated'}
@@ -548,36 +703,33 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
                             )}
                             
                             {/* NOUVEAU: Affichage des leçons sous forme de tirets */}
-                            {plan.lessons && plan.lessons.length > 0 && (
-                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                    <p className="text-xs font-bold text-green-800 uppercase mb-2 flex items-center gap-1">
-                                        <BookOpen size={12} />
-                                        Leçons / Chapitres inclus
-                                    </p>
-                                    <ul className="space-y-1">
-                                        {plan.lessons.slice(0, 8).map((lesson, idx) => (
-                                            <li key={idx} className="text-xs text-slate-700 flex items-start gap-2">
-                                                <span className="text-green-600 font-bold">-</span>
-                                                <span>{lesson}</span>
-                                            </li>
-                                        ))}
-                                        {plan.lessons.length > 8 && (
-                                            <li className="text-xs text-green-700 italic font-medium">
-                                                +{plan.lessons.length - 8} leçons supplémentaires...
-                                            </li>
-                                        )}
-                                    </ul>
-                                </div>
-                            )}
-                            
-                            {/* Affichage des chapitres (si pas de leçons définies) */}
-                            {!plan.lessons && plan.content && (
+                            {/* Affichage des chapitres */}
+                            {plan.chapters && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                     <p className="text-xs font-bold text-blue-700 uppercase mb-1 flex items-center gap-1">
                                         <BookOpen size={12} />
                                         Chapitres inclus
                                     </p>
-                                    <p className="text-xs text-slate-700 line-clamp-3">{plan.content}</p>
+                                    <div className="text-xs text-slate-700 whitespace-pre-line line-clamp-3">{plan.chapters}</div>
+                                </div>
+                            )}
+                            
+                            {/* Affichage des critères d'évaluation */}
+                            {plan.assessments && plan.assessments.length > 0 && (
+                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                    <p className="text-xs font-bold text-purple-700 uppercase mb-1.5">Critères d'évaluation</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {plan.assessments.map((assessment, idx) => (
+                                            <div 
+                                                key={idx} 
+                                                className="inline-flex items-center bg-white border border-purple-200 rounded-full px-2 py-0.5"
+                                                title={assessment.criterionName}
+                                            >
+                                                <span className="text-xs font-bold text-purple-600">Critère {assessment.criterion}</span>
+                                                <span className="text-[10px] text-slate-500 ml-1">({assessment.maxPoints}pts)</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
