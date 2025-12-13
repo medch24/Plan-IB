@@ -224,6 +224,15 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
           </div>
         ` : ''}
         
+        ${plan.assessments && plan.assessments.length > 0 ? `
+          <div class="section">
+            <div class="section-title">🎯 Critères d'évaluation</div>
+            <div class="criteria">
+              ${plan.assessments.map(a => `<span class="criterion-badge">Critère ${a.criterion}: ${a.criterionName} (${a.maxPoints}pts)</span>`).join(' ')}
+            </div>
+          </div>
+        ` : ''}
+        
         ${plan.summativeAssessment ? `
           <div class="section">
             <div class="section-title">✅ Évaluation sommative</div>
@@ -383,6 +392,17 @@ const Dashboard: React.FC<DashboardProps> = ({ currentSubject, currentGrade, pla
               <div class="section">
                 <div class="section-label">⏱️ Durée</div>
                 <div class="section-content">${plan.duration}</div>
+              </div>
+            ` : ''}
+            
+            ${plan.assessments && plan.assessments.length > 0 ? `
+              <div class="section">
+                <div class="section-label">🎯 Critères d'évaluation</div>
+                <div class="criteria-badges">
+                  ${plan.assessments.map(a => `
+                    <span class="criteria-badge">Critère ${a.criterion}: ${a.criterionName} (${a.maxPoints}pts)</span>
+                  `).join('')}
+                </div>
               </div>
             ` : ''}
           </div>

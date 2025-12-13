@@ -3,10 +3,33 @@ import { UnitPlan, AssessmentData } from "../types";
 
 const getClient = () => {
   // Get API key from environment variable only
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 
+                  process.env.GEMINI_API_KEY || 
+                  process.env.API_KEY;
   
   if (!apiKey) {
-    throw new Error("⚠️ GEMINI_API_KEY non définie. Veuillez configurer la clé API dans les variables d'environnement Vercel ou dans .env.local");
+    const errorMsg = `
+⚠️ ERREUR DE CONFIGURATION API
+
+La clé API Gemini n'est pas configurée.
+
+POUR RÉSOUDRE CE PROBLÈME:
+
+1. Si vous êtes en développement local:
+   - Créez un fichier .env.local à la racine du projet
+   - Ajoutez: VITE_GEMINI_API_KEY=votre_clé_api_ici
+   - Obtenez une clé gratuite sur: https://aistudio.google.com/app/apikey
+   - Redémarrez le serveur de développement
+
+2. Si vous êtes sur Vercel (production):
+   - Allez dans Settings > Environment Variables
+   - Ajoutez: GEMINI_API_KEY=votre_clé_api_ici
+   - Redéployez l'application
+
+La génération IA ne fonctionnera pas sans cette clé.
+    `.trim();
+    
+    throw new Error(errorMsg);
   }
   
   return new GoogleGenAI({ apiKey });
