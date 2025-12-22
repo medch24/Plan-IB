@@ -41,9 +41,21 @@ const isLanguageAcquisition = (subject: string): boolean => {
   return normalized.includes('acquisition') && normalized.includes('langue');
 };
 
+// Helper function to detect if subject is ART or EPS (need Arabic version)
+const isArtOrEPS = (subject: string): boolean => {
+  const normalized = subject.toLowerCase().trim();
+  return normalized.includes('arts') || 
+         normalized.includes('art') || 
+         normalized.includes('éducation physique') || 
+         normalized.includes('eps') ||
+         normalized.includes('santé');
+};
+
 // Get language code based on subject
-const getGenerationLanguage = (subject: string): 'fr' | 'en' => {
-  return isLanguageAcquisition(subject) ? 'en' : 'fr';
+const getGenerationLanguage = (subject: string): 'fr' | 'en' | 'bilingual' => {
+  if (isLanguageAcquisition(subject)) return 'en';
+  if (isArtOrEPS(subject)) return 'bilingual'; // Français + Arabe
+  return 'fr';
 };
 
 // Robust JSON extractor with better error handling
@@ -392,6 +404,122 @@ Structure JSON attendue :
 }
 `;
 
+// Shared System Prompt for Bilingual generation (ART and EPS - French + Arabic)
+const SYSTEM_INSTRUCTION_FULL_PLAN_BILINGUAL = `
+Tu es un expert coordinateur pédagogique du Programme d'Éducation Intermédiaire (PEI) de l'IB.
+Tu dois générer un plan d'unité complet BILINGUE (FRANÇAIS + ARABE) ET une série d'évaluations détaillées basées sur les critères.
+
+⚠️ RÈGLE CRUCIALE POUR ART ET EPS : GÉNÉRATION BILINGUE
+Pour les matières Arts et Éducation Physique et à la santé, TOUTES les sections doivent être générées en DEUX VERSIONS:
+1. VERSION FRANÇAISE (originale)
+2. VERSION ARABE (traduction complète et fidèle)
+
+FORMAT BILINGUE POUR CHAQUE SECTION:
+- Champ français: "nomChamp": "Contenu en français..."
+- Champ arabe: "nomChamp_ar": "المحتوى بالعربية..."
+
+RÈGLES ABSOLUES - FORMAT JSON:
+1. Utilise UNIQUEMENT les CLÉS JSON EN FRANÇAIS ci-dessous. NE PAS LES TRADUIRE.
+2. Le CONTENU (valeurs) doit être en FRANÇAIS ET EN ARABE (deux champs séparés).
+3. Ne laisse AUCUN champ vide. Remplis TOUTES les sections en français ET en arabe.
+4. La traduction arabe doit être précise, naturelle et pédagogiquement appropriée.
+
+CHAMPS OBLIGATOIRES ET DÉTAILLÉS (avec versions arabes):
+- "learningExperiences": Détailler les ACTIVITÉS D'APPRENTISSAGE et STRATÉGIES PÉDAGOGIQUES (enquête, collaboration...).
+- "learningExperiences_ar": النسخة العربية الكاملة للأنشطة التعليمية والاستراتيجيات
+- "formativeAssessment": Préciser les méthodes d'ÉVALUATION FORMATIVE (tickets de sortie, quiz rapide, observation...).
+- "formativeAssessment_ar": النسخة العربية الكاملة لطرق التقييم التكويني
+- "differentiation": Préciser les stratégies de DIFFÉRENCIATION (Contenu, Processus, Produit) pour élèves en difficulté et avancés.
+- "differentiation_ar": النسخة العربية الكاملة لاستراتيجيات التمايز
+
+RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
+1. Pour CHAQUE aspect (strand) listé dans "strands", tu DOIS générer EXACTEMENT UN exercice correspondant.
+2. Si le critère a 3 aspects, il doit y avoir 3 exercices.
+3. VARIER les types d'exercices pour couvrir différents niveaux cognitifs.
+4. La clé "criterionReference" de l'exercice doit correspondre EXPLICITEMENT à l'aspect (exemple: "Critère A: i. sélectionner...").
+5. CHAQUE exercice doit avoir une version arabe complète (title_ar, content_ar, criterionReference_ar).
+
+GESTION DES RESSOURCES DANS LES EXERCICES:
+- Si l'exercice nécessite l'analyse d'un texte, FOURNIR LE TEXTE COMPLET dans le champ "content" (français) et "content_ar" (arabe).
+- Si l'exercice nécessite une image, écrire EXPLICITEMENT: "[Insérer Image/Schéma ici: description détaillée]".
+
+Structure JSON attendue (avec champs arabes):
+{
+  "title": "Titre en français",
+  "title_ar": "العنوان بالعربية",
+  "duration": "XX heures",
+  "duration_ar": "XX ساعة",
+  "chapters": "- Chapitre 1: ...\n- Chapitre 2: ...\n- Chapitre 3: ...",
+  "chapters_ar": "- الفصل الأول: ...\n- الفصل الثاني: ...\n- الفصل الثالث: ...",
+  "keyConcept": "Un concept clé",
+  "keyConcept_ar": "مفهوم رئيسي",
+  "relatedConcepts": ["Concept 1", "Concept 2"],
+  "relatedConcepts_ar": ["المفهوم الأول", "المفهوم الثاني"],
+  "globalContext": "Un contexte mondial",
+  "globalContext_ar": "سياق عالمي",
+  "statementOfInquiry": "Phrase complète...",
+  "statementOfInquiry_ar": "جملة كاملة...",
+  "inquiryQuestions": {
+    "factual": ["Q1", "Q2"],
+    "factual_ar": ["س1", "س2"],
+    "conceptual": ["Q1", "Q2"],
+    "conceptual_ar": ["س1", "س2"],
+    "debatable": ["Q1", "Q2"],
+    "debatable_ar": ["س1", "س2"]
+  },
+  "objectives": ["Critère A: ...", "Critère B: ..."],
+  "objectives_ar": ["المعيار أ: ...", "المعيار ب: ..."],
+  "atlSkills": ["Compétence 1...", "Compétence 2..."],
+  "atlSkills_ar": ["المهارة الأولى...", "المهارة الثانية..."],
+  "content": "Contenu détaillé...",
+  "content_ar": "المحتوى المفصل...",
+  "learningExperiences": "Activités ET stratégies pédagogiques détaillées...",
+  "learningExperiences_ar": "الأنشطة والاستراتيجيات التعليمية المفصلة...",
+  "summativeAssessment": "Description de la tâche finale...",
+  "summativeAssessment_ar": "وصف المهمة النهائية...",
+  "formativeAssessment": "Description des évaluations formatives...",
+  "formativeAssessment_ar": "وصف التقييمات التكوينية...",
+  "differentiation": "Stratégies de différenciation...",
+  "differentiation_ar": "استراتيجيات التمايز...",
+  "resources": "Livres, liens...",
+  "resources_ar": "الكتب، الروابط...",
+  "reflection": {
+     "prior": "Connaissances préalables...",
+     "prior_ar": "المعرفة المسبقة...",
+     "during": "Engagement...",
+     "during_ar": "المشاركة...",
+     "after": "Résultats...",
+     "after_ar": "النتائج..."
+  },
+  "assessments": [
+    {
+       "criterion": "A",
+       "criterionName": "Connaissance",
+       "criterionName_ar": "المعرفة",
+       "maxPoints": 8,
+       "strands": ["i. sélectionner...", "ii. appliquer...", "iii. résoudre..."],
+       "strands_ar": ["١. اختيار...", "٢. تطبيق...", "٣. حل..."],
+       "rubricRows": [
+          { "level": "1-2", "descriptor": "...", "descriptor_ar": "..." },
+          { "level": "3-4", "descriptor": "...", "descriptor_ar": "..." },
+          { "level": "5-6", "descriptor": "...", "descriptor_ar": "..." },
+          { "level": "7-8", "descriptor": "...", "descriptor_ar": "..." }
+       ],
+       "exercises": [
+          {
+             "title": "Exercice 1 (Aspect i)",
+             "title_ar": "التمرين ١ (الجانب الأول)",
+             "content": "Question...",
+             "content_ar": "السؤال...",
+             "criterionReference": "Critère A: i. sélectionner...",
+             "criterionReference_ar": "المعيار أ: ١. اختيار..."
+          }
+       ]
+    }
+  ]
+}
+`;
+
 // Shared System Prompt for English generation (Language Acquisition)
 const SYSTEM_INSTRUCTION_FULL_PLAN_EN = `
 You are an expert IB Middle Years Programme (MYP) pedagogical coordinator.
@@ -470,9 +598,10 @@ Expected JSON Structure:
 
 // Get appropriate system instruction based on subject
 const getSystemInstruction = (subject: string): string => {
-  return isLanguageAcquisition(subject) 
-    ? SYSTEM_INSTRUCTION_FULL_PLAN_EN 
-    : SYSTEM_INSTRUCTION_FULL_PLAN_FR;
+  const lang = getGenerationLanguage(subject);
+  if (lang === 'en') return SYSTEM_INSTRUCTION_FULL_PLAN_EN;
+  if (lang === 'bilingual') return SYSTEM_INSTRUCTION_FULL_PLAN_BILINGUAL;
+  return SYSTEM_INSTRUCTION_FULL_PLAN_FR;
 };
 
 export const generateFullUnitPlan = async (
@@ -484,8 +613,10 @@ export const generateFullUnitPlan = async (
     const ai = getClient();
     const lang = getGenerationLanguage(subject);
     
-    const userPrompt = lang === 'en' 
-      ? `
+    let userPrompt = '';
+    
+    if (lang === 'en') {
+      userPrompt = `
         Subject: ${subject}
         Grade Level: ${gradeLevel}
         Topics to cover: ${topics}
@@ -496,8 +627,31 @@ export const generateFullUnitPlan = async (
         2. Include a "chapters" field listing the chapters/lessons covered in this unit (bullet points format)
         3. Select ONLY the relevant assessment criteria for this subject (not necessarily all 4)
         4. Return a valid, complete JSON structure
-      `
-      : `
+      `;
+    } else if (lang === 'bilingual') {
+      userPrompt = `
+        Matière: ${subject}
+        Niveau: ${gradeLevel}
+        Sujets à couvrir: ${topics}
+        
+        ⚠️ ATTENTION: Cette matière (ART ou EPS) nécessite une GÉNÉRATION BILINGUE (FRANÇAIS + ARABE).
+        
+        Génère le plan complet et les évaluations critériées EN DEUX VERSIONS:
+        1. VERSION FRANÇAISE (tous les champs standards)
+        2. VERSION ARABE (tous les champs avec suffixe _ar)
+        
+        Assure-toi de:
+        1. Générer TOUTES les sections en français ET en arabe (ex: "title" ET "title_ar")
+        2. Bien remplir 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation' (versions française et arabe)
+        3. Inclure un champ "chapters" et "chapters_ar" listant les chapitres/leçons en français et en arabe
+        4. Sélectionner UNIQUEMENT les critères d'évaluation pertinents pour cette matière
+        5. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
+        6. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
+        
+        La traduction arabe doit être pédagogiquement appropriée et naturelle.
+      `;
+    } else {
+      userPrompt = `
         Matière: ${subject}
         Niveau: ${gradeLevel}
         Sujets à couvrir: ${topics}
@@ -509,6 +663,7 @@ export const generateFullUnitPlan = async (
         3. Sélectionner UNIQUEMENT les critères d'évaluation pertinents pour cette matière (pas forcément les 4)
         4. Retourner une structure JSON valide et complète
       `;
+    }
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -580,34 +735,57 @@ export const generateCourseFromChapters = async (
       const ai = getClient();
       const lang = getGenerationLanguage(subject);
       
-      const taskInstruction = lang === 'en'
-        ? `
+      let taskInstruction = '';
+      
+      if (lang === 'en') {
+        taskInstruction = `
         TASK: Divide the provided curriculum into 4 to 6 logical units.
         Return a JSON LIST (Array) of UnitPlan objects.
-        `
-        : `
+        `;
+      } else if (lang === 'bilingual') {
+        taskInstruction = `
+        TACHE : Divise le programme fourni en 4 à 6 unités logiques.
+        Retourne une LISTE JSON (Array) d'objets UnitPlan BILINGUES (français + arabe).
+        ⚠️ CHAQUE unité doit avoir TOUS les champs en version française ET arabe (suffixe _ar).
+        `;
+      } else {
+        taskInstruction = `
         TACHE : Divise le programme fourni en 4 à 6 unités logiques.
         Retourne une LISTE JSON (Array) d'objets UnitPlan.
         `;
+      }
       
       const systemInstruction = `
       ${getSystemInstruction(subject)}
       ${taskInstruction}
       `;
   
-      const userPrompt = lang === 'en'
-        ? `
+      let userPrompt = '';
+      
+      if (lang === 'en') {
+        userPrompt = `
           Subject: ${subject}
           Grade Level: ${gradeLevel}
           Complete Curriculum:
           ${allChapters}
-        `
-        : `
+        `;
+      } else if (lang === 'bilingual') {
+        userPrompt = `
+          Matière: ${subject}
+          Niveau: ${gradeLevel}
+          Programme complet:
+          ${allChapters}
+          
+          ⚠️ RAPPEL: Génération BILINGUE requise (français + arabe avec suffixe _ar pour tous les champs).
+        `;
+      } else {
+        userPrompt = `
           Matière: ${subject}
           Niveau: ${gradeLevel}
           Programme complet:
           ${allChapters}
         `;
+      }
   
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

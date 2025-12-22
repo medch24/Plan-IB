@@ -99,8 +99,9 @@ const App: React.FC = () => {
   }, [currentPlans, session]);
 
   const handleLogin = (subject: string, grade: string, mode: AppMode) => {
-    // Pour le mode examens, passer directement à l'assistant sans stocker la session
+    // Pour le mode examens, passer directement à l'assistant de génération
     if (mode === AppMode.EXAMS) {
+      // Passer directement à la génération sans stocker de session
       setSession({ subject: '', grade: '', mode });
       setView(AppView.EXAMS_WIZARD);
     } else {
