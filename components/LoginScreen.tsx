@@ -45,7 +45,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (subject.trim() && grade.trim() && mode) {
+    // Pour le mode examens, pas besoin de sélectionner matière/classe à l'avance
+    if (mode === AppMode.EXAMS) {
+      onLogin('', '', mode);
+    } else if (subject.trim() && grade.trim() && mode) {
       onLogin(subject, grade, mode);
     } else {
         alert("Veuillez sélectionner la matière et la classe.");
@@ -126,7 +129,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 </button>
 
                 <button
-                  onClick={() => handleModeSelect(AppMode.EXAMS)}
+                  onClick={() => {
+                    // Pour les examens, aller directement à la génération sans passer par le formulaire
+                    onLogin('', '', AppMode.EXAMS);
+                  }}
                   className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 >
                   <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-all duration-300 group-hover:rotate-3">

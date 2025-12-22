@@ -51,6 +51,29 @@ const clean = (text: any): string => {
   return str.replace(/{/g, "[").replace(/}/g, "]");
 };
 
+// Helper to detect if subject is ART or EPS (bilingual)
+const isBilingualSubject = (subject: string): boolean => {
+  if (!subject) return false;
+  const normalized = subject.toLowerCase().trim();
+  return normalized.includes('arts') || 
+         normalized.includes('art') || 
+         normalized.includes('éducation physique') || 
+         normalized.includes('eps') ||
+         normalized.includes('santé');
+};
+
+// Helper to extract Arabic value from a field (supports direct _ar suffix or nested object)
+const getArabicValue = (data: any, fieldName: string): string => {
+  if (!data) return "";
+  
+  // Check for direct _ar suffix field
+  if (data[fieldName + '_ar']) {
+    return clean(data[fieldName + '_ar']);
+  }
+  
+  return "";
+};
+
 const generateDocumentBlob = (templateContent: ArrayBuffer, data: any): Blob => {
     let zip;
     try {
@@ -125,8 +148,10 @@ const generateDocument = async (templateUrl: string, data: any, fileName: string
   }
 };
 
-// Map AssessmentData to Word Template format
+// Map AssessmentData to Word Template format (with Arabic support for ART/EPS)
 const mapAssessmentToTemplate = (plan: UnitPlan, ad: AssessmentData) => {
+  const isBilingual = isBilingualSubject(plan.subject);
+  
   const strands = (ad.strands && Array.isArray(ad.strands) && ad.strands.length > 0) 
     ? ad.strands 
     : ["(Aucun aspect défini)"];
@@ -143,7 +168,7 @@ const mapAssessmentToTemplate = (plan: UnitPlan, ad: AssessmentData) => {
         { title: "Exercice 1", content: "(Aucun exercice généré)", criterionReference: "" }
       ];
 
-  return {
+  const baseData = {
     // Header Info
     classe: clean(plan.gradeLevel || "PEI"),
     matiere: clean(plan.subject || "Matière"),
@@ -177,11 +202,49 @@ const mapAssessmentToTemplate = (plan: UnitPlan, ad: AssessmentData) => {
         ref: clean(ex.criterionReference),
     }))
   };
+  
+  // Add Arabic versions if bilingual
+  if (isBilingual) {
+    return {
+      ...baseData,
+      // Arabic versions
+      unite_ar: getArabicValue(plan, 'title'),
+      enonce_de_recherche_ar: getArabicValue(plan, 'statementOfInquiry'),
+      enonce_ar: getArabicValue(plan, 'statementOfInquiry'),
+      nom_critere_ar: getArabicValue(ad, 'criterionName'),
+      nom_objectif_specifique_ar: getArabicValue(ad, 'criterionName'),
+      
+      // Table 2: Aspects Arabic
+      aspects_ar: (ad as any).strands_ar 
+        ? (ad as any).strands_ar.map((s: string) => ({ text: clean(s) }))
+        : strands.map(() => ({ text: "(لم يتم تحديد الجانب)" })),
+      
+      // Table 3: Rubric Arabic
+      rubriques_ar: rubrics.map((r, idx) => ({
+        niveau: clean(r.level),
+        descripteur_ar: (ad.rubricRows[idx] as any)?.descriptor_ar 
+          ? clean((ad.rubricRows[idx] as any).descriptor_ar)
+          : "(لم يتم تحديد الوصف)"
+      })),
+      
+      // Exercises Arabic
+      exercices_ar: exercises.map((ex, index) => ({
+        numero: index + 1,
+        titre_ar: (ex as any).title_ar ? clean((ex as any).title_ar) : "(تمرين)",
+        contenu_ar: (ex as any).content_ar ? clean((ex as any).content_ar) : "(المحتوى)",
+        ref_ar: (ex as any).criterionReference_ar ? clean((ex as any).criterionReference_ar) : "",
+      }))
+    };
+  }
+  
+  return baseData;
 };
 
 export const exportUnitPlanToWord = async (plan: UnitPlan) => {
+  const isBilingual = isBilingualSubject(plan.subject);
+  
   // Data mapping for Unit Plan Template
-  const data = {
+  const baseData = {
     enseignant: clean(plan.teacherName) || "____________________",
     groupe_matiere: clean(plan.subject),
     titre_unite: clean(plan.title),
@@ -210,6 +273,52 @@ export const exportUnitPlanToWord = async (plan: UnitPlan) => {
     reflexion_pendant: clean(plan.reflection?.during),
     reflexion_apres: clean(plan.reflection?.after)
   };
+  
+  // Add Arabic versions if bilingual (ART or EPS)
+  let data = baseData;
+  if (isBilingual) {
+    const planAny = plan as any; // Pour accéder aux champs _ar
+    data = {
+      ...baseData,
+      // Arabic versions of all fields
+      titre_unite_ar: getArabicValue(planAny, 'title'),
+      duree_ar: getArabicValue(planAny, 'duration'),
+      concept_cle_ar: getArabicValue(planAny, 'keyConcept'),
+      concepts_connexes_ar: planAny.relatedConcepts_ar 
+        ? clean(Array.isArray(planAny.relatedConcepts_ar) ? planAny.relatedConcepts_ar.join(", ") : planAny.relatedConcepts_ar)
+        : "",
+      contexte_mondial_ar: getArabicValue(planAny, 'globalContext'),
+      enonce_de_recherche_ar: getArabicValue(planAny, 'statementOfInquiry'),
+      
+      questions_factuelles_ar: planAny.inquiryQuestions?.factual_ar 
+        ? clean(planAny.inquiryQuestions.factual_ar.join("\n"))
+        : "",
+      questions_conceptuelles_ar: planAny.inquiryQuestions?.conceptual_ar 
+        ? clean(planAny.inquiryQuestions.conceptual_ar.join("\n"))
+        : "",
+      questions_debat_ar: planAny.inquiryQuestions?.debatable_ar 
+        ? clean(planAny.inquiryQuestions.debatable_ar.join("\n"))
+        : "",
+      
+      objectifs_specifiques_ar: planAny.objectives_ar 
+        ? clean(Array.isArray(planAny.objectives_ar) ? planAny.objectives_ar.join("\n") : planAny.objectives_ar)
+        : "",
+      evaluation_sommative_ar: getArabicValue(planAny, 'summativeAssessment'),
+      approches_apprentissage_ar: planAny.atlSkills_ar 
+        ? clean(Array.isArray(planAny.atlSkills_ar) ? planAny.atlSkills_ar.join("\n") : planAny.atlSkills_ar)
+        : "",
+      
+      contenu_ar: getArabicValue(planAny, 'content'),
+      processus_apprentissage_ar: getArabicValue(planAny, 'learningExperiences'),
+      evaluation_formative_ar: getArabicValue(planAny, 'formativeAssessment'),
+      differenciation_ar: getArabicValue(planAny, 'differentiation'),
+      ressources_ar: getArabicValue(planAny, 'resources'),
+      
+      reflexion_avant_ar: planAny.reflection?.prior_ar ? clean(planAny.reflection.prior_ar) : "",
+      reflexion_pendant_ar: planAny.reflection?.during_ar ? clean(planAny.reflection.during_ar) : "",
+      reflexion_apres_ar: planAny.reflection?.after_ar ? clean(planAny.reflection.after_ar) : ""
+    };
+  }
 
   await generateDocument(PLAN_TEMPLATE_URL, data, `Plan_Unite_${(plan.title || 'Sans_Titre').replace(/[^a-z0-9]/gi, '_')}.docx`);
 };
