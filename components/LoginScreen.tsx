@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { School, BookOpen, ChevronRight, FileText } from 'lucide-react';
+import { School, BookOpen, ChevronRight, FileText, LogOut } from 'lucide-react';
 import { SUBJECTS } from '../constants';
 import { AppMode } from '../types';
 
 interface LoginScreenProps {
   onLogin: (subject: string, grade: string, mode: AppMode) => void;
+  onLogout?: () => void;
 }
 
 // Classes pour PEI Planner (Programme IB)
@@ -26,7 +27,7 @@ const EXAM_SUBJECTS = [
   'Sciences Économiques et Sociales (SES)'
 ];
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onLogout }) => {
   const [mode, setMode] = useState<AppMode | null>(null);
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
@@ -41,6 +42,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setMode(null);
     setSubject('');
     setGrade('');
+  };
+
+  const handleLogout = () => {
+    if (onLogout && window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      onLogout();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,7 +67,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const currentSubjects = mode === AppMode.EXAMS ? EXAM_SUBJECTS : SUBJECTS;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-violet-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-violet-50 flex items-center justify-center p-4 relative">
+      {/* Bouton de déconnexion en haut à droite */}
+      {onLogout && (
+        <button
+          onClick={handleLogout}
+          className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-lg border border-slate-200 hover:border-red-300 transition-all shadow-sm hover:shadow-md"
+        >
+          <LogOut size={18} />
+          <span className="text-sm font-medium">Déconnexion</span>
+        </button>
+      )}
+      
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-fadeIn">
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 p-8 text-white text-center relative overflow-hidden">
            {/* Animated background pattern */}

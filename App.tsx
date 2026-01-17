@@ -3,11 +3,13 @@ import { UnitPlan, AppView, AppMode } from './types';
 import Dashboard from './components/Dashboard';
 import UnitPlanForm from './components/UnitPlanForm';
 import LoginScreen from './components/LoginScreen';
+import AuthenticationScreen from './components/AuthenticationScreen';
 import ExamsWizard from './components/ExamsWizard';
 import { sanitizeUnitPlan } from './services/geminiService';
 import { loadPlansFromDatabase, savePlansToDatabase, migrateLocalStorageToMongoDB, needsMigration } from './services/databaseService';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [view, setView] = useState<AppView>(AppView.LOGIN);
   const [currentPlans, setCurrentPlans] = useState<UnitPlan[]>([]);
   const [editingPlan, setEditingPlan] = useState<UnitPlan | undefined>(undefined);
@@ -15,6 +17,18 @@ const App: React.FC = () => {
   
   // Session State - Filter by subject, grade and mode
   const [session, setSession] = useState<{subject: string, grade: string, mode?: AppMode} | null>(null);
+
+  // Vérifier l'authentification au démarrage
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = localStorage.getItem('isAuthenticated');
+      if (authStatus === 'true') {
+        setIsAuthenticated(true);
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   // Migration automatique au démarrage de l'application
   useEffect(() => {
@@ -111,9 +125,17 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    // Déconnexion complète : effacer la session et l'authentification
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authTimestamp');
+    setIsAuthenticated(false);
     setSession(null);
     setCurrentPlans([]);
     setView(AppView.LOGIN);
+  };
+
+  const handleAuthenticated = () => {
+    setIsAuthenticated(true);
   };
 
   const handleCreateNew = () => {
@@ -190,8 +212,14 @@ const App: React.FC = () => {
     setView(AppView.DASHBOARD);
   };
 
+  // Si pas authentifié, afficher l'écran d'authentification
+  if (!isAuthenticated) {
+    return <AuthenticationScreen onAuthenticated={handleAuthenticated} />;
+  }
+
+  // Si authentifié mais pas encore de session (mode/matière/classe), afficher l'écran de sélection
   if (view === AppView.LOGIN) {
-      return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={handleLogin} onLogout={handleLogout} />;
   }
 
   // Mode Examens
