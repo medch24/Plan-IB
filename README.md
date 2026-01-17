@@ -8,14 +8,26 @@ An intelligent unit planning tool for IB MYP teachers, powered by Google's Gemin
 
 View your app in AI Studio: https://ai.studio/apps/drive/10z-rymNTf-5Ck-9yh_nqtV8JXau6plNH
 
+## 🔒 Authentication Required
+
+**New!** The application now requires authentication to access.
+
+**Default credentials:**
+- **Username:** `Alkawthar`
+- **Password:** `Alkawthar@7786`
+
+📖 See [AUTHENTICATION.md](AUTHENTICATION.md) for more details about the authentication system.
+
 ## Features
 
+- 🔐 **Secure authentication** with persistent login
 - 🤖 AI-powered unit plan generation
 - 📝 Complete MYP unit planning framework
-- 💾 Local storage for saving plans
+- 💾 MongoDB cloud storage for saving plans
 - 📊 Dashboard with analytics
 - 📄 Export to Word document
 - 🎯 Subject-specific customization
+- 📝 Exam generation for French curriculum
 
 ## Run Locally
 
