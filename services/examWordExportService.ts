@@ -182,9 +182,9 @@ const formatExercises = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de la section (sans markers BOLD)
+      // Titre de la section EN GRAS avec marqueurs **
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
+        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
       }
       
       // Questions de cette section
@@ -225,19 +225,24 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       linebreaks: true,
     });
     
+    // IMPORTANT: Vérification que subject est bien défini
+    console.log('🔍 [DEBUG] exam.subject =', exam.subject);
+    console.log('🔍 [DEBUG] typeof exam.subject =', typeof exam.subject);
+    
+    if (!exam.subject || exam.subject === 'undefined') {
+      console.error('❌ [EXPORT] exam.subject est vide ou undefined!');
+      throw new Error('Le nom de la matière est requis pour générer l\'examen');
+    }
+    
     // Préparer les données pour le template
-    // Support de TOUTES les variantes possibles de balises (avec/sans accents)
+    // La balise dans le template est {Matiere} - on assure qu'elle soit bien remplie
     const data = {
-      Matiere: exam.subject || 'Matière non spécifiée',  // Avec accent è
-      Matiere_sans_accent: exam.subject || 'Matiere non specifiee',  // Sans accent
-      Subject: exam.subject || 'Subject not specified',  // Anglais
-      matiere: exam.subject || 'Matière non spécifiée',  // Minuscule avec accent
-      subject: exam.subject || 'Matière non spécifiée',  // Minuscule sans accent
+      Matiere: exam.subject,  // BALISE PRINCIPALE utilisée dans le template
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: '',  // Champ vide pour que l'enseignant le remplisse
+      Date: '',  // Champ vide pour que l'enseignant le remplisse (format: JJ/MM/AAAA)
       Exercices: formatExercises(exam)
     };
     
@@ -270,12 +275,19 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       if (documentXml) {
         let modifiedXml = documentXml;
         
-        // Remplacer les marqueurs ** par du formatage gras XML
-        // Pattern : chercher **texte** et le remplacer par du texte en gras
+        // Stratégie améliorée pour le formatage gras
+        // On cherche tous les patterns **texte** y compris sur plusieurs lignes
+        
+        // 1. Pattern simple sur une seule balise <w:t>
         modifiedXml = modifiedXml.replace(
-          /<w:t[^>]*>\*\*([^*]+)\*\*<\/w:t>/g,
-          '<w:r><w:rPr><w:b/></w:rPr><w:t>$1</w:t></w:r>'
+          /<w:t([^>]*)>([^<]*?)\*\*([^*]+?)\*\*([^<]*?)<\/w:t>/g,
+          function(match, attrs, before, content, after) {
+            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
+          }
         );
+        
+        // 2. Nettoyer les ** restants (cas où ils sont séparés)
+        modifiedXml = modifiedXml.replace(/\*\*/g, '');
         
         generatedZip.file("word/document.xml", modifiedXml);
         console.log('✅ [EXPORT] Formatage gras appliqué aux énoncés');
@@ -380,7 +392,7 @@ const formatExercisesWithCorrections = (exam: Exam): string => {
     
     sections.forEach((questions, sectionName) => {
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
+        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
       }
       
       questions.forEach((question) => {
@@ -417,18 +429,22 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       linebreaks: true,
     });
     
-    // Support de TOUTES les variantes possibles de balises (avec/sans accents)
+    // IMPORTANT: Vérification que subject est bien défini
+    console.log('🔍 [DEBUG CORRECTION] exam.subject =', exam.subject);
+    
+    if (!exam.subject || exam.subject === 'undefined') {
+      console.error('❌ [CORRECTION] exam.subject est vide ou undefined!');
+      throw new Error('Le nom de la matière est requis pour générer la correction');
+    }
+    
+    // Préparer les données pour le template
     const data = {
-      Matiere: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Avec accent è
-      Matiere_sans_accent: `${exam.subject || 'Matiere non specifiee'} - CORRECTION`,  // Sans accent
-      Subject: `${exam.subject || 'Subject not specified'} - CORRECTION`,  // Anglais
-      matiere: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Minuscule avec accent
-      subject: `${exam.subject || 'Matière non spécifiée'} - CORRECTION`,  // Minuscule sans accent
+      Matiere: `${exam.subject} - CORRECTION`,  // BALISE PRINCIPALE
       Classe: exam.className || exam.grade || '',
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: '',  // Champ vide pour remplissage manuel,
+      Date: '',  // Champ vide pour remplissage manuel (format: JJ/MM/AAAA)
       Exercices: formatExercisesWithCorrections(exam)
     };
     
@@ -449,17 +465,26 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       if (documentXml) {
         let modifiedXml = documentXml;
         
-        // 1. Mettre en GRAS les énoncés (texte entre **)
+        // 1. Mettre en GRAS les énoncés (texte entre **) - Version améliorée
         modifiedXml = modifiedXml.replace(
-          /<w:t[^>]*>\*\*([^*]+)\*\*<\/w:t>/g,
-          '<w:r><w:rPr><w:b/></w:rPr><w:t>$1</w:t></w:r>'
+          /<w:t([^>]*)>([^<]*?)\*\*([^*]+?)\*\*([^<]*?)<\/w:t>/g,
+          function(match, attrs, before, content, after) {
+            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
+          }
         );
         
         // 2. Mettre en ROUGE et GRAS les corrections (texte entre <<<...>>>)
         modifiedXml = modifiedXml.replace(
-          /<w:t[^>]*><<<([^>]+)>>><\/w:t>/g,
-          '<w:r><w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr><w:t>$1</w:t></w:r>'
+          /<w:t([^>]*)>([^<]*?)<<<([^>]+?)>>>([^<]*?)<\/w:t>/g,
+          function(match, attrs, before, content, after) {
+            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
+          }
         );
+        
+        // 3. Nettoyer les marqueurs restants
+        modifiedXml = modifiedXml.replace(/\*\*/g, '');
+        modifiedXml = modifiedXml.replace(/<<</g, '');
+        modifiedXml = modifiedXml.replace(/>>>/g, '');
         
         generatedZip.file("word/document.xml", modifiedXml);
         console.log('✅ [CORRECTION] Formatage appliqué : gras pour énoncés, rouge pour corrections');

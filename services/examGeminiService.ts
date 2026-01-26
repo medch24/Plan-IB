@@ -377,10 +377,18 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     
     const parsed = JSON.parse(cleanedJson);
     
+    // Vérification CRITIQUE: config.subject doit être défini
+    if (!config.subject) {
+      console.error('❌ [GEMINI] config.subject est undefined ou vide!');
+      throw new Error('Le paramètre subject est obligatoire pour générer un examen');
+    }
+    
+    console.log('✅ [GEMINI] config.subject =', config.subject);
+    
     // Créer l'objet Exam complet (sans resources - tout est intégré dans les questions)
     const exam: Exam = {
       id: Date.now().toString(),
-      subject: config.subject || "Matière non spécifiée", // Protection contre undefined
+      subject: config.subject, // IMPORTANT: Utiliser directement config.subject sans fallback
       grade: config.grade,
       semester: config.semester,
       teacherName: config.teacherName || "",
@@ -396,6 +404,9 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       createdAt: new Date(),
       updatedAt: new Date()
     };
+    
+    // LOG de vérification finale
+    console.log('✅ [GEMINI] Examen créé avec subject =', exam.subject);
     
     // Vérifier que la somme des points correspond au total attendu
     const expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;

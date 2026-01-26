@@ -146,6 +146,11 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
   const handleExport = async () => {
     if (!generatedExam) return;
 
+    // LOG de débogage AVANT l'export
+    console.log('📤 [EXPORT] Début export - generatedExam.subject =', generatedExam.subject);
+    console.log('📤 [EXPORT] Type de subject =', typeof generatedExam.subject);
+    console.log('📤 [EXPORT] Examen complet =', JSON.stringify(generatedExam, null, 2));
+
     setExporting(true);
     try {
       await exportExamToWord(generatedExam);
