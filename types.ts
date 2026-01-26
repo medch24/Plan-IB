@@ -112,10 +112,12 @@ export enum QuestionType {
   VRAI_FAUX = 'Vrai/Faux',
   TEXTE_A_TROUS = 'Textes à trous',
   LEGENDER = 'Légender',
+  RELIER_FLECHE = 'Relier par flèche',
   DEFINITIONS = 'Définitions',
   ANALYSE_DOCUMENTS = 'Analyse de documents',
   REPONSE_LONGUE = 'Réponse longue',
-  PROBLEME = 'Résolution de problème'
+  PROBLEME = 'Résolution de problème',
+  COMPLETER_TABLEAU = 'Compléter un tableau'
 }
 
 // Ressource utilisée dans l'examen

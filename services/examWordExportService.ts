@@ -80,17 +80,16 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
   
-  // CORRECTION: Pas de markers BOLD - utiliser du texte normal
-  // Le formatage sera fait via le template Word lui-même
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
+  // EN-TÊTE DE L'EXERCICE avec marqueur pour mise en gras
+  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // Énoncé de l'exercice (contenu) - Convertir LaTeX
-  formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  // ÉNONCÉ DE L'EXERCICE (contenu) en GRAS - Convertir LaTeX
+  formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -121,6 +120,16 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
       const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
       formatted += `\n${labelText}\n`;
       formatted += `${generateAnswerLines(3)}\n`;
+      break;
+      
+    case 'Relier par flèche':
+      // Déjà formaté dans le content (tableau avec colonnes)
+      formatted += `\n`;
+      break;
+      
+    case 'Compléter un tableau':
+      // Déjà formaté dans le content (tableau)
+      formatted += `\n`;
       break;
       
     case QuestionType.DEFINITIONS:
@@ -228,7 +237,7 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: new Date().toLocaleDateString('fr-FR'),
+      Date: '',  // Champ vide pour que l'enseignant le remplisse
       Exercices: formatExercises(exam)
     };
     
@@ -252,7 +261,31 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     doc.render(data);
     console.log('✅ [EXPORT] Template rempli');
     
-    const output = zip.generate({
+    // Obtenir le zip généré
+    const generatedZip = doc.getZip();
+    
+    // Modifier le XML pour mettre en gras les énoncés (texte entre **)
+    try {
+      const documentXml = generatedZip.file("word/document.xml")?.asText();
+      if (documentXml) {
+        let modifiedXml = documentXml;
+        
+        // Remplacer les marqueurs ** par du formatage gras XML
+        // Pattern : chercher **texte** et le remplacer par du texte en gras
+        modifiedXml = modifiedXml.replace(
+          /<w:t[^>]*>\*\*([^*]+)\*\*<\/w:t>/g,
+          '<w:r><w:rPr><w:b/></w:rPr><w:t>$1</w:t></w:r>'
+        );
+        
+        generatedZip.file("word/document.xml", modifiedXml);
+        console.log('✅ [EXPORT] Formatage gras appliqué aux énoncés');
+      }
+    } catch (boldError) {
+      console.warn('⚠️ Impossible d\'appliquer le formatage gras:', boldError);
+      // Continue sans le formatage
+    }
+    
+    const output = generatedZip.generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
@@ -276,16 +309,16 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
-  // CORRECTION: Pas de markers BOLD
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
+  // EN-TÊTE en GRAS
+  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // Énoncé de l'exercice - Convertir LaTeX
-  formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  // ÉNONCÉ en GRAS - Convertir LaTeX
+  formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
@@ -295,11 +328,11 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
         question.options.forEach((opt: string, i: number) => {
           const letter = String.fromCharCode(65 + i);
           const isCorrect = question.correctAnswer === letter;
-          const marker = isCorrect ? '✓✓✓ RÉPONSE CORRECTE ✓✓✓' : '';
+          const marker = isCorrect ? '<<<RÉPONSE CORRECTE>>>' : '';
           formatted += `☐ ${letter}. ${convertLaTeXToText(opt)} ${marker}\n`;
         });
         if (question.answer) {
-          formatted += `\n✓✓✓ EXPLICATION: ${convertLaTeXToText(question.answer)}\n`;
+          formatted += `\n<<<EXPLICATION: ${convertLaTeXToText(question.answer)}>>>`;
         }
       }
       break;
@@ -312,7 +345,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
           const correctAnswer = stmt.isTrue ? 'Vrai' : 'Faux';
           formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n`;
           formatted += `   ☐ Vrai   ☐ Faux\n`;
-          formatted += `   ✓✓✓ RÉPONSE: ${correctAnswer}\n\n`;
+          formatted += `   <<<RÉPONSE: ${correctAnswer}>>>\n\n`;
         });
       }
       break;
@@ -321,13 +354,13 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
       const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
       formatted += `\n${labelText}\n`;
       if (question.answer) {
-        formatted += `\n✓✓✓ CORRECTION:\n${question.answer}\n`;
+        formatted += `\n<<<CORRECTION:\n${question.answer}>>>`;
       }
       break;
       
     default:
       if (question.answer) {
-        formatted += `\n✓✓✓ CORRECTION:\n${question.answer}\n`;
+        formatted += `\n<<<CORRECTION:\n${question.answer}>>>`;
       }
   }
   
@@ -395,7 +428,7 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: new Date().toLocaleDateString('fr-FR'),
+      Date: '',  // Champ vide pour remplissage manuel,
       Exercices: formatExercisesWithCorrections(exam)
     };
     
@@ -414,34 +447,25 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
     try {
       const documentXml = generatedZip.file("word/document.xml")?.asText();
       if (documentXml) {
-        // Ajouter la couleur rouge aux textes de correction (contenant ✓✓✓)
-        // On cherche les runs de texte contenant les markers de correction
         let modifiedXml = documentXml;
         
-        // Pattern pour identifier les corrections
-        // 1. Mettre en rouge et gras TOUT texte contenant ✓✓✓
+        // 1. Mettre en GRAS les énoncés (texte entre **)
         modifiedXml = modifiedXml.replace(
-          /(<w:r>)(<w:t[^>]*>)([^<]*✓✓✓[^<]*<\/w:t>)/g,
-          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
+          /<w:t[^>]*>\*\*([^*]+)\*\*<\/w:t>/g,
+          '<w:r><w:rPr><w:b/></w:rPr><w:t>$1</w:t></w:r>'
         );
         
-        // 2. Mettre en rouge le texte des réponses correctes (lignes avec RÉPONSE CORRECTE, RÉPONSE:, CORRECTION:, EXPLICATION:)
+        // 2. Mettre en ROUGE et GRAS les corrections (texte entre <<<...>>>)
         modifiedXml = modifiedXml.replace(
-          /(<w:r>)(<w:t[^>]*>)([^<]*(?:RÉPONSE CORRECTE|RÉPONSE:|CORRECTION:|EXPLICATION:)[^<]*<\/w:t>)/gi,
-          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
-        );
-        
-        // 3. Mettre en rouge les lignes avec "La bonne réponse est"
-        modifiedXml = modifiedXml.replace(
-          /(<w:r>)(<w:t[^>]*>)([^<]*La bonne réponse est[^<]*<\/w:t>)/gi,
-          '$1<w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr>$2$3'
+          /<w:t[^>]*><<<([^>]+)>>><\/w:t>/g,
+          '<w:r><w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr><w:t>$1</w:t></w:r>'
         );
         
         generatedZip.file("word/document.xml", modifiedXml);
-        console.log('✅ [CORRECTION] Couleur rouge appliquée aux corrections');
+        console.log('✅ [CORRECTION] Formatage appliqué : gras pour énoncés, rouge pour corrections');
       }
-    } catch (colorError) {
-      console.warn('⚠️ Impossible d\'appliquer la couleur rouge:', colorError);
+    } catch (formatError) {
+      console.warn('⚠️ Impossible d\'appliquer le formatage:', formatError);
       // Continue sans la couleur
     }
     

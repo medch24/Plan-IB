@@ -83,33 +83,39 @@ Tu es un expert pédagogique spécialisé dans la création d'examens selon les 
 Tu dois générer un examen complet et structuré.
 
 RÈGLES ABSOLUES :
-1. L'examen doit être sur EXACTEMENT 30 points.
-2. Niveau de difficulté : MOYEN à FACILE (adapté au niveau demandé).
+1. BARÈME STRICT PAR CLASSE :
+   - Classes 5ème, 4ème, 3ème, Seconde, 1ère, Terminale : EXACTEMENT 30 points
+   - Classe 6ème UNIQUEMENT : EXACTEMENT 20 points
+2. Niveau de difficulté : MOYEN (ni trop facile ni trop difficile, adapté au niveau demandé).
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
 4. BARÈME ÉQUILIBRÉ ET DIVISIBLE :
    - Pour QCM : 1 point par choix OU points divisibles (2pts, 3pts, 5pts)
    - Pour Vrai/Faux : OBLIGATOIREMENT 1 point par affirmation
    - Pour exercices : points logiques et divisibles (2, 3, 4, 5, 6, 8, 10)
    - Répartir les points de manière progressive
-5. Types de questions VARIÉS OBLIGATOIRES (minimum 4 types différents par examen) :
-   - QCM (Questions à Choix Multiples)
-   - Vrai/Faux
+5. Types de questions VARIÉS OBLIGATOIRES (minimum 5 types différents par examen) :
+   - QCM (Questions à Choix Multiples) - ÉVITER pour Mathématiques
+   - Vrai/Faux - ÉVITER pour Mathématiques
    - Textes à trous
-   - Légender (schémas, cartes, etc.)
+   - Légender (schémas, cartes, figures géométriques, etc.)
+   - Relier par flèche (tableaux avec deux colonnes à associer)
    - Définitions
    - Analyse de documents
    - Réponse longue / Développement
-   - Résolution de problème
+   - Résolution de problème / Calculs
+   - Compléter un tableau
 
 ORGANISATION DE L'EXAMEN PAR SECTIONS :
 
 **MATHÉMATIQUES** - Structure obligatoire :
-- PARTIE I : ALGÈBRE (15 points)
+- ÉVITER les QCM et Vrai/Faux (privilégier calculs, résolution de problèmes, constructions)
+- PARTIE I : ALGÈBRE (15 ou 10 points selon le total)
   * Calculs, équations, fonctions
-  * Exercices progressifs
-- PARTIE II : GÉOMÉTRIE (15 points)
+  * Exercices progressifs de calcul et résolution
+- PARTIE II : GÉOMÉTRIE (15 ou 10 points selon le total)
   * Figures, théorèmes, constructions
-  * Inclure schémas/figures à légender
+  * OBLIGATOIRE : Inclure au moins un schéma/figure à légender ou à compléter
+  * Types d'exercices : constructions géométriques, calculs de périmètres/aires/volumes, démonstrations
 
 **HISTOIRE-GÉOGRAPHIE-EMC** - Structure obligatoire :
 - PARTIE I : HISTOIRE (10 points)
@@ -208,7 +214,7 @@ STYLE D'EXAMEN PAR NIVEAU :
 FORMAT JSON ATTENDU :
 {
   "title": "Titre de l'examen",
-  "totalPoints": 30,
+  "totalPoints": 30 (ou 20 pour 6ème uniquement),
   "duration": "2H",
   "difficulty": "Moyen",
   "style": "Brevet" | "Bac" | "Standard",
@@ -244,6 +250,15 @@ FORMAT JSON ATTENDU :
   * Texte littéraire : (Victor Hugo, Les Misérables, Gallimard, 1862)
   * Article : (Le Monde, "Titre de l'article", 15 novembre 2023)
   * Document historique : (Lettre de Voltaire à D'Alembert, 1757)
+
+⚠️ EXERCICE "RELIER PAR FLÈCHE" :
+- Pour ce type d'exercice, présenter deux colonnes :
+  Colonne A          |  Colonne B
+  1. Élément 1       |  a. Définition A
+  2. Élément 2       |  b. Définition B
+  3. Élément 3       |  c. Définition C
+- Instructions : "Reliez chaque élément de la colonne A à sa correspondance dans la colonne B."
+- Type de question : "Relier par flèche"
 
 ⚠️ CORRECTION / RÉPONSES (OBLIGATOIRE) :
 - CHAQUE question DOIT avoir son champ "answer" avec la réponse complète
@@ -300,8 +315,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     ${needsText ? 'IMPORTANT: Include a comprehension text of MINIMUM 20 lines IN ENGLISH.' : ''}
     
     Duration: 2H
-    Total: EXACTLY 30 points
-    Difficulty: Medium to Easy
+    Total: EXACTLY ${config.grade === ExamGrade.SIXIEME ? '20' : '30'} points
+    Difficulty: Medium (balanced - not too easy, not too hard)
     
     ⚠️ MANDATORY RULES FOR ENGLISH EXAM:
     - ALL text must be in ENGLISH (titles, questions, instructions, content)
@@ -330,8 +345,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     ${needsGraph ? 'IMPORTANT : Inclus des descriptions de graphiques, courbes ou tableaux de données.' : ''}
     
     Durée : 2H
-    Total : 30 points EXACTEMENT
-    Niveau : Moyen à Facile
+    Total : ${config.grade === ExamGrade.SIXIEME ? '20' : '30'} points EXACTEMENT
+    Niveau : MOYEN (ni trop facile ni trop difficile)
     
     Assure-toi de :
     - Varier les types de questions (minimum 4 types différents)
@@ -371,7 +386,7 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       teacherName: config.teacherName || "",
       className: config.className || config.grade || "",
       duration: parsed.duration || "2H",
-      totalPoints: 30, // Force 30 points
+      totalPoints: config.grade === ExamGrade.SIXIEME ? 20 : 30, // 20 pour 6ème, 30 pour les autres
       title: parsed.title || `Examen de ${config.subject}`,
       questions: parsed.questions || [],
       resources: [], // Tableau vide - tout est dans le content des questions
@@ -382,12 +397,13 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       updatedAt: new Date()
     };
     
-    // Vérifier que la somme des points = 30
+    // Vérifier que la somme des points correspond au total attendu
+    const expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;
     const totalPoints = exam.questions.reduce((sum, q) => sum + (q.points || 0), 0);
-    if (totalPoints !== 30) {
-      console.warn(`⚠️ Total des points (${totalPoints}) ne fait pas 30. Ajustement...`);
+    if (totalPoints !== expectedTotal) {
+      console.warn(`⚠️ Total des points (${totalPoints}) ne fait pas ${expectedTotal}. Ajustement...`);
       // Ajustement simple : répartir la différence
-      const diff = 30 - totalPoints;
+      const diff = expectedTotal - totalPoints;
       if (exam.questions.length > 0) {
         exam.questions[0].points += diff;
       }
