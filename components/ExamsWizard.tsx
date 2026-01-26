@@ -68,6 +68,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
   const [semester, setSemester] = useState<'1' | '2' | ''>('');
   const [chapters, setChapters] = useState('');
   const [teacherName, setTeacherName] = useState('');
+  const [examDate, setExamDate] = useState(''); // Nouvelle date de l'examen
   const [generating, setGenerating] = useState(false);
   const [generatedExam, setGeneratedExam] = useState<Exam | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -123,6 +124,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
       exam.semester = `Semestre ${semester}` as any;
       exam.teacherName = teacherName || '';
       exam.className = grade;
+      exam.date = examDate || ''; // Assigner la date saisie
       
       // NOUVEAU: Sauvegarder automatiquement dans la base de données
       try {
@@ -186,6 +188,7 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
     setSemester('');
     setChapters('');
     setTeacherName('');
+    setExamDate('');
     setGeneratedExam(null);
   };
 
@@ -441,6 +444,22 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
                     placeholder="Nom et prénom de l'enseignant"
                   />
+                </div>
+
+                {/* Date de l'examen */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                    <Calendar size={18} />
+                    Date de l'examen / évaluation (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={examDate}
+                    onChange={(e) => setExamDate(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                    placeholder="JJ/MM/AAAA (ex: 15/03/2026)"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Format: Jour/Mois/Année (ex: 15/03/2026)</p>
                 </div>
               </div>
 

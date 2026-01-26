@@ -242,7 +242,7 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: '',  // Champ vide pour que l'enseignant le remplisse (format: JJ/MM/AAAA)
+      Date: exam.date || '',  // Date saisie par l'enseignant (format: JJ/MM/AAAA)
       Exercices: formatExercises(exam)
     };
     
@@ -444,7 +444,7 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
       Duree: '2H',
       Enseignant: exam.teacherName || '',
       Semestre: exam.semester || '',
-      Date: '',  // Champ vide pour remplissage manuel (format: JJ/MM/AAAA)
+      Date: exam.date || '',  // Date saisie par l'enseignant (format: JJ/MM/AAAA)
       Exercices: formatExercisesWithCorrections(exam)
     };
     
