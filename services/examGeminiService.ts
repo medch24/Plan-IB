@@ -1,5 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { Exam, ExamQuestion, ExamResource, ExamGenerationConfig, QuestionType, ExamGrade } from "../types";
+
+// Déterminer quel service IA utiliser (GROQ en priorité, puis Gemini)
+const getAIProvider = (): 'groq' | 'gemini' => {
+  const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  if (groqKey) {
+    console.log('🚀 Utilisation de GROQ AI (quotas élevés)');
+    return 'groq';
+  }
+  
+  if (geminiKey) {
+    console.log('🤖 Utilisation de Gemini AI (fallback)');
+    return 'gemini';
+  }
+  
+  throw new Error("⚠️ Aucune clé API disponible. Configurez GROQ_API_KEY ou GEMINI_API_KEY.");
+};
 
 const getClient = () => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -9,6 +28,16 @@ const getClient = () => {
   }
   
   return new GoogleGenAI({ apiKey });
+};
+
+const getGroqClient = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("⚠️ GROQ_API_KEY non définie.");
+  }
+  
+  return new Groq({ apiKey });
 };
 
 // Nettoyer le JSON retourné par l'IA
@@ -291,7 +320,7 @@ FORMAT JSON ATTENDU :
 
 export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> => {
   try {
-    const ai = getClient();
+    const provider = getAIProvider();
     const style = getExamStyle(config.grade);
     const needsText = needsComprehensionText(config.subject);
     const needsGraph = needsGraphResource(config.subject);
@@ -373,18 +402,47 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     - Barème équilibré et logique
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: userPrompt,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION_EXAM,
-        responseMimeType: "application/json",
-        temperature: 0.7
-      }
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("Pas de réponse de l'IA");
+    let text: string;
+    
+    if (provider === 'groq') {
+      // Utiliser GROQ AI (quotas élevés)
+      const groq = getGroqClient();
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile', // Modèle puissant et rapide
+        messages: [
+          {
+            role: 'system',
+            content: SYSTEM_INSTRUCTION_EXAM
+          },
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 8000,
+        response_format: { type: 'json_object' }
+      });
+      
+      text = completion.choices[0]?.message?.content || '';
+      if (!text) throw new Error("Pas de réponse de GROQ AI");
+      
+    } else {
+      // Utiliser Gemini AI (fallback)
+      const ai = getClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: userPrompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION_EXAM,
+          responseMimeType: "application/json",
+          temperature: 0.7
+        }
+      });
+      
+      text = response.text;
+      if (!text) throw new Error("Pas de réponse de Gemini");
+    }
     
     const cleanedJson = cleanJsonText(text);
     if (!cleanedJson || cleanedJson === "{}") {
