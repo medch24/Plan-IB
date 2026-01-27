@@ -3,6 +3,7 @@ import { Exam, ExamGrade } from '../types';
 import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User, ClipboardCheck } from 'lucide-react';
 import { generateExam } from '../services/examGeminiService';
 import { exportExamToWord, exportExamCorrectionToWord } from '../services/examWordExportService';
+import { exportExamToWordNative, exportExamCorrectionToWordNative } from '../services/examWordExportNative';
 import { saveExamToDatabase } from '../services/examDatabaseService';
 
 interface ExamsWizardProps {
@@ -155,8 +156,9 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
 
     setExporting(true);
     try {
-      await exportExamToWord(generatedExam);
-      alert('✅ Examen exporté avec succès!');
+      // Utiliser l'export natif avec formatage gras/rouge
+      await exportExamToWordNative(generatedExam);
+      alert('✅ Examen exporté avec succès (avec formatage natif)!');
     } catch (error: any) {
       alert(`Erreur lors de l'export: ${error.message}`);
       console.error(error);
@@ -170,8 +172,9 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
 
     setExportingCorrection(true);
     try {
-      await exportExamCorrectionToWord(generatedExam);
-      alert('✅ Correction exportée avec succès!');
+      // Utiliser l'export natif avec corrections en rouge
+      await exportExamCorrectionToWordNative(generatedExam);
+      alert('✅ Correction exportée avec succès (corrections en rouge)!');
     } catch (error: any) {
       alert(`Erreur lors de l'export de la correction: ${error.message}`);
       console.error(error);
