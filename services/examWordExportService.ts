@@ -3,24 +3,20 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import { Exam, QuestionType } from '../types';
 
-// Charger le template Word depuis Google Docs (environnement Vercel)
+// Charger le template Word depuis la variable d'environnement Vercel UNIQUEMENT
 const loadTemplate = async (): Promise<ArrayBuffer> => {
-  // Essayer d'abord le template v2 (depuis Google Docs)
-  try {
-    const response = await fetch('/Template_Examen_Ministere_v2.docx');
-    if (response.ok) {
-      console.log('✅ Template v2 chargé depuis Google Docs');
-      return await response.arrayBuffer();
-    }
-  } catch (error) {
-    console.warn('⚠️ Template v2 non disponible, utilisation du template par défaut');
+  // Utiliser UNIQUEMENT le template depuis la variable d'environnement Vercel
+  const templateUrl = process.env.WORD_TEMPLATE_URL || 
+                      'https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx';
+  
+  console.log('📄 Chargement du template depuis Vercel env:', templateUrl);
+  
+  const response = await fetch(templateUrl);
+  if (!response.ok) {
+    throw new Error(`Impossible de charger le template depuis l'URL: ${templateUrl}`);
   }
   
-  // Fallback sur le template original
-  const response = await fetch('/Template_Examen_Ministere.docx');
-  if (!response.ok) {
-    throw new Error('Impossible de charger le template d\'examen');
-  }
+  console.log('✅ Template chargé depuis la variable d\'environnement Vercel');
   return await response.arrayBuffer();
 };
 
