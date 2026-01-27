@@ -128,6 +128,8 @@ const App: React.FC = () => {
     // Déconnexion complète : effacer la session et l'authentification
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authTimestamp');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
     setIsAuthenticated(false);
     setSession(null);
     setCurrentPlans([]);

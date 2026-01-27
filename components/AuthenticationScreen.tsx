@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
-import { Lock, User, AlertCircle } from 'lucide-react';
+import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface AuthenticationScreenProps {
   onAuthenticated: () => void;
 }
 
 // Credentials sécurisés (dans une vraie application, cela devrait être côté serveur)
-const VALID_CREDENTIALS = {
-  username: 'Alkawthar',
-  password: 'Alkawthar@7786'
-};
+const VALID_CREDENTIALS = [
+  {
+    username: 'Alkawthar',
+    password: 'Alkawthar@7786',
+    role: 'admin', // Accès complet (PEI Planner + Examens)
+    displayName: 'Administrateur'
+  },
+  {
+    username: 'Alkawthar',
+    password: 'Alkawthar01',
+    role: 'teacher', // Accès limité (PEI Planner uniquement)
+    displayName: 'Enseignant'
+  }
+];
 
 const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +35,17 @@ const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onAuthentic
 
     // Simulation d'un délai de connexion
     setTimeout(() => {
-      if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
+      // Vérifier les credentials
+      const matchedUser = VALID_CREDENTIALS.find(
+        cred => cred.username === username && cred.password === password
+      );
+      
+      if (matchedUser) {
         // Stocker la session dans localStorage
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('authTimestamp', new Date().toISOString());
+        localStorage.setItem('userRole', matchedUser.role);
+        localStorage.setItem('userName', matchedUser.displayName);
         onAuthenticated();
       } else {
         setError('Identifiants incorrects. Veuillez réessayer.');
@@ -135,16 +153,24 @@ const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onAuthentic
                   <Lock className="text-slate-400" size={20} />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setError('');
                   }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="block w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   placeholder="Entrez votre mot de passe"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 

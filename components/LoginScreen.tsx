@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { School, BookOpen, ChevronRight, FileText, LogOut } from 'lucide-react';
 import { SUBJECTS } from '../constants';
 import { AppMode } from '../types';
@@ -31,6 +31,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onLogout }) => {
   const [mode, setMode] = useState<AppMode | null>(null);
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
+  const [userRole, setUserRole] = useState<string>('admin');
+  const [userName, setUserName] = useState<string>('Utilisateur');
+  
+  // Récupérer le rôle et le nom de l'utilisateur depuis localStorage
+  useEffect(() => {
+    const role = localStorage.getItem('userRole') || 'admin';
+    const name = localStorage.getItem('userName') || 'Utilisateur';
+    setUserRole(role);
+    setUserName(name);
+  }, []);
 
   const handleModeSelect = (selectedMode: AppMode) => {
     setMode(selectedMode);
@@ -104,6 +114,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onLogout }) => {
              </div>
              <h1 className="text-3xl font-bold mb-2 animate-slideDown">{mode ? (mode === AppMode.PEI_PLANNER ? '📚 PEI Planner' : '📝 Examens & Évaluations') : '🎓 Plateforme Pédagogique'}</h1>
              <p className="text-blue-100 text-sm tracking-wide">Les Écoles Internationales Al-Kawthar</p>
+             <p className="text-blue-200 text-xs mt-2">Bienvenue, {userName}</p>
            </div>
         </div>
         
@@ -146,22 +157,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onLogout }) => {
                   <ChevronRight className="text-slate-400 group-hover:text-blue-600 transition-all group-hover:translate-x-1" size={24} />
                 </button>
 
-                <button
-                  onClick={() => {
-                    // Pour les examens, aller directement à la génération sans passer par le formulaire
-                    onLogin('', '', AppMode.EXAMS);
-                  }}
-                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-                >
-                  <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-all duration-300 group-hover:rotate-3">
-                    <FileText className="text-violet-600 group-hover:text-white transition-colors" size={28} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-slate-800 text-lg group-hover:text-violet-600 transition-colors">📝 Examens & Évaluations</h3>
-                    <p className="text-sm text-slate-600">Génération d'examens ministériels français</p>
-                  </div>
-                  <ChevronRight className="text-slate-400 group-hover:text-violet-600 transition-all group-hover:translate-x-1" size={24} />
-                </button>
+                {/* Examens & Évaluations - Visible uniquement pour les admins */}
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => {
+                      // Pour les examens, aller directement à la génération sans passer par le formulaire
+                      onLogin('', '', AppMode.EXAMS);
+                    }}
+                    className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-500 transition-all duration-300 group-hover:rotate-3">
+                      <FileText className="text-violet-600 group-hover:text-white transition-colors" size={28} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="font-semibold text-slate-800 text-lg group-hover:text-violet-600 transition-colors">📝 Examens & Évaluations</h3>
+                      <p className="text-sm text-slate-600">Génération d'examens ministériels français</p>
+                    </div>
+                    <ChevronRight className="text-slate-400 group-hover:text-violet-600 transition-all group-hover:translate-x-1" size={24} />
+                  </button>
+                )}
               </div>
             ) : (
               <>
