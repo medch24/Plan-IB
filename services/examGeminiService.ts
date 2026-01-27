@@ -99,7 +99,7 @@ RÈGLES ABSOLUES :
    - Textes à trous
    - Légender (schémas, cartes, figures géométriques, etc.)
    - Relier par flèche (tableaux avec deux colonnes à associer)
-   - Définitions
+   - Définitions (ÉVITER en Mathématiques - privilégier calculs et résolution)
    - Analyse de documents
    - Réponse longue / Développement
    - Résolution de problème / Calculs
@@ -108,14 +108,30 @@ RÈGLES ABSOLUES :
 ORGANISATION DE L'EXAMEN PAR SECTIONS :
 
 **MATHÉMATIQUES** - Structure obligatoire :
-- ÉVITER les QCM et Vrai/Faux (privilégier calculs, résolution de problèmes, constructions)
+- ÉVITER les QCM, Vrai/Faux ET Définitions (privilégier calculs, résolution de problèmes, constructions)
+- ÉCRITURE MATHÉMATIQUE CORRECTE OBLIGATOIRE :
+  * Fractions : utiliser notation Unicode (½, ¼, ¾) ou format LaTeX (\frac{a}{b})
+  * Puissances : utiliser exposants Unicode (x², x³, 10⁴) ou format LaTeX (x^2, x^3)
+  * Racines : √ ou \sqrt{x}
+  * Symboles : ≤, ≥, ≠, ∈, ∉, ∀, ∃, π, etc.
+- EXPRESSIONS MATHÉMATIQUES :
+  * TOUJOURS donner PLUSIEURS expressions (minimum 3-5 expressions par exercice)
+  * Exemples : Si exercice sur simplification, donner 5 expressions à simplifier
+  * Si exercice sur calculs, donner 4-6 calculs différents
 - PARTIE I : ALGÈBRE (15 ou 10 points selon le total)
-  * Calculs, équations, fonctions
+  * Calculs numériques avec fractions, puissances, racines carrées
+  * Équations, inéquations, systèmes
+  * Développement, factorisation, identités remarquables
+  * Fonctions (tableaux de valeurs, graphiques, résolution)
   * Exercices progressifs de calcul et résolution
+  * DONNER plusieurs expressions/équations par question
 - PARTIE II : GÉOMÉTRIE (15 ou 10 points selon le total)
-  * Figures, théorèmes, constructions
+  * Figures, théorèmes (Pythagore, Thalès, trigonométrie)
+  * Constructions géométriques précises
   * OBLIGATOIRE : Inclure au moins un schéma/figure à légender ou à compléter
-  * Types d'exercices : constructions géométriques, calculs de périmètres/aires/volumes, démonstrations
+  * Calculs de périmètres, aires, volumes avec notations correctes
+  * Démonstrations géométriques
+  * Transformations (symétries, rotations, translations)
 
 **HISTOIRE-GÉOGRAPHIE-EMC** - Structure obligatoire :
 - PARTIE I : HISTOIRE (10 points)

@@ -3,8 +3,20 @@ import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import { Exam, QuestionType } from '../types';
 
-// Charger le template Word original
+// Charger le template Word depuis Google Docs (environnement Vercel)
 const loadTemplate = async (): Promise<ArrayBuffer> => {
+  // Essayer d'abord le template v2 (depuis Google Docs)
+  try {
+    const response = await fetch('/Template_Examen_Ministere_v2.docx');
+    if (response.ok) {
+      console.log('✅ Template v2 chargé depuis Google Docs');
+      return await response.arrayBuffer();
+    }
+  } catch (error) {
+    console.warn('⚠️ Template v2 non disponible, utilisation du template par défaut');
+  }
+  
+  // Fallback sur le template original
   const response = await fetch('/Template_Examen_Ministere.docx');
   if (!response.ok) {
     throw new Error('Impossible de charger le template d\'examen');
@@ -73,15 +85,20 @@ const generateAnswerLines = (numberOfLines: number): string => {
 };
 
 // Formater un exercice selon son type
-const formatQuestion = (question: any, index: number, isEnglish: boolean = false): string => {
+const formatQuestion = (question: any, index: number, isEnglish: boolean = false, subject: string = ''): string => {
   const pointsLabel = isEnglish 
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
   
-  // EN-TÊTE DE L'EXERCICE
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
+  // Vérifier si c'est Français ou Anglais (pas de gras pour le contenu)
+  const isFrenchOrEnglish = subject.toLowerCase().includes('français') || 
+                            subject.toLowerCase().includes('anglais') ||
+                            subject.toLowerCase().includes('english');
+  
+  // EN-TÊTE DE L'EXERCICE - TOUJOURS EN GRAS
+  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
@@ -89,7 +106,12 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   }
   
   // ÉNONCÉ DE L'EXERCICE (contenu) - Convertir LaTeX
-  formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  // PAS DE GRAS pour Français/Anglais, GRAS pour autres matières
+  if (isFrenchOrEnglish) {
+    formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  } else {
+    formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
+  }
   
   // Formater selon le type de question
   switch (question.type) {
@@ -182,14 +204,14 @@ const formatExercises = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de la section
+      // Titre de la section - TOUJOURS EN GRAS
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
+        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
       }
       
       // Questions de cette section
       questions.forEach((question) => {
-        exercisesText += formatQuestion(question, globalIndex, isEnglish);
+        exercisesText += formatQuestion(question, globalIndex, isEnglish, exam.subject || '');
         exercisesText += `\n`;
         globalIndex++;
       });
@@ -288,13 +310,18 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
 };
 
 // Formater un exercice avec sa CORRECTION
-const formatQuestionWithCorrection = (question: any, index: number, isEnglish: boolean = false): string => {
+const formatQuestionWithCorrection = (question: any, index: number, isEnglish: boolean = false, subject: string = ''): string => {
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
   const pointsLabel = isEnglish 
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
-  // EN-TÊTE en GRAS
+  // Vérifier si c'est Français ou Anglais
+  const isFrenchOrEnglish = subject.toLowerCase().includes('français') || 
+                            subject.toLowerCase().includes('anglais') ||
+                            subject.toLowerCase().includes('english');
+  
+  // EN-TÊTE en GRAS - TOUJOURS
   let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
@@ -302,8 +329,12 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     formatted += `${diffLabel}\n`;
   }
   
-  // ÉNONCÉ en GRAS - Convertir LaTeX
-  formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
+  // ÉNONCÉ - PAS DE GRAS pour Français/Anglais
+  if (isFrenchOrEnglish) {
+    formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  } else {
+    formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
+  }
   
   // Ajouter les RÉPONSES
   switch (question.type) {
@@ -364,12 +395,13 @@ const formatExercisesWithCorrections = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
+      // Titre de section - TOUJOURS EN GRAS
       if (sectionName !== 'Exercices') {
         exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
       }
       
       questions.forEach((question) => {
-        exercisesText += formatQuestionWithCorrection(question, globalIndex, isEnglish);
+        exercisesText += formatQuestionWithCorrection(question, globalIndex, isEnglish, exam.subject || '');
         exercisesText += `\n`;
         globalIndex++;
       });
