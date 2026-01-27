@@ -132,30 +132,57 @@ function loadExamsStorage(): ExamsStorage {
 
 function saveExamsStorage(storage: ExamsStorage): void {
   try {
-    localStorage.setItem(EXAMS_STORAGE_KEY, JSON.stringify(storage));
-  } catch (e) {
+    const dataString = JSON.stringify(storage);
+    localStorage.setItem(EXAMS_STORAGE_KEY, dataString);
+  } catch (e: any) {
     console.error("❌ [LocalStorage] Erreur écriture:", e);
+    
+    // Si quota dépassé, nettoyer le localStorage
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      console.warn("⚠️ [LocalStorage] Quota dépassé - nettoyage en cours...");
+      try {
+        // Garder seulement les 5 examens les plus récents au lieu de 10
+        const cleanedStorage: ExamsStorage = {};
+        Object.keys(storage).forEach(key => {
+          if (Array.isArray(storage[key])) {
+            cleanedStorage[key] = storage[key].slice(0, 5);
+          }
+        });
+        localStorage.setItem(EXAMS_STORAGE_KEY, JSON.stringify(cleanedStorage));
+        console.log("✅ [LocalStorage] Nettoyage réussi - 5 examens conservés par clé");
+      } catch (cleanError) {
+        console.error("❌ [LocalStorage] Impossible de nettoyer:", cleanError);
+        // Dernier recours : vider complètement
+        localStorage.removeItem(EXAMS_STORAGE_KEY);
+        console.warn("⚠️ [LocalStorage] localStorage vidé complètement");
+      }
+    }
   }
 }
 
 function saveExamToLocalStorage(exam: Exam): void {
-  const storage = loadExamsStorage();
-  const key = getExamKey(exam);
-  
-  if (!storage[key]) {
-    storage[key] = [];
+  try {
+    const storage = loadExamsStorage();
+    const key = getExamKey(exam);
+    
+    if (!storage[key]) {
+      storage[key] = [];
+    }
+    
+    // Ajouter l'examen en début de liste (le plus récent)
+    storage[key].unshift(exam);
+    
+    // Garder seulement les 5 derniers examens par clé (réduit pour éviter quota exceeded)
+    if (storage[key].length > 5) {
+      storage[key] = storage[key].slice(0, 5);
+    }
+    
+    saveExamsStorage(storage);
+    console.log('✅ [LocalStorage] Examen sauvegardé localement');
+  } catch (error) {
+    console.error('❌ [LocalStorage] Impossible de sauvegarder:', error);
+    // Ne pas propager l'erreur - la sauvegarde localStorage est optionnelle
   }
-  
-  // Ajouter l'examen en début de liste (le plus récent)
-  storage[key].unshift(exam);
-  
-  // Garder seulement les 10 derniers examens par clé
-  if (storage[key].length > 10) {
-    storage[key] = storage[key].slice(0, 10);
-  }
-  
-  saveExamsStorage(storage);
-  console.log('✅ [LocalStorage] Examen sauvegardé localement');
 }
 
 function loadExamsFromLocalStorage(
