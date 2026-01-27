@@ -80,16 +80,16 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   
   const exerciseLabel = isEnglish ? 'EXERCISE' : 'EXERCICE';
   
-  // EN-TÊTE DE L'EXERCICE avec marqueur pour mise en gras
-  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
+  // EN-TÊTE DE L'EXERCICE
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
     formatted += `${diffLabel}\n`;
   }
   
-  // ÉNONCÉ DE L'EXERCICE (contenu) en GRAS - Convertir LaTeX
-  formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
+  // ÉNONCÉ DE L'EXERCICE (contenu) - Convertir LaTeX
+  formatted += `\n${convertLaTeXToText(question.content)}\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -182,9 +182,9 @@ const formatExercises = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de la section EN GRAS avec marqueurs **
+      // Titre de la section
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
       }
       
       // Questions de cette section
@@ -266,41 +266,14 @@ export const exportExamToWord = async (exam: Exam): Promise<void> => {
     doc.render(data);
     console.log('✅ [EXPORT] Template rempli');
     
-    // Obtenir le zip généré
-    const generatedZip = doc.getZip();
-    
-    // Modifier le XML pour mettre en gras les énoncés (texte entre **)
-    try {
-      const documentXml = generatedZip.file("word/document.xml")?.asText();
-      if (documentXml) {
-        let modifiedXml = documentXml;
-        
-        // Stratégie améliorée pour le formatage gras
-        // On cherche tous les patterns **texte** y compris sur plusieurs lignes
-        
-        // 1. Pattern simple sur une seule balise <w:t>
-        modifiedXml = modifiedXml.replace(
-          /<w:t([^>]*)>([^<]*?)\*\*([^*]+?)\*\*([^<]*?)<\/w:t>/g,
-          function(match, attrs, before, content, after) {
-            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
-          }
-        );
-        
-        // 2. Nettoyer les ** restants (cas où ils sont séparés)
-        modifiedXml = modifiedXml.replace(/\*\*/g, '');
-        
-        generatedZip.file("word/document.xml", modifiedXml);
-        console.log('✅ [EXPORT] Formatage gras appliqué aux énoncés');
-      }
-    } catch (boldError) {
-      console.warn('⚠️ Impossible d\'appliquer le formatage gras:', boldError);
-      // Continue sans le formatage
-    }
-    
-    const output = generatedZip.generate({
+    // Générer directement le document SANS manipulation XML
+    // (pour éviter la corruption du fichier Word)
+    const output = doc.getZip().generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
+    
+    console.log('⚠️ [EXPORT] Document généré sans manipulation XML pour éviter corruption');
     
     const fileName = `Examen_${exam.subject.replace(/\s+/g, '_')}_${exam.grade}_${exam.semester.replace(/\s+/g, '_')}.docx`;
     console.log(`✅ [EXPORT] Téléchargement: ${fileName}`);
@@ -340,11 +313,11 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
         question.options.forEach((opt: string, i: number) => {
           const letter = String.fromCharCode(65 + i);
           const isCorrect = question.correctAnswer === letter;
-          const marker = isCorrect ? '<<<RÉPONSE CORRECTE>>>' : '';
+          const marker = isCorrect ? '[✓ RÉPONSE CORRECTE]' : '';
           formatted += `☐ ${letter}. ${convertLaTeXToText(opt)} ${marker}\n`;
         });
         if (question.answer) {
-          formatted += `\n<<<EXPLICATION: ${convertLaTeXToText(question.answer)}>>>`;
+          formatted += `\n[EXPLICATION: ${convertLaTeXToText(question.answer)}]`;
         }
       }
       break;
@@ -357,7 +330,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
           const correctAnswer = stmt.isTrue ? 'Vrai' : 'Faux';
           formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n`;
           formatted += `   ☐ Vrai   ☐ Faux\n`;
-          formatted += `   <<<RÉPONSE: ${correctAnswer}>>>\n\n`;
+          formatted += `   [✓ RÉPONSE: ${correctAnswer}]\n\n`;
         });
       }
       break;
@@ -366,13 +339,13 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
       const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
       formatted += `\n${labelText}\n`;
       if (question.answer) {
-        formatted += `\n<<<CORRECTION:\n${question.answer}>>>`;
+        formatted += `\n[CORRECTION:\n${question.answer}]`;
       }
       break;
       
     default:
       if (question.answer) {
-        formatted += `\n<<<CORRECTION:\n${question.answer}>>>`;
+        formatted += `\n[CORRECTION:\n${question.answer}]`;
       }
   }
   
@@ -456,48 +429,13 @@ export const exportExamCorrectionToWord = async (exam: Exam): Promise<void> => {
     doc.render(data);
     console.log('✅ [CORRECTION] Template rempli');
     
-    // Obtenir le zip généré
-    const generatedZip = doc.getZip();
-    
-    // Modifier le XML pour ajouter la couleur rouge aux corrections
-    try {
-      const documentXml = generatedZip.file("word/document.xml")?.asText();
-      if (documentXml) {
-        let modifiedXml = documentXml;
-        
-        // 1. Mettre en GRAS les énoncés (texte entre **) - Version améliorée
-        modifiedXml = modifiedXml.replace(
-          /<w:t([^>]*)>([^<]*?)\*\*([^*]+?)\*\*([^<]*?)<\/w:t>/g,
-          function(match, attrs, before, content, after) {
-            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
-          }
-        );
-        
-        // 2. Mettre en ROUGE et GRAS les corrections (texte entre <<<...>>>)
-        modifiedXml = modifiedXml.replace(
-          /<w:t([^>]*)>([^<]*?)<<<([^>]+?)>>>([^<]*?)<\/w:t>/g,
-          function(match, attrs, before, content, after) {
-            return `<w:t${attrs}>${before}</w:t></w:r><w:r><w:rPr><w:color w:val="FF0000"/><w:b/></w:rPr><w:t${attrs}>${content}</w:t></w:r><w:r><w:t${attrs}>${after}`;
-          }
-        );
-        
-        // 3. Nettoyer les marqueurs restants
-        modifiedXml = modifiedXml.replace(/\*\*/g, '');
-        modifiedXml = modifiedXml.replace(/<<</g, '');
-        modifiedXml = modifiedXml.replace(/>>>/g, '');
-        
-        generatedZip.file("word/document.xml", modifiedXml);
-        console.log('✅ [CORRECTION] Formatage appliqué : gras pour énoncés, rouge pour corrections');
-      }
-    } catch (formatError) {
-      console.warn('⚠️ Impossible d\'appliquer le formatage:', formatError);
-      // Continue sans la couleur
-    }
-    
-    const output = generatedZip.generate({
+    // Générer directement SANS manipulation XML pour éviter corruption
+    const output = doc.getZip().generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
+    
+    console.log('⚠️ [CORRECTION] Document généré sans manipulation XML (corrections avec marqueurs [...])');
     
     const fileName = `CORRECTION_${exam.subject.replace(/\s+/g, '_')}_${exam.grade}_${exam.semester.replace(/\s+/g, '_')}.docx`;
     console.log(`✅ [CORRECTION] Téléchargement: ${fileName}`);
