@@ -9,11 +9,21 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   // Cette URL est celle configurée dans la variable d'environnement WORD_TEMPLATE_URL
   const templateUrl = 'https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx';
   
+  // Ajouter un timestamp pour éviter le cache navigateur
+  const urlWithCacheBust = `${templateUrl}&t=${Date.now()}`;
+  
   console.log('📄 [WORD EXPORT] Chargement du template depuis Google Docs (Vercel config)');
   console.log('🔗 [WORD EXPORT] URL:', templateUrl);
+  console.log('🔄 [WORD EXPORT] Cache-busting activé');
   
   try {
-    const response = await fetch(templateUrl);
+    const response = await fetch(urlWithCacheBust, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     
     if (!response.ok) {
       console.error(`❌ [WORD EXPORT] Erreur HTTP ${response.status}: ${response.statusText}`);
@@ -23,6 +33,14 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
     const arrayBuffer = await response.arrayBuffer();
     console.log('✅ [WORD EXPORT] Template Google Docs chargé avec succès');
     console.log(`📊 [WORD EXPORT] Taille: ${arrayBuffer.byteLength} bytes`);
+    console.log(`🎯 [WORD EXPORT] Taille attendue: 68644 bytes (template Vercel correct)`);
+    
+    // Vérification de la taille pour s'assurer qu'on a le bon template
+    if (arrayBuffer.byteLength === 68644) {
+      console.log('✅ [WORD EXPORT] Template Vercel CORRECT détecté');
+    } else {
+      console.warn(`⚠️ [WORD EXPORT] Taille différente: ${arrayBuffer.byteLength} bytes au lieu de 68644`);
+    }
     
     return arrayBuffer;
   } catch (error) {
