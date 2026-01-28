@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Templates Word - UNIQUEMENT depuis Vercel (variable d'environnement)
+*.docx
+*.doc

@@ -5,19 +5,30 @@ import { Exam, QuestionType } from '../types';
 
 // Charger le template Word depuis la variable d'environnement Vercel UNIQUEMENT
 const loadTemplate = async (): Promise<ArrayBuffer> => {
-  // Utiliser UNIQUEMENT le template depuis la variable d'environnement Vercel
-  const templateUrl = process.env.WORD_TEMPLATE_URL || 
-                      'https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx';
+  // URL FIXE du template Google Docs (configuré dans Vercel)
+  // Cette URL est celle configurée dans la variable d'environnement WORD_TEMPLATE_URL
+  const templateUrl = 'https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx';
   
-  console.log('📄 Chargement du template depuis Vercel env:', templateUrl);
+  console.log('📄 [WORD EXPORT] Chargement du template depuis Google Docs (Vercel config)');
+  console.log('🔗 [WORD EXPORT] URL:', templateUrl);
   
-  const response = await fetch(templateUrl);
-  if (!response.ok) {
-    throw new Error(`Impossible de charger le template depuis l'URL: ${templateUrl}`);
+  try {
+    const response = await fetch(templateUrl);
+    
+    if (!response.ok) {
+      console.error(`❌ [WORD EXPORT] Erreur HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(`Impossible de charger le template (HTTP ${response.status})`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    console.log('✅ [WORD EXPORT] Template Google Docs chargé avec succès');
+    console.log(`📊 [WORD EXPORT] Taille: ${arrayBuffer.byteLength} bytes`);
+    
+    return arrayBuffer;
+  } catch (error) {
+    console.error('❌ [WORD EXPORT] Erreur lors du chargement du template:', error);
+    throw new Error(`Échec chargement template: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
   }
-  
-  console.log('✅ Template chargé depuis la variable d\'environnement Vercel');
-  return await response.arrayBuffer();
 };
 
 // Convertir les formules LaTeX simples en texte lisible
