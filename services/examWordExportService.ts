@@ -130,13 +130,8 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
     formatted += `${diffLabel}\n`;
   }
   
-  // ÉNONCÉ DE L'EXERCICE (contenu) - Convertir LaTeX
-  // PAS DE GRAS pour Français/Anglais, GRAS pour autres matières
-  if (isFrenchOrEnglish) {
-    formatted += `\n${convertLaTeXToText(question.content)}\n`;
-  } else {
-    formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
-  }
+  // ÉNONCÉ DE L'EXERCICE (contenu) - PAS DE GRAS
+  formatted += `\n${convertLaTeXToText(question.content)}\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -341,11 +336,6 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
-  // Vérifier si c'est Français ou Anglais
-  const isFrenchOrEnglish = subject.toLowerCase().includes('français') || 
-                            subject.toLowerCase().includes('anglais') ||
-                            subject.toLowerCase().includes('english');
-  
   // EN-TÊTE en GRAS - TOUJOURS
   let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
   
@@ -354,12 +344,8 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     formatted += `${diffLabel}\n`;
   }
   
-  // ÉNONCÉ - PAS DE GRAS pour Français/Anglais
-  if (isFrenchOrEnglish) {
-    formatted += `\n${convertLaTeXToText(question.content)}\n`;
-  } else {
-    formatted += `\n**${convertLaTeXToText(question.content)}**\n`;
-  }
+  // ÉNONCÉ - PAS DE GRAS
+  formatted += `\n${convertLaTeXToText(question.content)}\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
