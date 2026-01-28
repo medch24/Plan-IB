@@ -122,8 +122,8 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
                             subject.toLowerCase().includes('anglais') ||
                             subject.toLowerCase().includes('english');
   
-  // EN-TÊTE DE L'EXERCICE - TOUJOURS EN GRAS
-  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
+  // EN-TÊTE DE L'EXERCICE - EN MAJUSCULES (effet gras visuel)
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
@@ -224,9 +224,9 @@ const formatExercises = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de la section - TOUJOURS EN GRAS
+      // Titre de la section (PARTIE) - DÉJÀ EN MAJUSCULES
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
       }
       
       // Questions de cette section
@@ -336,8 +336,8 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     ? (question.points > 1 ? 'points' : 'point')
     : (question.points > 1 ? 'points' : 'point');
   
-  // EN-TÊTE en GRAS - TOUJOURS
-  let formatted = `\n**${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title)}** (${question.points} ${pointsLabel})\n`;
+  // EN-TÊTE - EN MAJUSCULES (effet gras visuel)
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
@@ -406,9 +406,9 @@ const formatExercisesWithCorrections = (exam: Exam): string => {
     let globalIndex = 0;
     
     sections.forEach((questions, sectionName) => {
-      // Titre de section - TOUJOURS EN GRAS
+      // Titre de section (PARTIE) - DÉJÀ EN MAJUSCULES
       if (sectionName !== 'Exercices') {
-        exercisesText += `\n**${sectionName.toUpperCase()}**\n\n`;
+        exercisesText += `\n${sectionName.toUpperCase()}\n\n`;
       }
       
       questions.forEach((question) => {

@@ -482,16 +482,35 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     // LOG de vérification finale
     console.log(`✅ [${provider.toUpperCase()}] Examen créé avec subject =`, exam.subject);
     
+    // Vérifier et corriger les questions avec 0 points
+    exam.questions = exam.questions.map((q, idx) => {
+      if (!q.points || q.points === 0) {
+        console.warn(`⚠️ Question ${idx + 1} a 0 points. Attribution de 2 points par défaut.`);
+        return { ...q, points: 2 };
+      }
+      return q;
+    });
+    
     // Vérifier que la somme des points correspond au total attendu
     const expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;
-    const totalPoints = exam.questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    let totalPoints = exam.questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    
     if (totalPoints !== expectedTotal) {
       console.warn(`⚠️ Total des points (${totalPoints}) ne fait pas ${expectedTotal}. Ajustement...`);
-      // Ajustement simple : répartir la différence
+      
+      // Ajustement intelligent : répartir la différence sur toutes les questions
       const diff = expectedTotal - totalPoints;
-      if (exam.questions.length > 0) {
-        exam.questions[0].points += diff;
-      }
+      const adjustment = Math.floor(diff / exam.questions.length);
+      const remainder = diff % exam.questions.length;
+      
+      exam.questions = exam.questions.map((q, idx) => ({
+        ...q,
+        points: q.points + adjustment + (idx < remainder ? 1 : 0)
+      }));
+      
+      // Vérification finale
+      totalPoints = exam.questions.reduce((sum, q) => sum + q.points, 0);
+      console.log(`✅ Total ajusté : ${totalPoints} points`);
     }
     
     return exam;
