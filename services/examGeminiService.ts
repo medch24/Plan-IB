@@ -114,15 +114,15 @@ Tu dois générer un examen ou une évaluation complet(e) et structuré(e).
 ⚠️ DISTINCTION CRITIQUE - EXAMEN VS ÉVALUATION :
 1. **EXAMEN (2 HEURES)** :
    - Durée : 2H
-   - Barème : 30 points (20 points pour 6ème)
-   - Niveau de difficulté : MOYEN à DIFFICILE
+   - Barème : 30 points (toutes les classes)
+   - Niveau de difficulté : DIFFICILE
    - Exercices longs, approfondis, variés (minimum 5 types différents)
    - Couvre plusieurs chapitres
 
 2. **ÉVALUATION (40 MINUTES)** :
    - Durée : 40 MINUTES (contrainte stricte)
-   - Barème : 20 points (toutes classes)
-   - Niveau de difficulté : MOYEN (ni trop facile ni trop difficile)
+   - Barème : 30 points (5ème, 4ème, 3ème, Seconde, 1ère, Terminale) | 20 points (6ème uniquement)
+   - Niveau de difficulté : DIFFICILE
    - Exercices CONCIS et RAPIDES adaptés à 40 minutes
    - Couvre 1-2 chapitres spécifiques
    - Types de questions variés mais COURTS
@@ -130,11 +130,11 @@ Tu dois générer un examen ou une évaluation complet(e) et structuré(e).
 RÈGLES ABSOLUES - BARÈME :
 1. BARÈME STRICT PAR TYPE :
    **EXAMEN (2H)** :
-   - Classes 5ème, 4ème, 3ème, Seconde, 1ère, Terminale : EXACTEMENT 30 points
-   - Classe 6ème UNIQUEMENT : EXACTEMENT 20 points
+   - TOUTES les classes : EXACTEMENT 30 points
    
    **ÉVALUATION (40 MIN)** :
-   - TOUTES les classes : EXACTEMENT 20 points
+   - Classes 5ème, 4ème, 3ème, Seconde, 1ère, Terminale : EXACTEMENT 30 points
+   - Classe 6ème UNIQUEMENT : EXACTEMENT 20 points
    
 2. Niveau de difficulté selon le type (voir ci-dessus)
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
@@ -300,9 +300,9 @@ STYLE D'EXAMEN PAR NIVEAU :
 FORMAT JSON ATTENDU :
 {
   "title": "Titre de l'examen ou évaluation",
-  "totalPoints": EXAMEN: 30 (ou 20 pour 6ème) | ÉVALUATION: 20 (toutes classes),
+  "totalPoints": EXAMEN: 30 (toutes classes) | ÉVALUATION: 30 (ou 20 pour 6ème uniquement),
   "duration": EXAMEN: "2H" | ÉVALUATION: "40 min",
-  "difficulty": EXAMEN: "Moyen à Difficile" | ÉVALUATION: "Moyen",
+  "difficulty": EXAMEN: "Difficile" | ÉVALUATION: "Difficile",
   "style": "Brevet" | "Bac" | "Standard",
 
   "questions": [
@@ -409,8 +409,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     ${needsText ? `IMPORTANT: Include a comprehension text of MINIMUM ${isEvaluation ? '15' : '20'} lines IN ENGLISH.` : ''}
     
     Duration: ${isEvaluation ? '40 MINUTES' : '2H'}
-    Total: EXACTLY ${isEvaluation ? '20' : (config.grade === ExamGrade.SIXIEME ? '20' : '30')} points
-    Difficulty: ${isEvaluation ? 'MEDIUM' : 'MEDIUM to DIFFICULT'} (balanced - not too easy, not too hard)
+    Total: EXACTLY ${isEvaluation ? (config.grade === ExamGrade.SIXIEME ? '20' : '30') : '30'} points
+    Difficulty: DIFFICULT
     
     ⚠️ MANDATORY RULES FOR ENGLISH ${examType.toUpperCase()}:
     - ALL text must be in ENGLISH (titles, questions, instructions, content)
@@ -443,8 +443,8 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     ${needsGraph ? 'IMPORTANT : Inclus des descriptions de graphiques, courbes ou tableaux de données.' : ''}
     
     Durée : ${isEvaluation ? '40 MINUTES' : '2H'}
-    Total : ${isEvaluation ? '20' : (config.grade === ExamGrade.SIXIEME ? '20' : '30')} points EXACTEMENT
-    Niveau : ${isEvaluation ? 'MOYEN' : 'MOYEN à DIFFICILE'} (ni trop facile ni trop difficile)
+    Total : ${isEvaluation ? (config.grade === ExamGrade.SIXIEME ? '20' : '30') : '30'} points EXACTEMENT
+    Niveau : DIFFICILE
     
     ${isFrenchOrLanguage ? `⚠️ RÈGLE CRITIQUE POUR ${config.subject.toUpperCase()} :
     - INTERDIT : Questions de type "Définitions" ou "Donnez la définition de..."
@@ -523,9 +523,11 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     // Déterminer le total de points selon le type
     let expectedTotal: number;
     if (isEvaluation) {
-      expectedTotal = 20; // Toutes les évaluations = 20 points
+      // Évaluations: 20 pour 6ème, 30 pour les autres
+      expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;
     } else {
-      expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30; // Examens: 20 pour 6ème, 30 pour les autres
+      // Examens: 30 pour toutes les classes
+      expectedTotal = 30;
     }
     
     // Créer l'objet Exam complet (sans resources - tout est intégré dans les questions)
@@ -541,7 +543,7 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       title: parsed.title || `${examType} de ${config.subject}`,
       questions: parsed.questions || [],
       resources: [], // Tableau vide - tout est dans le content des questions
-      difficulty: parsed.difficulty || (isEvaluation ? "Moyen" : "Moyen à Difficile"),
+      difficulty: parsed.difficulty || "Difficile",
       style: style,
       chapters: config.chapters,
       createdAt: new Date(),

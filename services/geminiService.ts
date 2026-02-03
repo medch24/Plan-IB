@@ -421,7 +421,6 @@ Structure JSON attendue :
 - Chaque évaluation doit être faisable en 30 MINUTES
 - Choisis les critères les plus pertinents pour l'unité
 `;
-`;
 
 // Shared System Prompt for Bilingual generation (ART and EPS - French + Arabic)
 const SYSTEM_INSTRUCTION_FULL_PLAN_BILINGUAL = `
