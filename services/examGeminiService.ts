@@ -108,31 +108,60 @@ const isEnglishExam = (subject: string): boolean => {
 
 // Prompt système pour la génération d'examens
 const SYSTEM_INSTRUCTION_EXAM = `
-Tu es un expert pédagogique spécialisé dans la création d'examens selon les normes du programme français.
-Tu dois générer un examen complet et structuré.
+Tu es un expert pédagogique spécialisé dans la création d'examens et évaluations selon les normes du programme français.
+Tu dois générer un examen ou une évaluation complet(e) et structuré(e).
 
-RÈGLES ABSOLUES :
-1. BARÈME STRICT PAR CLASSE :
+⚠️ DISTINCTION CRITIQUE - EXAMEN VS ÉVALUATION :
+1. **EXAMEN (2 HEURES)** :
+   - Durée : 2H
+   - Barème : 30 points (20 points pour 6ème)
+   - Niveau de difficulté : MOYEN à DIFFICILE
+   - Exercices longs, approfondis, variés (minimum 5 types différents)
+   - Couvre plusieurs chapitres
+
+2. **ÉVALUATION (40 MINUTES)** :
+   - Durée : 40 MINUTES (contrainte stricte)
+   - Barème : 20 points (toutes classes)
+   - Niveau de difficulté : MOYEN (ni trop facile ni trop difficile)
+   - Exercices CONCIS et RAPIDES adaptés à 40 minutes
+   - Couvre 1-2 chapitres spécifiques
+   - Types de questions variés mais COURTS
+
+RÈGLES ABSOLUES - BARÈME :
+1. BARÈME STRICT PAR TYPE :
+   **EXAMEN (2H)** :
    - Classes 5ème, 4ème, 3ème, Seconde, 1ère, Terminale : EXACTEMENT 30 points
    - Classe 6ème UNIQUEMENT : EXACTEMENT 20 points
-2. Niveau de difficulté : MOYEN (ni trop facile ni trop difficile, adapté au niveau demandé).
+   
+   **ÉVALUATION (40 MIN)** :
+   - TOUTES les classes : EXACTEMENT 20 points
+   
+2. Niveau de difficulté selon le type (voir ci-dessus)
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
 4. BARÈME ÉQUILIBRÉ ET DIVISIBLE :
    - Pour QCM : 1 point par choix OU points divisibles (2pts, 3pts, 5pts)
    - Pour Vrai/Faux : OBLIGATOIREMENT 1 point par affirmation
    - Pour exercices : points logiques et divisibles (2, 3, 4, 5, 6, 8, 10)
    - Répartir les points de manière progressive
-5. Types de questions VARIÉS OBLIGATOIRES (minimum 5 types différents par examen) :
+5. Types de questions VARIÉS OBLIGATOIRES :
+   - **POUR EXAMEN (2H)** : minimum 5 types différents
+   - **POUR ÉVALUATION (40 MIN)** : minimum 3-4 types différents
+   
+   TYPES DISPONIBLES :
    - QCM (Questions à Choix Multiples) - ÉVITER pour Mathématiques
    - Vrai/Faux - ÉVITER pour Mathématiques
    - Textes à trous
    - Légender (schémas, cartes, figures géométriques, etc.)
    - Relier par flèche (tableaux avec deux colonnes à associer)
-   - Définitions (ÉVITER en Mathématiques - privilégier calculs et résolution)
+   - Définitions (⚠️ STRICTEMENT INTERDIT pour "Français" et "Langue et littérature" et "Anglais" - ÉVITER aussi en Mathématiques)
    - Analyse de documents
    - Réponse longue / Développement
    - Résolution de problème / Calculs
    - Compléter un tableau
+   
+   ⚠️ RÈGLE SPÉCIALE FRANÇAIS/ANGLAIS/LANGUE ET LITTÉRATURE :
+   - NE JAMAIS utiliser le type "Définitions"
+   - Privilégier : Analyse de texte, Compréhension, Grammaire appliquée, Rédaction, Reformulation
 
 ORGANISATION DE L'EXAMEN PAR SECTIONS :
 
@@ -174,32 +203,44 @@ ORGANISATION DE L'EXAMEN PAR SECTIONS :
   * Réflexion éthique
 
 **FRANÇAIS** - Structure obligatoire :
-- PARTIE I : COMPRÉHENSION DE TEXTE (10 points)
+- PARTIE I : COMPRÉHENSION DE TEXTE (10 points pour examen, 8 points pour évaluation)
   * Texte littéraire de MINIMUM 20 lignes fourni DANS L'ÉNONCÉ de l'exercice
   * ⚠️ OBLIGATOIRE : Source en bas du texte : (Auteur, Titre, Éditeur, Année)
   * Exemples sources valides :
     - (Victor Hugo, Les Misérables, Gallimard, 1862)
     - (Émile Zola, Germinal, Fasquelle, 1885)
     - (Albert Camus, L'Étranger, Gallimard, 1942)
-  * Questions de compréhension
-- PARTIE II : LANGUE (Grammaire, Conjugaison, Orthographe, Vocabulaire) (10 points)
+  * Questions de compréhension, analyse, interprétation
+  
+- PARTIE II : LANGUE (Grammaire, Conjugaison, Orthographe, Vocabulaire) (10 points pour examen, 7 points pour évaluation)
   * Exercices variés de maîtrise de la langue
-- PARTIE III : PRODUCTION ÉCRITE (10 points)
-  * Rédaction/Expression écrite
+  * ⚠️ INTERDIT : Questions de type "Définitions" ou "Donnez la définition de..."
+  * PRIVILÉGIER : Exercices d'application (identifier, transformer, corriger, réécrire, analyser en contexte)
+  * EXEMPLES VALIDES : "Identifiez les verbes conjugués", "Transformez au passé composé", "Corrigez les erreurs"
+  * EXEMPLES INTERDITS : "Définissez ce qu'est un adverbe", "Donnez la définition du COD"
+  
+- PARTIE III : PRODUCTION ÉCRITE (10 points pour examen, 5 points pour évaluation)
+  * Rédaction/Expression écrite (adaptée au temps disponible)
 
 **ANGLAIS** - Structure obligatoire (TOUT EN ANGLAIS) :
-- PART I : READING COMPREHENSION (10 points)
+- PART I : READING COMPREHENSION (10 points for exam, 8 points for evaluation)
   * Text of MINIMUM 20 lines provided IN THE EXERCISE CONTENT
   * ⚠️ MANDATORY: Source below the text: (Author, Title, Publisher, Year)
   * Valid source examples:
     - (Charles Dickens, Oliver Twist, Penguin Books, 1838)
     - (Jane Austen, Pride and Prejudice, T. Egerton, 1813)
     - (George Orwell, 1984, Secker & Warburg, 1949)
-  * Comprehension questions
-- PART II : LANGUAGE (Grammar, Vocabulary) (10 points)
+  * Comprehension and analysis questions
+  
+- PART II : LANGUAGE (Grammar, Vocabulary) (10 points for exam, 7 points for evaluation)
   * Varied language exercises
-- PART III : WRITING (10 points)
-  * Written expression
+  * ⚠️ FORBIDDEN: "Definitions" type questions or "Define..."
+  * PRIORITIZE: Application exercises (identify, transform, correct, rewrite, analyze in context)
+  * VALID EXAMPLES: "Identify the verbs", "Transform into past tense", "Correct the errors"
+  * FORBIDDEN EXAMPLES: "Define what an adverb is", "Give the definition of a pronoun"
+  
+- PART III : WRITING (10 points for exam, 5 points for evaluation)
+  * Written expression (adapted to available time)
 
 **SCIENCES (SVT, Physique-Chimie)** - Inclure obligatoirement :
 - Graphiques, courbes, tableaux de données avec descriptions détaillées DANS L'ÉNONCÉ
@@ -258,10 +299,10 @@ STYLE D'EXAMEN PAR NIVEAU :
 
 FORMAT JSON ATTENDU :
 {
-  "title": "Titre de l'examen",
-  "totalPoints": 30 (ou 20 pour 6ème uniquement),
-  "duration": "2H",
-  "difficulty": "Moyen",
+  "title": "Titre de l'examen ou évaluation",
+  "totalPoints": EXAMEN: 30 (ou 20 pour 6ème) | ÉVALUATION: 20 (toutes classes),
+  "duration": EXAMEN: "2H" | ÉVALUATION: "40 min",
+  "difficulty": EXAMEN: "Moyen à Difficile" | ÉVALUATION: "Moyen",
   "style": "Brevet" | "Bac" | "Standard",
 
   "questions": [
@@ -325,6 +366,13 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     const needsText = needsComprehensionText(config.subject);
     const needsGraph = needsGraphResource(config.subject);
     const isEnglish = isEnglishExam(config.subject);
+    const examType = config.examType || 'Examen'; // Par défaut: Examen
+    const isEvaluation = examType === 'Évaluation';
+    
+    // Vérifier si la matière est Français ou Langue pour éviter les définitions
+    const isFrenchOrLanguage = config.subject.toLowerCase().includes('français') || 
+                               config.subject.toLowerCase().includes('langue') ||
+                               config.subject.toLowerCase().includes('littérature');
     
     // Détails spécifiques selon le style d'examen
     let styleGuidelines = '';
@@ -347,59 +395,72 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     }
     
     const userPrompt = isEnglish ? `
-    ⚠️ CRITICAL: This is an ENGLISH exam - EVERYTHING must be in ENGLISH (no French at all)
+    ⚠️ CRITICAL: This is an ENGLISH ${examType.toUpperCase()} - EVERYTHING must be in ENGLISH (no French at all)
     
-    Generate a complete English exam for:
+    Generate a complete English ${examType} for:
     
     Subject: ${config.subject}
     Grade Level: ${config.grade}
     Topics to cover: ${config.chapters}
     
+    Type: ${examType} ${isEvaluation ? '(40 MINUTES - SHORT AND FOCUSED)' : '(2 HOURS - COMPREHENSIVE)'}
     Exam Style: ${style}
     ${styleGuidelines}
-    ${needsText ? 'IMPORTANT: Include a comprehension text of MINIMUM 20 lines IN ENGLISH.' : ''}
+    ${needsText ? `IMPORTANT: Include a comprehension text of MINIMUM ${isEvaluation ? '15' : '20'} lines IN ENGLISH.` : ''}
     
-    Duration: 2H
-    Total: EXACTLY ${config.grade === ExamGrade.SIXIEME ? '20' : '30'} points
-    Difficulty: Medium (balanced - not too easy, not too hard)
+    Duration: ${isEvaluation ? '40 MINUTES' : '2H'}
+    Total: EXACTLY ${isEvaluation ? '20' : (config.grade === ExamGrade.SIXIEME ? '20' : '30')} points
+    Difficulty: ${isEvaluation ? 'MEDIUM' : 'MEDIUM to DIFFICULT'} (balanced - not too easy, not too hard)
     
-    ⚠️ MANDATORY RULES FOR ENGLISH EXAM:
+    ⚠️ MANDATORY RULES FOR ENGLISH ${examType.toUpperCase()}:
     - ALL text must be in ENGLISH (titles, questions, instructions, content)
     - NO French words or phrases allowed
     - Section names in ENGLISH (e.g., "PART I: READING COMPREHENSION")
     - Question types in ENGLISH (e.g., "Multiple Choice", "True/False", "Fill in the blanks")
     - Instructions in ENGLISH (e.g., "Read the following text", "Answer the questions")
     - Sources in ENGLISH format: (Author, Title, Publisher, Year)
+    - ⚠️ FORBIDDEN: "Definitions" type questions or "Define..." questions
+    - PRIORITIZE: Comprehension, grammar in context, application exercises
     
     Make sure to:
-    - Vary question types (minimum 4 different types)
+    - Vary question types (minimum ${isEvaluation ? '3' : '4'} different types)
     - Include EXACTLY 1 differentiation question
     - Provide complete resources (texts, descriptions) IN ENGLISH
     - Follow ${style} exam format and standards
     - Use balanced scoring (points well distributed)
+    ${isEvaluation ? '- Keep exercises SHORT and CONCISE (40 minutes constraint)' : ''}
     ` : `
-    Génère un examen complet pour :
+    Génère ${isEvaluation ? 'une évaluation' : 'un examen'} complet${isEvaluation ? 'e' : ''} pour :
     
     Matière : ${config.subject}
     Niveau : ${config.grade}
     Chapitres/Sujets à couvrir : ${config.chapters}
     
+    Type : ${examType} ${isEvaluation ? '(40 MINUTES - COURT ET CIBLÉ)' : '(2 HEURES - COMPLET)'}
     Style d'examen : ${style}
     ${styleGuidelines}
-    ${needsText ? 'IMPORTANT : Inclus un texte de compréhension de MINIMUM 20 lignes dans les ressources.' : ''}
+    ${needsText ? `IMPORTANT : Inclus un texte de compréhension de MINIMUM ${isEvaluation ? '15' : '20'} lignes dans les ressources.` : ''}
     ${needsGraph ? 'IMPORTANT : Inclus des descriptions de graphiques, courbes ou tableaux de données.' : ''}
     
-    Durée : 2H
-    Total : ${config.grade === ExamGrade.SIXIEME ? '20' : '30'} points EXACTEMENT
-    Niveau : MOYEN (ni trop facile ni trop difficile)
+    Durée : ${isEvaluation ? '40 MINUTES' : '2H'}
+    Total : ${isEvaluation ? '20' : (config.grade === ExamGrade.SIXIEME ? '20' : '30')} points EXACTEMENT
+    Niveau : ${isEvaluation ? 'MOYEN' : 'MOYEN à DIFFICILE'} (ni trop facile ni trop difficile)
+    
+    ${isFrenchOrLanguage ? `⚠️ RÈGLE CRITIQUE POUR ${config.subject.toUpperCase()} :
+    - INTERDIT : Questions de type "Définitions" ou "Donnez la définition de..."
+    - PRIVILÉGIER : Compréhension, grammaire en contexte, exercices d'application, analyse
+    - EXEMPLES VALIDES : "Identifiez...", "Transformez...", "Analysez...", "Expliquez en contexte..."
+    - EXEMPLES INTERDITS : "Définissez ce qu'est...", "Donnez la définition de..."
+    ` : ''}
     
     Assure-toi de :
-    - Varier les types de questions (minimum 4 types différents)
+    - Varier les types de questions (minimum ${isEvaluation ? '3' : '4'} types différents)
     - Inclure EXACTEMENT 1 question de différenciation
     - Fournir des ressources complètes (textes, tableaux, descriptions d'images)
     - Respecter les contraintes spécifiques à la matière
     - Suivre le format ${style === 'Brevet' ? 'Brevet des collèges' : style === 'Bac' ? 'Baccalauréat' : 'standard'}
     - Barème équilibré et logique
+    ${isEvaluation ? '- Garder les exercices COURTS et CONCIS (contrainte de 40 minutes)' : ''}
     `;
 
     let text: string;
@@ -459,6 +520,14 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     
     console.log(`✅ [${provider.toUpperCase()}] config.subject =`, config.subject);
     
+    // Déterminer le total de points selon le type
+    let expectedTotal: number;
+    if (isEvaluation) {
+      expectedTotal = 20; // Toutes les évaluations = 20 points
+    } else {
+      expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30; // Examens: 20 pour 6ème, 30 pour les autres
+    }
+    
     // Créer l'objet Exam complet (sans resources - tout est intégré dans les questions)
     const exam: Exam = {
       id: Date.now().toString(),
@@ -467,12 +536,12 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       semester: config.semester,
       teacherName: config.teacherName || "",
       className: config.className || config.grade || "",
-      duration: parsed.duration || "2H",
-      totalPoints: config.grade === ExamGrade.SIXIEME ? 20 : 30, // 20 pour 6ème, 30 pour les autres
-      title: parsed.title || `Examen de ${config.subject}`,
+      duration: parsed.duration || (isEvaluation ? "40 min" : "2H"),
+      totalPoints: expectedTotal,
+      title: parsed.title || `${examType} de ${config.subject}`,
       questions: parsed.questions || [],
       resources: [], // Tableau vide - tout est dans le content des questions
-      difficulty: parsed.difficulty || "Moyen",
+      difficulty: parsed.difficulty || (isEvaluation ? "Moyen" : "Moyen à Difficile"),
       style: style,
       chapters: config.chapters,
       createdAt: new Date(),
@@ -492,7 +561,6 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     });
     
     // Vérifier que la somme des points correspond au total attendu
-    const expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;
     let totalPoints = exam.questions.reduce((sum, q) => sum + (q.points || 0), 0);
     
     if (totalPoints !== expectedTotal) {

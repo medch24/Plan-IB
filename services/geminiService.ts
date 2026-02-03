@@ -331,7 +331,19 @@ export const generateLearningExperiences = async (plan: UnitPlan): Promise<strin
 // Shared System Prompt for consistent generation (French)
 const SYSTEM_INSTRUCTION_FULL_PLAN_FR = `
 Tu es un expert pédagogique du Programme d'Éducation Intermédiaire (PEI) de l'IB.
-Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critériées détaillées en Français (Critères A, B, C, D selon la matière).
+Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critériées détaillées en Français.
+
+⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
+- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
+- CHOISIS UNIQUEMENT 2 À 3 CRITÈRES selon le contenu et les objectifs de l'unité
+- MINIMUM : 2 critères obligatoires
+- MAXIMUM : 3 critères (pas plus)
+- Sélectionne les critères les PLUS PERTINENTS pour l'unité (ex: Mathématiques → A+C, Sciences → A+B+C, Langue → A+C+D)
+
+⚠️ DURÉE DES ÉVALUATIONS IB :
+- Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
+- Les exercices doivent être réalisables en 30 minutes maximum
+- Adapte le nombre et la complexité des exercices à cette contrainte de temps
 
 RÈGLES ABSOLUES - FORMAT JSON :
 1. Utilise UNIQUEMENT les CLÉS JSON EN ANGLAIS ci-dessous. NE LES TRADUIS PAS.
@@ -348,6 +360,7 @@ RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
 2. Si le critère a 3 aspects, il doit y avoir 3 exercices.
 3. VARIE les types d'exercices pour couvrir différents niveaux cognitifs.
 4. La clé "criterionReference" de l'exercice doit correspondre EXPLICITEMENT à l'aspect (exemple: "Critère A : i. sélectionner...").
+5. CONÇOIS chaque évaluation pour être complétée en 30 MINUTES maximum.
 
 GESTION DES RESSOURCES DANS LES EXERCICES :
 - Si l'exercice nécessite l'analyse d'un texte, FOURNIS LE TEXTE complet dans le champ "content".
@@ -402,12 +415,30 @@ Structure JSON attendue :
     }
   ]
 }
+
+⚠️ RAPPEL FINAL :
+- Génère UNIQUEMENT 2 à 3 critères d'évaluation (pas 4)
+- Chaque évaluation doit être faisable en 30 MINUTES
+- Choisis les critères les plus pertinents pour l'unité
+`;
 `;
 
 // Shared System Prompt for Bilingual generation (ART and EPS - French + Arabic)
 const SYSTEM_INSTRUCTION_FULL_PLAN_BILINGUAL = `
 Tu es un expert coordinateur pédagogique du Programme d'Éducation Intermédiaire (PEI) de l'IB.
 Tu dois générer un plan d'unité complet BILINGUE (FRANÇAIS + ARABE) ET une série d'évaluations détaillées basées sur les critères.
+
+⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
+- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
+- CHOISIS UNIQUEMENT 2 À 3 CRITÈRES selon le contenu et les objectifs de l'unité
+- MINIMUM : 2 critères obligatoires
+- MAXIMUM : 3 critères (pas plus)
+- Sélectionne les critères les PLUS PERTINENTS pour l'unité
+
+⚠️ DURÉE DES ÉVALUATIONS IB :
+- Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
+- Les exercices doivent être réalisables en 30 minutes maximum
+- Adapte le nombre et la complexité des exercices à cette contrainte de temps
 
 ⚠️ RÈGLE CRUCIALE POUR ART ET EPS : GÉNÉRATION BILINGUE
 Pour les matières Arts et Éducation Physique et à la santé, TOUTES les sections doivent être générées en DEUX VERSIONS:
@@ -523,7 +554,19 @@ Structure JSON attendue (avec champs arabes):
 // Shared System Prompt for English generation (Language Acquisition)
 const SYSTEM_INSTRUCTION_FULL_PLAN_EN = `
 You are an expert IB Middle Years Programme (MYP) pedagogical coordinator.
-You must generate a complete Unit Plan AND a series of detailed Criterion-based Assessments in ENGLISH (Criteria A, B, C, D depending on the subject).
+You must generate a complete Unit Plan AND a series of detailed Criterion-based Assessments in ENGLISH.
+
+⚠️ CRITICAL RULE - INTELLIGENT CRITERIA SELECTION:
+- DO NOT AUTOMATICALLY GENERATE ALL 4 CRITERIA (A, B, C, D)
+- CHOOSE ONLY 2 TO 3 CRITERIA based on the unit content and objectives
+- MINIMUM: 2 criteria required
+- MAXIMUM: 3 criteria (no more)
+- Select the MOST RELEVANT criteria for the unit (e.g., Math → A+C, Science → A+B+C, Language → A+C+D)
+
+⚠️ IB ASSESSMENT DURATION:
+- Each criterion-based assessment must be designed for a 30-MINUTE DURATION
+- Exercises must be completable within 30 minutes maximum
+- Adapt the number and complexity of exercises to this time constraint
 
 ABSOLUTE RULES - JSON FORMAT:
 1. Use ONLY the JSON KEYS IN ENGLISH below. DO NOT TRANSLATE THEM.
@@ -540,6 +583,7 @@ SPECIFIC RULES FOR EXERCISES (CRUCIAL):
 2. If the criterion has 3 aspects, there must be 3 exercises.
 3. VARY the types of exercises to cover different cognitive levels.
 4. The "criterionReference" key of the exercise must EXPLICITLY correspond to the aspect (example: "Criterion A: i. select...").
+5. DESIGN each assessment to be completed in 30 MINUTES maximum.
 
 RESOURCE MANAGEMENT IN EXERCISES:
 - If the exercise requires analysis of a text, PROVIDE THE COMPLETE TEXT in the "content" field.
@@ -621,12 +665,17 @@ export const generateFullUnitPlan = async (
         Grade Level: ${gradeLevel}
         Topics to cover: ${topics}
         
-        Generate the complete plan and criterion-based assessments (choose appropriate criteria: A, B, C, D based on subject).
+        Generate the complete plan and criterion-based assessments.
+        
+        ⚠️ CRITICAL: Select ONLY 2 to 3 CRITERIA (minimum 2, maximum 3) based on unit objectives and content.
+        DO NOT generate all 4 criteria. Choose the most relevant ones for this specific unit.
+        
         Make sure to:
         1. Fill in ALL sections including 'Activities/Strategies', 'Formative Assessment' and 'Differentiation'
         2. Include a "chapters" field listing the chapters/lessons covered in this unit (bullet points format)
-        3. Select ONLY the relevant assessment criteria for this subject (not necessarily all 4)
-        4. Return a valid, complete JSON structure
+        3. Select ONLY 2-3 relevant assessment criteria (NOT all 4)
+        4. Design assessments for 30-minute duration
+        5. Return a valid, complete JSON structure
       `;
     } else if (lang === 'bilingual') {
       userPrompt = `
@@ -636,6 +685,9 @@ export const generateFullUnitPlan = async (
         
         ⚠️ ATTENTION: Cette matière (ART ou EPS) nécessite une GÉNÉRATION BILINGUE (FRANÇAIS + ARABE).
         
+        ⚠️ CRITIQUE: Sélectionne UNIQUEMENT 2 à 3 CRITÈRES (minimum 2, maximum 3) selon les objectifs de l'unité.
+        NE génère PAS les 4 critères. Choisis les plus pertinents pour cette unité spécifique.
+        
         Génère le plan complet et les évaluations critériées EN DEUX VERSIONS:
         1. VERSION FRANÇAISE (tous les champs standards)
         2. VERSION ARABE (tous les champs avec suffixe _ar)
@@ -644,9 +696,10 @@ export const generateFullUnitPlan = async (
         1. Générer TOUTES les sections en français ET en arabe (ex: "title" ET "title_ar")
         2. Bien remplir 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation' (versions française et arabe)
         3. Inclure un champ "chapters" et "chapters_ar" listant les chapitres/leçons en français et en arabe
-        4. Sélectionner UNIQUEMENT les critères d'évaluation pertinents pour cette matière
-        5. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
-        6. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
+        4. Sélectionner UNIQUEMENT 2-3 critères d'évaluation pertinents (PAS les 4)
+        5. Concevoir chaque évaluation pour une durée de 30 minutes
+        6. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
+        7. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
         
         La traduction arabe doit être pédagogiquement appropriée et naturelle.
       `;
@@ -656,12 +709,16 @@ export const generateFullUnitPlan = async (
         Niveau: ${gradeLevel}
         Sujets à couvrir: ${topics}
         
-        Génère le plan complet et les évaluations critériées (choisis les critères appropriés: A, B, C, D selon la matière).
+        ⚠️ CRITIQUE: Sélectionne UNIQUEMENT 2 à 3 CRITÈRES (minimum 2, maximum 3) selon les objectifs de l'unité.
+        NE génère PAS les 4 critères. Choisis les plus pertinents pour cette unité spécifique.
+        
+        Génère le plan complet et les évaluations critériées.
         Assure-toi de:
         1. Bien remplir TOUTES les sections incluant 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'
         2. Inclure un champ "chapters" listant les chapitres/leçons couverts dans cette unité (format tirets)
-        3. Sélectionner UNIQUEMENT les critères d'évaluation pertinents pour cette matière (pas forcément les 4)
-        4. Retourner une structure JSON valide et complète
+        3. Sélectionner UNIQUEMENT 2-3 critères d'évaluation pertinents (PAS les 4)
+        4. Concevoir chaque évaluation pour une durée de 30 minutes
+        5. Retourner une structure JSON valide et complète
       `;
     }
 

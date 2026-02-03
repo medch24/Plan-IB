@@ -114,7 +114,8 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
         semester: `Semestre ${semester}` as any,
         chapters,
         teacherName: teacherName || undefined,
-        className: grade
+        className: grade,
+        examType: examType as 'Examen' | 'Évaluation' // NOUVEAU: Passer le type
       });
       
       // CORRECTION: S'assurer que subject et grade sont correctement assignés

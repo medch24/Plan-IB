@@ -193,4 +193,5 @@ export interface ExamGenerationConfig {
   className?: string;
   includeTextResource?: boolean; // Pour Français/Anglais
   includeGraphResource?: boolean; // Pour Sciences/Maths
+  examType?: 'Examen' | 'Évaluation'; // Type: Examen (2H) ou Évaluation (40 min)
 }
