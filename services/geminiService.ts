@@ -334,16 +334,31 @@ Tu es un expert pédagogique du Programme d'Éducation Intermédiaire (PEI) de l
 Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critériées détaillées en Français.
 
 ⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
-- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
+- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D) pour une seule unité
 - Le choix des critères est ÉTROITEMENT LIÉ au contenu de l'unité et aux exigences de l'IB
-- IDÉAL : 2 critères spécifiques par unité (les plus pertinents)
-- MAXIMUM : 3 critères (si un troisième critère peut aussi être évalué de manière pertinente)
-- MINIMUM : 2 critères obligatoires
-- Sélectionne les critères selon :
+
+⚠️ PRINCIPE FONDAMENTAL IB :
+- À LA FIN DU SEMESTRE (après 2 unités), les 4 critères (A, B, C, D) doivent être couverts
+- CHAQUE UNITÉ évalue UNIQUEMENT les critères les plus pertinents pour son contenu
+
+⚠️ NOMBRE DE CRITÈRES PAR UNITÉ :
+- STANDARD : 2 critères par unité (le plus courant et RECOMMANDÉ)
+  * Choisis les 2 critères les PLUS CONVENABLES selon le contenu de l'unité
+  * Exemple : Unité sur algèbre → Critères A + C
+  * Exemple : Unité sur recherche → Critères B + D
+- EXCEPTIONNEL : 3 critères par unité (SEULEMENT si vraiment nécessaire)
+  * Uniquement si l'unité DOIT OBLIGATOIREMENT être évaluée par ces 3 critères
+  * C'est le PIRE DES CAS, à éviter si possible
+- JAMAIS : 4 critères dans une seule unité (interdit)
+
+⚠️ SÉLECTION DES CRITÈRES :
+- Choisis les critères les PLUS CONVENABLES selon :
   * Le contenu spécifique de l'unité
-  * Les objectifs d'apprentissage
-  * Les compétences visées
-  * Les exigences IB pour cette matière
+  * Les objectifs d'apprentissage visés
+  * Les compétences à développer
+  * La cohérence pédagogique
+- Assure-toi que les critères choisis sont VRAIMENT pertinents pour cette unité
+- Pense à la complémentarité avec d'autres unités du semestre
 
 ⚠️ SOUS-ASPECTS FLEXIBLES :
 - Les sous-aspects (i, ii, iii, iv, v) dépendent AUSSI du contenu de l'unité
@@ -427,9 +442,11 @@ Structure JSON attendue :
   ]
 }
 
-⚠️ RAPPEL FINAL :
-- IDÉAL : 2 critères spécifiques par unité (selon le contenu et les exigences IB)
-- MAXIMUM : 3 critères (si un troisième est vraiment pertinent)
+⚠️ RAPPEL FINAL - RÈGLES DES CRITÈRES :
+- STANDARD : 2 critères par unité (choisis les PLUS CONVENABLES selon le contenu)
+- EXCEPTIONNEL : 3 critères (SEULEMENT si l'unité doit OBLIGATOIREMENT être évaluée par ces 3 critères - c'est le PIRE DES CAS)
+- JAMAIS : 4 critères dans une seule unité
+- IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
 - Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
 - Possibilité de combiner 2-3 sous-aspects dans un même exercice
 - Chaque évaluation doit être faisable en 30 MINUTES
@@ -441,10 +458,11 @@ Tu es un expert coordinateur pédagogique du Programme d'Éducation Intermédiai
 Tu dois générer un plan d'unité complet BILINGUE (FRANÇAIS + ARABE) ET une série d'évaluations détaillées basées sur les critères.
 
 ⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
-- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
-- Le choix des critères est ÉTROITEMENT LIÉ au contenu de l'unité et aux exigences de l'IB
-- IDÉAL : 2 critères spécifiques par unité
-- MAXIMUM : 3 critères (si un troisième est vraiment pertinent)
+- NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D) pour une seule unité
+- PRINCIPE FONDAMENTAL : À la fin du semestre (2 unités), les 4 critères doivent être couverts
+- STANDARD : 2 critères par unité (choisis les PLUS CONVENABLES selon le contenu)
+- EXCEPTIONNEL : 3 critères (SEULEMENT si l'unité doit OBLIGATOIREMENT être évaluée par ces 3 critères)
+- JAMAIS : 4 critères dans une seule unité
 - Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
 - Possibilité de combiner 2-3 sous-aspects dans un même exercice
 
@@ -570,10 +588,11 @@ You are an expert IB Middle Years Programme (MYP) pedagogical coordinator.
 You must generate a complete Unit Plan AND a series of detailed Criterion-based Assessments in ENGLISH.
 
 ⚠️ CRITICAL RULE - INTELLIGENT CRITERIA SELECTION:
-- DO NOT AUTOMATICALLY GENERATE ALL 4 CRITERIA (A, B, C, D)
-- Criteria selection is CLOSELY LINKED to unit content and IB requirements
-- IDEAL: 2 specific criteria per unit (most relevant)
-- MAXIMUM: 3 criteria (if a third is truly relevant)
+- DO NOT AUTOMATICALLY GENERATE ALL 4 CRITERIA (A, B, C, D) for a single unit
+- FUNDAMENTAL PRINCIPLE: At the end of the semester (2 units), all 4 criteria must be covered
+- STANDARD: 2 criteria per unit (choose the MOST SUITABLE based on content)
+- EXCEPTIONAL: 3 criteria (ONLY if the unit MUST be assessed by these 3 criteria)
+- NEVER: 4 criteria in a single unit
 - Sub-aspects (i, ii, iii, iv, v) are FLEXIBLE based on unit content
 - You CAN combine 2-3 sub-aspects in a SINGLE exercise
 
@@ -682,16 +701,18 @@ export const generateFullUnitPlan = async (
         
         Generate the complete plan and criterion-based assessments.
         
-        ⚠️ CRITICAL: 
-        - IDEAL: Select 2 specific criteria based on unit content and IB requirements
-        - MAXIMUM: 3 criteria (only if a third is truly relevant)
+        ⚠️ CRITICAL CRITERIA SELECTION: 
+        - STANDARD: Select 2 MOST SUITABLE criteria based on unit content
+        - EXCEPTIONAL: 3 criteria ONLY if unit MUST be assessed by these 3 criteria (worst case)
+        - NEVER: 4 criteria in one unit
+        - REMEMBER: Over 2 units (semester), all 4 criteria (A, B, C, D) must be covered
         - Sub-aspects (i, ii, iii, iv, v) are flexible - adapt to unit content
         - You CAN combine 2-3 sub-aspects in a single exercise
         
         Make sure to:
         1. Fill in ALL sections including 'Activities/Strategies', 'Formative Assessment' and 'Differentiation'
         2. Include a "chapters" field listing the chapters/lessons covered in this unit (bullet points format)
-        3. Select IDEAL: 2 criteria, MAX: 3 criteria (based on unit content and IB requirements)
+        3. Select STANDARD: 2 criteria (most suitable), EXCEPTIONAL: 3 criteria (if truly necessary)
         4. Adapt sub-aspects to unit content (can combine multiple in one exercise)
         5. Design assessments for 30-minute duration
         6. Return a valid, complete JSON structure
@@ -704,9 +725,11 @@ export const generateFullUnitPlan = async (
         
         ⚠️ ATTENTION: Cette matière (ART ou EPS) nécessite une GÉNÉRATION BILINGUE (FRANÇAIS + ARABE).
         
-        ⚠️ CRITIQUE: 
-        - IDÉAL : Sélectionne 2 critères spécifiques selon le contenu de l'unité et les exigences IB
-        - MAXIMUM : 3 critères (seulement si un troisième est vraiment pertinent)
+        ⚠️ CRITIQUE - SÉLECTION DES CRITÈRES: 
+        - STANDARD : Sélectionne 2 critères LES PLUS CONVENABLES selon le contenu de l'unité
+        - EXCEPTIONNEL : 3 critères SEULEMENT si l'unité DOIT OBLIGATOIREMENT être évaluée par ces 3 critères (pire des cas)
+        - JAMAIS : 4 critères dans une seule unité
+        - IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
         - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
         - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
         
@@ -718,7 +741,7 @@ export const generateFullUnitPlan = async (
         1. Générer TOUTES les sections en français ET en arabe (ex: "title" ET "title_ar")
         2. Bien remplir 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation' (versions française et arabe)
         3. Inclure un champ "chapters" et "chapters_ar" listant les chapitres/leçons en français et en arabe
-        4. Sélectionner IDÉAL: 2 critères, MAX: 3 critères (selon contenu et exigences IB)
+        4. Sélectionner STANDARD: 2 critères (les plus convenables), EXCEPTIONNEL: 3 critères (si vraiment nécessaire)
         5. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
         6. Concevoir chaque évaluation pour une durée de 30 minutes
         7. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
@@ -732,9 +755,11 @@ export const generateFullUnitPlan = async (
         Niveau: ${gradeLevel}
         Sujets à couvrir: ${topics}
         
-        ⚠️ CRITIQUE: 
-        - IDÉAL : Sélectionne 2 critères spécifiques selon le contenu de l'unité et les exigences IB
-        - MAXIMUM : 3 critères (seulement si un troisième est vraiment pertinent)
+        ⚠️ CRITIQUE - SÉLECTION DES CRITÈRES: 
+        - STANDARD : Sélectionne 2 critères LES PLUS CONVENABLES selon le contenu de l'unité
+        - EXCEPTIONNEL : 3 critères SEULEMENT si l'unité DOIT OBLIGATOIREMENT être évaluée par ces 3 critères (pire des cas)
+        - JAMAIS : 4 critères dans une seule unité
+        - IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
         - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
         - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
         
@@ -742,7 +767,7 @@ export const generateFullUnitPlan = async (
         Assure-toi de:
         1. Bien remplir TOUTES les sections incluant 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'
         2. Inclure un champ "chapters" listant les chapitres/leçons couverts dans cette unité (format tirets)
-        3. Sélectionner IDÉAL: 2 critères, MAX: 3 critères (selon contenu et exigences IB)
+        3. Sélectionner STANDARD: 2 critères (les plus convenables), EXCEPTIONNEL: 3 critères (si vraiment nécessaire)
         4. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
         5. Concevoir chaque évaluation pour une durée de 30 minutes
         6. Retourner une structure JSON valide et complète
