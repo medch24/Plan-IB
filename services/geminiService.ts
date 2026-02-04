@@ -335,10 +335,20 @@ Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critéri
 
 ⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
 - NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
-- CHOISIS UNIQUEMENT 2 À 3 CRITÈRES selon le contenu et les objectifs de l'unité
+- Le choix des critères est ÉTROITEMENT LIÉ au contenu de l'unité et aux exigences de l'IB
+- IDÉAL : 2 critères spécifiques par unité (les plus pertinents)
+- MAXIMUM : 3 critères (si un troisième critère peut aussi être évalué de manière pertinente)
 - MINIMUM : 2 critères obligatoires
-- MAXIMUM : 3 critères (pas plus)
-- Sélectionne les critères les PLUS PERTINENTS pour l'unité (ex: Mathématiques → A+C, Sciences → A+B+C, Langue → A+C+D)
+- Sélectionne les critères selon :
+  * Le contenu spécifique de l'unité
+  * Les objectifs d'apprentissage
+  * Les compétences visées
+  * Les exigences IB pour cette matière
+
+⚠️ SOUS-ASPECTS FLEXIBLES :
+- Les sous-aspects (i, ii, iii, iv, v) dépendent AUSSI du contenu de l'unité
+- Il est POSSIBLE de combiner 2-3 sous-aspects dans un MÊME exercice
+- Adapter le nombre de sous-aspects selon la complexité et le contenu de l'unité
 
 ⚠️ DURÉE DES ÉVALUATIONS IB :
 - Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
@@ -356,11 +366,12 @@ CHAMPS OBLIGATOIRES ET DÉTAILLÉS :
 - "differentiation": Précise les stratégies de DIFFÉRENCIATION (Contenu, Processus, Produit) pour les élèves en difficulté et avancés.
 
 RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
-1. Pour CHAQUE aspect (strand) listé dans "strands" (ex: i, ii, iii), tu DOIS générer EXACTEMENT UN exercice correspondant.
-2. Si le critère a 3 aspects, il doit y avoir 3 exercices.
-3. VARIE les types d'exercices pour couvrir différents niveaux cognitifs.
-4. La clé "criterionReference" de l'exercice doit correspondre EXPLICITEMENT à l'aspect (exemple: "Critère A : i. sélectionner...").
-5. CONÇOIS chaque évaluation pour être complétée en 30 MINUTES maximum.
+1. Les aspects (strands) à évaluer (i, ii, iii, iv, v) dépendent du CONTENU de l'unité.
+2. Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice si cela est pertinent.
+3. Exemple : Un exercice peut évaluer à la fois "i. sélectionner" ET "ii. appliquer".
+4. VARIE les types d'exercices pour couvrir différents niveaux cognitifs.
+5. La clé "criterionReference" de l'exercice doit indiquer TOUS les aspects évalués (exemple: "Critère A : i. et ii." ou "Critère A : i.").
+6. CONÇOIS chaque évaluation pour être complétée en 30 MINUTES maximum.
 
 GESTION DES RESSOURCES DANS LES EXERCICES :
 - Si l'exercice nécessite l'analyse d'un texte, FOURNIS LE TEXTE complet dans le champ "content".
@@ -417,9 +428,11 @@ Structure JSON attendue :
 }
 
 ⚠️ RAPPEL FINAL :
-- Génère UNIQUEMENT 2 à 3 critères d'évaluation (pas 4)
+- IDÉAL : 2 critères spécifiques par unité (selon le contenu et les exigences IB)
+- MAXIMUM : 3 critères (si un troisième est vraiment pertinent)
+- Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
+- Possibilité de combiner 2-3 sous-aspects dans un même exercice
 - Chaque évaluation doit être faisable en 30 MINUTES
-- Choisis les critères les plus pertinents pour l'unité
 `;
 
 // Shared System Prompt for Bilingual generation (ART and EPS - French + Arabic)
@@ -429,10 +442,11 @@ Tu dois générer un plan d'unité complet BILINGUE (FRANÇAIS + ARABE) ET une s
 
 ⚠️ RÈGLE CRITIQUE - SÉLECTION INTELLIGENTE DES CRITÈRES :
 - NE GÉNÈRE PAS AUTOMATIQUEMENT LES 4 CRITÈRES (A, B, C, D)
-- CHOISIS UNIQUEMENT 2 À 3 CRITÈRES selon le contenu et les objectifs de l'unité
-- MINIMUM : 2 critères obligatoires
-- MAXIMUM : 3 critères (pas plus)
-- Sélectionne les critères les PLUS PERTINENTS pour l'unité
+- Le choix des critères est ÉTROITEMENT LIÉ au contenu de l'unité et aux exigences de l'IB
+- IDÉAL : 2 critères spécifiques par unité
+- MAXIMUM : 3 critères (si un troisième est vraiment pertinent)
+- Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
+- Possibilité de combiner 2-3 sous-aspects dans un même exercice
 
 ⚠️ DURÉE DES ÉVALUATIONS IB :
 - Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
@@ -557,10 +571,11 @@ You must generate a complete Unit Plan AND a series of detailed Criterion-based 
 
 ⚠️ CRITICAL RULE - INTELLIGENT CRITERIA SELECTION:
 - DO NOT AUTOMATICALLY GENERATE ALL 4 CRITERIA (A, B, C, D)
-- CHOOSE ONLY 2 TO 3 CRITERIA based on the unit content and objectives
-- MINIMUM: 2 criteria required
-- MAXIMUM: 3 criteria (no more)
-- Select the MOST RELEVANT criteria for the unit (e.g., Math → A+C, Science → A+B+C, Language → A+C+D)
+- Criteria selection is CLOSELY LINKED to unit content and IB requirements
+- IDEAL: 2 specific criteria per unit (most relevant)
+- MAXIMUM: 3 criteria (if a third is truly relevant)
+- Sub-aspects (i, ii, iii, iv, v) are FLEXIBLE based on unit content
+- You CAN combine 2-3 sub-aspects in a SINGLE exercise
 
 ⚠️ IB ASSESSMENT DURATION:
 - Each criterion-based assessment must be designed for a 30-MINUTE DURATION
@@ -578,11 +593,12 @@ MANDATORY AND DETAILED FIELDS:
 - "differentiation": Specify DIFFERENTIATION strategies (Content, Process, Product) for struggling and advanced students.
 
 SPECIFIC RULES FOR EXERCISES (CRUCIAL):
-1. For EACH aspect (strand) listed in "strands" (e.g., i, ii, iii), you MUST generate EXACTLY ONE corresponding exercise.
-2. If the criterion has 3 aspects, there must be 3 exercises.
-3. VARY the types of exercises to cover different cognitive levels.
-4. The "criterionReference" key of the exercise must EXPLICITLY correspond to the aspect (example: "Criterion A: i. select...").
-5. DESIGN each assessment to be completed in 30 MINUTES maximum.
+1. Aspects (strands) to assess (i, ii, iii, iv, v) depend on the unit CONTENT.
+2. You CAN combine 2-3 sub-aspects in a SINGLE exercise if relevant.
+3. Example: One exercise can assess both "i. select" AND "ii. apply".
+4. VARY the types of exercises to cover different cognitive levels.
+5. The "criterionReference" must indicate ALL aspects assessed (e.g., "Criterion A: i. and ii." or "Criterion A: i.").
+6. DESIGN each assessment to be completed in 30 MINUTES maximum.
 
 RESOURCE MANAGEMENT IN EXERCISES:
 - If the exercise requires analysis of a text, PROVIDE THE COMPLETE TEXT in the "content" field.
@@ -666,15 +682,19 @@ export const generateFullUnitPlan = async (
         
         Generate the complete plan and criterion-based assessments.
         
-        ⚠️ CRITICAL: Select ONLY 2 to 3 CRITERIA (minimum 2, maximum 3) based on unit objectives and content.
-        DO NOT generate all 4 criteria. Choose the most relevant ones for this specific unit.
+        ⚠️ CRITICAL: 
+        - IDEAL: Select 2 specific criteria based on unit content and IB requirements
+        - MAXIMUM: 3 criteria (only if a third is truly relevant)
+        - Sub-aspects (i, ii, iii, iv, v) are flexible - adapt to unit content
+        - You CAN combine 2-3 sub-aspects in a single exercise
         
         Make sure to:
         1. Fill in ALL sections including 'Activities/Strategies', 'Formative Assessment' and 'Differentiation'
         2. Include a "chapters" field listing the chapters/lessons covered in this unit (bullet points format)
-        3. Select ONLY 2-3 relevant assessment criteria (NOT all 4)
-        4. Design assessments for 30-minute duration
-        5. Return a valid, complete JSON structure
+        3. Select IDEAL: 2 criteria, MAX: 3 criteria (based on unit content and IB requirements)
+        4. Adapt sub-aspects to unit content (can combine multiple in one exercise)
+        5. Design assessments for 30-minute duration
+        6. Return a valid, complete JSON structure
       `;
     } else if (lang === 'bilingual') {
       userPrompt = `
@@ -684,8 +704,11 @@ export const generateFullUnitPlan = async (
         
         ⚠️ ATTENTION: Cette matière (ART ou EPS) nécessite une GÉNÉRATION BILINGUE (FRANÇAIS + ARABE).
         
-        ⚠️ CRITIQUE: Sélectionne UNIQUEMENT 2 à 3 CRITÈRES (minimum 2, maximum 3) selon les objectifs de l'unité.
-        NE génère PAS les 4 critères. Choisis les plus pertinents pour cette unité spécifique.
+        ⚠️ CRITIQUE: 
+        - IDÉAL : Sélectionne 2 critères spécifiques selon le contenu de l'unité et les exigences IB
+        - MAXIMUM : 3 critères (seulement si un troisième est vraiment pertinent)
+        - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
+        - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
         
         Génère le plan complet et les évaluations critériées EN DEUX VERSIONS:
         1. VERSION FRANÇAISE (tous les champs standards)
@@ -695,10 +718,11 @@ export const generateFullUnitPlan = async (
         1. Générer TOUTES les sections en français ET en arabe (ex: "title" ET "title_ar")
         2. Bien remplir 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation' (versions française et arabe)
         3. Inclure un champ "chapters" et "chapters_ar" listant les chapitres/leçons en français et en arabe
-        4. Sélectionner UNIQUEMENT 2-3 critères d'évaluation pertinents (PAS les 4)
-        5. Concevoir chaque évaluation pour une durée de 30 minutes
-        6. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
-        7. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
+        4. Sélectionner IDÉAL: 2 critères, MAX: 3 critères (selon contenu et exigences IB)
+        5. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
+        6. Concevoir chaque évaluation pour une durée de 30 minutes
+        7. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
+        8. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
         
         La traduction arabe doit être pédagogiquement appropriée et naturelle.
       `;
@@ -708,16 +732,20 @@ export const generateFullUnitPlan = async (
         Niveau: ${gradeLevel}
         Sujets à couvrir: ${topics}
         
-        ⚠️ CRITIQUE: Sélectionne UNIQUEMENT 2 à 3 CRITÈRES (minimum 2, maximum 3) selon les objectifs de l'unité.
-        NE génère PAS les 4 critères. Choisis les plus pertinents pour cette unité spécifique.
+        ⚠️ CRITIQUE: 
+        - IDÉAL : Sélectionne 2 critères spécifiques selon le contenu de l'unité et les exigences IB
+        - MAXIMUM : 3 critères (seulement si un troisième est vraiment pertinent)
+        - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
+        - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
         
         Génère le plan complet et les évaluations critériées.
         Assure-toi de:
         1. Bien remplir TOUTES les sections incluant 'Activités/Stratégies', 'Évaluation formative' et 'Différenciation'
         2. Inclure un champ "chapters" listant les chapitres/leçons couverts dans cette unité (format tirets)
-        3. Sélectionner UNIQUEMENT 2-3 critères d'évaluation pertinents (PAS les 4)
-        4. Concevoir chaque évaluation pour une durée de 30 minutes
-        5. Retourner une structure JSON valide et complète
+        3. Sélectionner IDÉAL: 2 critères, MAX: 3 critères (selon contenu et exigences IB)
+        4. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
+        5. Concevoir chaque évaluation pour une durée de 30 minutes
+        6. Retourner une structure JSON valide et complète
       `;
     }
 

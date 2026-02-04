@@ -3,6 +3,10 @@ import { saveAs } from 'file-saver';
 import { Packer } from 'docx';
 import { Exam, QuestionType } from '../types';
 
+// Configuration globale du formatage
+const FONT_NAME = 'Times New Roman';
+const LINE_SPACING = 360; // Interligne 1,5 (240 * 1.5 = 360 en twips)
+
 // Fonction pour créer l'en-tête du document (tableau)
 const createHeader = (exam: Exam): Table => {
   return new Table({
@@ -28,8 +32,13 @@ const createHeader = (exam: Exam): Table => {
                   new TextRun({
                     text: `Examen ${exam.subject}`,
                     bold: true,
+                    font: FONT_NAME,
                   }),
                 ],
+                spacing: {
+                  line: LINE_SPACING,
+                  
+                },
               }),
             ],
             rowSpan: 5,
@@ -151,13 +160,21 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
           text: `${exerciseLabel} ${index + 1} : ${question.title}`,
           bold: true,
           size: 24, // 12pt
+          font: FONT_NAME,
         }),
         new TextRun({
           text: ` (${question.points} ${pointsLabel})`,
           size: 24,
+                  font: FONT_NAME,
+          font: FONT_NAME,
         }),
       ],
-      spacing: { before: 240, after: 120 },
+      spacing: {
+        before: 120, // Réduire l'espace avant
+        after: 80,   // Réduire l'espace après
+        line: LINE_SPACING,
+        
+      },
     })
   );
   
@@ -169,9 +186,14 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
           text: question.content,
           bold: true,
           size: 22, // 11pt
+          font: FONT_NAME,
         }),
       ],
-      spacing: { after: 120 },
+      spacing: {
+        after: 80, // Réduire l'espace après
+        line: LINE_SPACING,
+        
+      },
     })
   );
   
@@ -186,6 +208,7 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
                 new TextRun({
                   text: `☐ ${String.fromCharCode(65 + i)}. ${opt}`,
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 60 },
@@ -205,6 +228,7 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
                 new TextRun({
                   text: `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)`,
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 60 },
@@ -216,6 +240,7 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
                 new TextRun({
                   text: '   ☐ Vrai   ☐ Faux',
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 120 },
@@ -233,6 +258,7 @@ const createQuestionParagraphs = (question: any, index: number, isEnglish: boole
             new TextRun({
               text: '............................................................................................................................',
               size: 22,
+                  font: FONT_NAME,
             }),
           ],
           spacing: { after: 120 },
@@ -259,10 +285,12 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
           text: `${exerciseLabel} ${index + 1} : ${question.title}`,
           bold: true,
           size: 24,
+                  font: FONT_NAME,
         }),
         new TextRun({
           text: ` (${question.points} ${pointsLabel})`,
           size: 24,
+                  font: FONT_NAME,
         }),
       ],
       spacing: { before: 240, after: 120 },
@@ -277,6 +305,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
           text: question.content,
           bold: true,
           size: 22,
+                  font: FONT_NAME,
         }),
       ],
       spacing: { after: 120 },
@@ -295,6 +324,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
             new TextRun({
               text: `☐ ${letter}. ${opt}`,
               size: 22,
+                  font: FONT_NAME,
             }),
           ];
           
@@ -305,6 +335,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                 bold: true,
                 color: 'FF0000', // Rouge
                 size: 22,
+                  font: FONT_NAME,
               })
             );
           }
@@ -326,6 +357,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                   bold: true,
                   color: 'FF0000',
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 120 },
@@ -347,6 +379,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                 new TextRun({
                   text: `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)`,
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 60 },
@@ -359,6 +392,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                 new TextRun({
                   text: '   ☐ Vrai   ☐ Faux',
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 60 },
@@ -373,6 +407,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                   bold: true,
                   color: 'FF0000',
                   size: 22,
+                  font: FONT_NAME,
                 }),
               ],
               spacing: { after: 120 },
@@ -392,6 +427,7 @@ const createQuestionWithCorrectionParagraphs = (question: any, index: number, is
                 bold: true,
                 color: 'FF0000',
                 size: 22,
+                  font: FONT_NAME,
               }),
             ],
             spacing: { after: 120 },
@@ -432,6 +468,7 @@ export const exportExamToWordNative = async (exam: Exam): Promise<void> => {
                 text: 'LES ÉCOLES INTERNATIONALES AL KAWTHAR',
                 bold: true,
                 size: 28,
+                  font: FONT_NAME,
               }),
             ],
             alignment: AlignmentType.CENTER,
@@ -522,6 +559,7 @@ export const exportExamCorrectionToWordNative = async (exam: Exam): Promise<void
                 text: 'LES ÉCOLES INTERNATIONALES AL KAWTHAR',
                 bold: true,
                 size: 28,
+                  font: FONT_NAME,
               }),
             ],
             alignment: AlignmentType.CENTER,
@@ -561,6 +599,7 @@ const generateCorrectionParagraphs = (exam: Exam, isEnglish: boolean): Paragraph
                 text: sectionName.toUpperCase(),
                 bold: true,
                 size: 26,
+                  font: FONT_NAME,
               }),
             ],
             spacing: { before: 360, after: 240 },

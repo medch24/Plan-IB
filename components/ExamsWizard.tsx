@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Exam, ExamGrade } from '../types';
 import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User, ClipboardCheck } from 'lucide-react';
 import { generateExam } from '../services/examGeminiService';
-import { exportExamToWord, exportExamCorrectionToWord } from '../services/examWordExportService';
+import { exportExamToWordNative as exportExamToWord, exportExamCorrectionToWordNative as exportExamCorrectionToWord } from '../services/examWordExportNative';
 import { saveExamToDatabase } from '../services/examDatabaseService';
 
 interface ExamsWizardProps {
@@ -14,13 +14,13 @@ enum ExamType {
   EVALUATION = 'Évaluation'
 }
 
-// Classes françaises (système indépendant du PEI)
+// Classes PEI et lycée
 const EXAM_GRADES: { value: ExamGrade; label: string }[] = [
-  { value: ExamGrade.SIXIEME, label: '6ème' },
-  { value: ExamGrade.CINQUIEME, label: '5ème' },
-  { value: ExamGrade.QUATRIEME, label: '4ème' },
-  { value: ExamGrade.TROISIEME, label: '3ème' },
-  { value: ExamGrade.SECONDE, label: 'Seconde' },
+  { value: ExamGrade.SIXIEME, label: 'PEI1 (6ème)' },
+  { value: ExamGrade.CINQUIEME, label: 'PEI2 (5ème)' },
+  { value: ExamGrade.QUATRIEME, label: 'PEI3 (4ème)' },
+  { value: ExamGrade.TROISIEME, label: 'PEI4 (3ème)' },
+  { value: ExamGrade.SECONDE, label: 'PEI5 (Seconde)' },
   { value: ExamGrade.PREMIERE, label: '1ère' },
   { value: ExamGrade.TERMINALE, label: 'Terminale' }
 ];

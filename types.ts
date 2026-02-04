@@ -92,11 +92,11 @@ export enum AppMode {
 }
 
 export enum ExamGrade {
-  SIXIEME = '6ème',
-  CINQUIEME = '5ème',
-  QUATRIEME = '4ème',
-  TROISIEME = '3ème',
-  SECONDE = 'Seconde',
+  SIXIEME = 'PEI1',
+  CINQUIEME = 'PEI2',
+  QUATRIEME = 'PEI3',
+  TROISIEME = 'PEI4',
+  SECONDE = 'PEI5',
   PREMIERE = '1ère',
   TERMINALE = 'Terminale'
 }

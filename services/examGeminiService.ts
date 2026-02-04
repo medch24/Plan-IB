@@ -76,8 +76,8 @@ const cleanJsonText = (text: string): string => {
 
 // Déterminer le style d'examen basé sur le grade
 const getExamStyle = (grade: ExamGrade): 'Brevet' | 'Bac' | 'Standard' => {
-  if (grade === ExamGrade.PEI4) return 'Brevet';
-  if (grade === ExamGrade.DP1 || grade === ExamGrade.DP2) return 'Bac';
+  if (grade === ExamGrade.TROISIEME) return 'Brevet'; // PEI4 (3ème)
+  if (grade === ExamGrade.PREMIERE || grade === ExamGrade.TERMINALE) return 'Bac';
   return 'Standard';
 };
 
@@ -121,7 +121,7 @@ Tu dois générer un examen ou une évaluation complet(e) et structuré(e).
 
 2. **ÉVALUATION (40 MINUTES)** :
    - Durée : 40 MINUTES (contrainte stricte)
-   - Barème : 30 points (5ème, 4ème, 3ème, Seconde, 1ère, Terminale) | 20 points (6ème uniquement)
+   - Barème : 30 points (PEI2, PEI3, PEI4, PEI5, 1ère, Terminale) | 20 points (PEI1 uniquement)
    - Niveau de difficulté : DIFFICILE
    - Exercices CONCIS et RAPIDES adaptés à 40 minutes
    - Couvre 1-2 chapitres spécifiques
@@ -133,8 +133,8 @@ RÈGLES ABSOLUES - BARÈME :
    - TOUTES les classes : EXACTEMENT 30 points
    
    **ÉVALUATION (40 MIN)** :
-   - Classes 5ème, 4ème, 3ème, Seconde, 1ère, Terminale : EXACTEMENT 30 points
-   - Classe 6ème UNIQUEMENT : EXACTEMENT 20 points
+   - Classes PEI2, PEI3, PEI4, PEI5, 1ère, Terminale : EXACTEMENT 30 points
+   - Classe PEI1 UNIQUEMENT : EXACTEMENT 20 points
    
 2. Niveau de difficulté selon le type (voir ci-dessus)
 3. Il doit y avoir EXACTEMENT 1 question de différenciation explicite (marquée comme telle).
@@ -293,14 +293,14 @@ STYLE D'EXAMEN PAR NIVEAU :
 - Pour Sciences : Exercices de spécialité, analyse de documents scientifiques
 - Niveau supérieur avec réflexion approfondie
 
-**Autres niveaux (6ème, 5ème, 4ème, Seconde)** :
-- Style standard adapté au niveau du collège/lycée
+**Autres niveaux (PEI1, PEI2, PEI3, PEI5)** :
+- Style standard adapté au niveau du PEI/lycée
 - Questions variées et progressives
 
 FORMAT JSON ATTENDU :
 {
   "title": "Titre de l'examen ou évaluation",
-  "totalPoints": EXAMEN: 30 (toutes classes) | ÉVALUATION: 30 (ou 20 pour 6ème uniquement),
+  "totalPoints": EXAMEN: 30 (toutes classes) | ÉVALUATION: 30 (ou 20 pour PEI1 uniquement),
   "duration": EXAMEN: "2H" | ÉVALUATION: "40 min",
   "difficulty": EXAMEN: "Difficile" | ÉVALUATION: "Difficile",
   "style": "Brevet" | "Bac" | "Standard",
@@ -523,7 +523,7 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     // Déterminer le total de points selon le type
     let expectedTotal: number;
     if (isEvaluation) {
-      // Évaluations: 20 pour 6ème, 30 pour les autres
+      // Évaluations: 20 pour PEI1, 30 pour les autres
       expectedTotal = config.grade === ExamGrade.SIXIEME ? 20 : 30;
     } else {
       // Examens: 30 pour toutes les classes
