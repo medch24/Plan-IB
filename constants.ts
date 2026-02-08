@@ -44,3 +44,6 @@ export const SUBJECTS = [
 
 export const PLAN_TEMPLATE_URL = "https://docs.google.com/document/d/144_yUOythmkjTsP9PA4k5YLOpRFyV7Zv/export?format=docx";
 export const EVAL_TEMPLATE_URL = "https://docs.google.com/document/d/15ASfn_LF-jsPh5CYn4FJvEBSpm31hPAA/export?format=docx";
+
+// URL du template Word pour les examens (depuis variable d'environnement Vercel)
+export const WORD_TEMPLATE_URL = "https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx";

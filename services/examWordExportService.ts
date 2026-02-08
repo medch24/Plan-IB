@@ -2,12 +2,13 @@ import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
 import { saveAs } from 'file-saver';
 import { Exam, QuestionType } from '../types';
+import { WORD_TEMPLATE_URL } from '../constants';
 
 // Charger le template Word depuis la variable d'environnement Vercel UNIQUEMENT
 const loadTemplate = async (): Promise<ArrayBuffer> => {
-  // URL FIXE du template Google Docs (configuré dans Vercel)
-  // Cette URL est celle configurée dans la variable d'environnement WORD_TEMPLATE_URL
-  const templateUrl = 'https://docs.google.com/document/d/1Gd7bZPsRNPbL5bpv_Pq6aAcSUgjF_FCR/export?format=docx';
+  // URL du template Google Docs (définie dans constants.ts)
+  // Cette URL correspond à la variable d'environnement WORD_TEMPLATE_URL configurée dans Vercel
+  const templateUrl = WORD_TEMPLATE_URL;
   
   // Ajouter un timestamp pour éviter le cache navigateur
   const urlWithCacheBust = `${templateUrl}&t=${Date.now()}`;
