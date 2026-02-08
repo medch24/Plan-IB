@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Exam, ExamGrade } from '../types';
 import { Check, ChevronRight, Loader2, Download, ArrowLeft, FileText, Calendar, BookOpen, User, ClipboardCheck } from 'lucide-react';
 import { generateExam } from '../services/examGeminiService';
-import { exportExamToWordNative as exportExamToWord, exportExamCorrectionToWordNative as exportExamCorrectionToWord } from '../services/examWordExportNative';
+import { exportExamToWord, exportExamCorrectionToWord } from '../services/examWordExportService';
 import { saveExamToDatabase } from '../services/examDatabaseService';
 
 interface ExamsWizardProps {
