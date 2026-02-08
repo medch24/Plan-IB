@@ -148,9 +148,11 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
     case QuestionType.VRAI_FAUX:
       if (question.statements && Array.isArray(question.statements)) {
         formatted += `\n`;
+        const trueLabel = isEnglish ? 'True' : 'Vrai';
+        const falseLabel = isEnglish ? 'False' : 'Faux';
         question.statements.forEach((stmt: any, i: number) => {
           const pointsPerStatement = question.pointsPerStatement || 1;
-          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n   ☐ Vrai   ☐ Faux\n\n`;
+          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n   ☐ ${trueLabel}   ☐ ${falseLabel}\n\n`;
         });
       }
       break;
@@ -215,9 +217,13 @@ const organizeQuestionsBySection = (questions: any[]): Map<string, any[]> => {
 const formatExercises = (exam: Exam): string => {
   let exercisesText = '';
   
-  // Détecter si c'est un examen d'anglais
-  const isEnglish = exam.subject?.toLowerCase().includes('anglais') || 
-                    exam.subject?.toLowerCase() === 'english';
+  // Détecter si c'est un examen d'anglais ou d'acquisition de langues
+  const subjectLower = exam.subject?.toLowerCase() || '';
+  const isEnglish = subjectLower.includes('anglais') || 
+                    subjectLower === 'english' ||
+                    subjectLower.includes('acquisition de langues') ||
+                    subjectLower.includes('acquisition de langue') ||
+                    subjectLower.includes('language acquisition');
   
   // Organiser les questions par sections
   if (exam.questions && exam.questions.length > 0) {
@@ -353,14 +359,16 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     case QuestionType.QCM:
       if (question.options && Array.isArray(question.options)) {
         formatted += `\n`;
+        const correctLabel = isEnglish ? 'CORRECT ANSWER' : 'RÉPONSE CORRECTE';
+        const explanationLabel = isEnglish ? 'EXPLANATION' : 'EXPLICATION';
         question.options.forEach((opt: string, i: number) => {
           const letter = String.fromCharCode(65 + i);
           const isCorrect = question.correctAnswer === letter;
-          const marker = isCorrect ? '[✓ RÉPONSE CORRECTE]' : '';
+          const marker = isCorrect ? `[✓ ${correctLabel}]` : '';
           formatted += `☐ ${letter}. ${convertLaTeXToText(opt)} ${marker}\n`;
         });
         if (question.answer) {
-          formatted += `\n[EXPLICATION: ${convertLaTeXToText(question.answer)}]`;
+          formatted += `\n[${explanationLabel}: ${convertLaTeXToText(question.answer)}]`;
         }
       }
       break;
@@ -368,12 +376,15 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     case QuestionType.VRAI_FAUX:
       if (question.statements && Array.isArray(question.statements)) {
         formatted += `\n`;
+        const trueLabel = isEnglish ? 'True' : 'Vrai';
+        const falseLabel = isEnglish ? 'False' : 'Faux';
+        const answerLabel = isEnglish ? 'ANSWER' : 'RÉPONSE';
         question.statements.forEach((stmt: any, i: number) => {
           const pointsPerStatement = question.pointsPerStatement || 1;
-          const correctAnswer = stmt.isTrue ? 'Vrai' : 'Faux';
+          const correctAnswer = stmt.isTrue ? trueLabel : falseLabel;
           formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n`;
-          formatted += `   ☐ Vrai   ☐ Faux\n`;
-          formatted += `   [✓ RÉPONSE: ${correctAnswer}]\n\n`;
+          formatted += `   ☐ ${trueLabel}   ☐ ${falseLabel}\n`;
+          formatted += `   [✓ ${answerLabel}: ${correctAnswer}]\n\n`;
         });
       }
       break;
@@ -388,7 +399,8 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
       
     default:
       if (question.answer) {
-        formatted += `\n[CORRECTION:\n${question.answer}]`;
+        const correctionLabel = isEnglish ? 'CORRECTION' : 'CORRECTION';
+        formatted += `\n[${correctionLabel}:\n${question.answer}]`;
       }
   }
   
@@ -399,8 +411,12 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
 const formatExercisesWithCorrections = (exam: Exam): string => {
   let exercisesText = '';
   
-  const isEnglish = exam.subject?.toLowerCase().includes('anglais') || 
-                    exam.subject?.toLowerCase() === 'english';
+  const subjectLower = exam.subject?.toLowerCase() || '';
+  const isEnglish = subjectLower.includes('anglais') || 
+                    subjectLower === 'english' ||
+                    subjectLower.includes('acquisition de langues') ||
+                    subjectLower.includes('acquisition de langue') ||
+                    subjectLower.includes('language acquisition');
   
   if (exam.questions && exam.questions.length > 0) {
     const sections = organizeQuestionsBySection(exam.questions);

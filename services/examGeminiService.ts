@@ -100,16 +100,32 @@ const needsGraphResource = (subject: string): boolean => {
          normalized.includes('sciences');
 };
 
-// Vérifier si c'est un examen d'anglais
+// Vérifier si c'est un examen d'anglais ou d'acquisition de langues (qui doit être en anglais)
 const isEnglishExam = (subject: string): boolean => {
   const normalized = subject.toLowerCase();
-  return normalized.includes('anglais') || normalized === 'english';
+  return normalized.includes('anglais') || 
+         normalized === 'english' || 
+         normalized.includes('acquisition de langues') ||
+         normalized.includes('acquisition de langue') ||
+         normalized.includes('language acquisition');
 };
 
 // Prompt système pour la génération d'examens
 const SYSTEM_INSTRUCTION_EXAM = `
-Tu es un expert pédagogique spécialisé dans la création d'examens et évaluations selon les normes du programme français.
+Tu es un expert pédagogique spécialisé dans la création d'examens et évaluations selon les normes du programme français et IB.
 Tu dois générer un examen ou une évaluation complet(e) et structuré(e).
+
+⚠️ RÈGLE CRITIQUE POUR EXAMENS EN ANGLAIS (English, Anglais, Acquisition de langues) :
+- Si l'examen est en ANGLAIS, TOUT doit être en anglais (aucun mot français)
+- Titres de sections en anglais : "PART I", "PART II" (pas "PARTIE I")
+- Types de questions en anglais : "Multiple Choice", "True/False", "Fill in the blanks"
+- Instructions techniques en anglais :
+  * "[Space for audio recording]" (PAS "Espace pour audio")
+  * "[Space for image/diagram]" (PAS "Espace pour image")
+  * "[Space for video]" (PAS "Espace pour vidéo")
+  * "Listen to the audio and answer..." (PAS "Écoutez l'audio...")
+  * "Watch the video and..." (PAS "Regardez la vidéo...")
+- Ressources et sources en anglais uniquement
 
 ⚠️ DISTINCTION CRITIQUE - EXAMEN VS ÉVALUATION :
 1. **EXAMEN (2 HEURES)** :
@@ -418,6 +434,12 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     - Section names in ENGLISH (e.g., "PART I: READING COMPREHENSION")
     - Question types in ENGLISH (e.g., "Multiple Choice", "True/False", "Fill in the blanks")
     - Instructions in ENGLISH (e.g., "Read the following text", "Answer the questions")
+    - ⚠️ TECHNICAL INSTRUCTIONS IN ENGLISH ONLY:
+      * "[Space for audio recording]" NOT "Espace pour audio"
+      * "[Space for image/diagram]" NOT "Espace pour image"
+      * "[Space for video]" NOT "Espace pour vidéo"
+      * "Listen to the audio and..." NOT "Écoutez l'audio..."
+      * "Watch the video and..." NOT "Regardez la vidéo..."
     - Sources in ENGLISH format: (Author, Title, Publisher, Year)
     - ⚠️ FORBIDDEN: "Definitions" type questions or "Define..." questions
     - PRIORITIZE: Comprehension, grammar in context, application exercises
