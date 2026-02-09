@@ -18,12 +18,36 @@ const App: React.FC = () => {
   // Session State - Filter by subject, grade and mode
   const [session, setSession] = useState<{subject: string, grade: string, mode?: AppMode} | null>(null);
 
-  // Vérifier l'authentification au démarrage
+  // Vérifier l'authentification et restaurer la session au démarrage
   useEffect(() => {
     const checkAuth = () => {
       const authStatus = localStorage.getItem('isAuthenticated');
       if (authStatus === 'true') {
         setIsAuthenticated(true);
+        
+        // Restaurer la session sauvegardée (matière, classe, mode, vue)
+        const savedSession = localStorage.getItem('userSession');
+        const savedView = localStorage.getItem('currentView');
+        
+        if (savedSession) {
+          try {
+            const sessionData = JSON.parse(savedSession);
+            setSession(sessionData);
+            
+            // Restaurer la vue active
+            if (savedView) {
+              setView(savedView as AppView);
+            } else if (sessionData.mode === AppMode.EXAMS) {
+              setView(AppView.EXAMS_WIZARD);
+            } else if (sessionData.mode === AppMode.PEI_PLANNER) {
+              setView(AppView.DASHBOARD);
+            }
+          } catch (error) {
+            console.error('Erreur lors de la restauration de la session:', error);
+            // En cas d'erreur, retourner à l'écran de sélection
+            setView(AppView.LOGIN);
+          }
+        }
       }
     };
     
@@ -116,11 +140,21 @@ const App: React.FC = () => {
     // Pour le mode examens, passer directement à l'assistant de génération
     if (mode === AppMode.EXAMS) {
       // Passer directement à la génération sans stocker de session
-      setSession({ subject: '', grade: '', mode });
+      const sessionData = { subject: '', grade: '', mode };
+      setSession(sessionData);
       setView(AppView.EXAMS_WIZARD);
+      
+      // Sauvegarder la session dans localStorage pour persistance
+      localStorage.setItem('userSession', JSON.stringify(sessionData));
+      localStorage.setItem('currentView', AppView.EXAMS_WIZARD);
     } else {
-      setSession({ subject, grade, mode });
+      const sessionData = { subject, grade, mode };
+      setSession(sessionData);
       setView(AppView.DASHBOARD);
+      
+      // Sauvegarder la session dans localStorage pour persistance
+      localStorage.setItem('userSession', JSON.stringify(sessionData));
+      localStorage.setItem('currentView', AppView.DASHBOARD);
     }
   };
 
@@ -130,6 +164,8 @@ const App: React.FC = () => {
     localStorage.removeItem('authTimestamp');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userSession');
+    localStorage.removeItem('currentView');
     setIsAuthenticated(false);
     setSession(null);
     setCurrentPlans([]);
@@ -148,11 +184,13 @@ const App: React.FC = () => {
         gradeLevel: session?.grade || ""
     });
     setView(AppView.EDITOR);
+    localStorage.setItem('currentView', AppView.EDITOR);
   };
 
   const handleEdit = (plan: UnitPlan) => {
     setEditingPlan(plan);
     setView(AppView.EDITOR);
+    localStorage.setItem('currentView', AppView.EDITOR);
   };
 
   const handleDelete = (id: string) => {
@@ -175,6 +213,7 @@ const App: React.FC = () => {
       setCurrentPlans(prev => [planToSave, ...prev]);
     }
     setView(AppView.DASHBOARD);
+    localStorage.setItem('currentView', AppView.DASHBOARD);
   };
 
   const handleAddPlans = (newPlans: UnitPlan[]) => {
@@ -212,6 +251,7 @@ const App: React.FC = () => {
 
   const handleCancel = () => {
     setView(AppView.DASHBOARD);
+    localStorage.setItem('currentView', AppView.DASHBOARD);
   };
 
   // Si pas authentifié, afficher l'écran d'authentification
