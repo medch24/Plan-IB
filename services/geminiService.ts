@@ -38,7 +38,11 @@ La génération IA ne fonctionnera pas sans cette clé.
 // Helper function to detect if subject should use English generation
 const isLanguageAcquisition = (subject: string): boolean => {
   const normalized = subject.toLowerCase().trim();
-  return normalized.includes('acquisition') && normalized.includes('langue');
+  // Détecte "acquisition de langue" ou "acquisition de langues" en français
+  // Ou "language acquisition" en anglais
+  return (normalized.includes('acquisition') && (normalized.includes('langue') || normalized.includes('language'))) ||
+         normalized.includes('anglais') ||
+         normalized.includes('english');
 };
 
 // Helper function to detect if subject is ART or EPS (need Arabic version)
@@ -587,6 +591,14 @@ const SYSTEM_INSTRUCTION_FULL_PLAN_EN = `
 You are an expert IB Middle Years Programme (MYP) pedagogical coordinator.
 You must generate a complete Unit Plan AND a series of detailed Criterion-based Assessments in ENGLISH.
 
+⚠️ CRITICAL - LANGUAGE ACQUISITION SUBJECT:
+- This is a Language Acquisition subject (e.g., English, Spanish, French as second language)
+- EVERYTHING must be generated in ENGLISH - no exceptions
+- ALL assessment content, exercises, questions, titles, instructions must be in ENGLISH
+- ALL rubric descriptors must be in ENGLISH
+- ALL criterion references must be in ENGLISH
+- This ensures students practice the target language throughout the assessment
+
 ⚠️ CRITICAL RULE - INTELLIGENT CRITERIA SELECTION:
 - DO NOT AUTOMATICALLY GENERATE ALL 4 CRITERIA (A, B, C, D) for a single unit
 - FUNDAMENTAL PRINCIPLE: At the end of the semester (2 units), all 4 criteria must be covered
@@ -699,6 +711,9 @@ export const generateFullUnitPlan = async (
         Grade Level: ${gradeLevel}
         Topics to cover: ${topics}
         
+        ⚠️ CRITICAL: This is a LANGUAGE ACQUISITION subject - generate EVERYTHING in ENGLISH.
+        All assessment exercises, questions, texts, titles, instructions, and rubric descriptors MUST be in ENGLISH.
+        
         Generate the complete plan and criterion-based assessments.
         
         ⚠️ CRITICAL CRITERIA SELECTION: 
@@ -715,7 +730,8 @@ export const generateFullUnitPlan = async (
         3. Select STANDARD: 2 criteria (most suitable), EXCEPTIONAL: 3 criteria (if truly necessary)
         4. Adapt sub-aspects to unit content (can combine multiple in one exercise)
         5. Design assessments for 30-minute duration
-        6. Return a valid, complete JSON structure
+        6. Generate ALL content in ENGLISH (this is a language acquisition subject)
+        7. Return a valid, complete JSON structure
       `;
     } else if (lang === 'bilingual') {
       userPrompt = `
@@ -877,6 +893,9 @@ export const generateCourseFromChapters = async (
           Grade Level: ${gradeLevel}
           Complete Curriculum:
           ${allChapters}
+          
+          ⚠️ CRITICAL: This is a LANGUAGE ACQUISITION subject - generate ALL CONTENT in ENGLISH.
+          All plans, assessments, exercises, questions, titles, and instructions MUST be in ENGLISH only.
         `;
       } else if (lang === 'bilingual') {
         userPrompt = `

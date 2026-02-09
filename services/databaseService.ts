@@ -233,15 +233,19 @@ export async function migrateLocalStorageToMongoDB(): Promise<{
   // Migrer chaque planification
   for (const key of keys) {
     try {
-      // Extraire subject et grade depuis la clé (format: "Mathématiques_PEI 3")
-      const parts = key.split('_');
-      if (parts.length < 2) {
-        console.warn(`⚠️ Clé invalide ignorée: ${key}`);
+      // Extraire subject et grade depuis la clé (format: "Mathématiques_PEI 3" ou "Acquisition de langues_PEI 5")
+      // La clé est construite avec getPlanningKey qui fait: `${subject}_${grade}`
+      // Le grade peut contenir un espace (ex: "PEI 3")
+      // On cherche le dernier underscore pour séparer subject et grade
+      const lastUnderscoreIndex = key.lastIndexOf('_');
+      
+      if (lastUnderscoreIndex === -1) {
+        console.warn(`⚠️ Clé invalide ignorée (pas de _): ${key}`);
         continue;
       }
       
-      const subject = parts.slice(0, -2).join('_'); // Tout sauf les 2 derniers
-      const grade = parts.slice(-2).join(' '); // Les 2 derniers (ex: "PEI 3")
+      const subject = key.substring(0, lastUnderscoreIndex); // Tout avant le dernier _
+      const grade = key.substring(lastUnderscoreIndex + 1); // Tout après le dernier _
       
       const localPlans = localPlanifications[key];
       
