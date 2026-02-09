@@ -90,7 +90,18 @@ const cleanJsonText = (text: string): string => {
     }
 
     if (start !== -1 && end !== -1 && end > start) {
-        const extracted = clean.substring(start, end + 1);
+        let extracted = clean.substring(start, end + 1);
+        
+        // Fix common JSON issues before parsing
+        // 1. Remove trailing commas before closing brackets
+        extracted = extracted.replace(/,(\s*[}\]])/g, '$1');
+        
+        // 2. Fix unescaped newlines in strings
+        extracted = extracted.replace(/([^\\])\n/g, '$1\\n');
+        
+        // 3. Remove any control characters that might break JSON
+        extracted = extracted.replace(/[\x00-\x1F\x7F]/g, '');
+        
         // Validate it's parseable
         JSON.parse(extracted);
         return extracted;
@@ -378,6 +389,13 @@ RÈGLES ABSOLUES - FORMAT JSON :
 1. Utilise UNIQUEMENT les CLÉS JSON EN ANGLAIS ci-dessous. NE LES TRADUIS PAS.
 2. Le CONTENU (les valeurs) doit être en FRANÇAIS.
 3. Ne laisse AUCUN champ vide. Remplis TOUTES les sections.
+4. ⚠️ CRITIQUE - VALIDITÉ JSON :
+   - Assure-toi que le JSON est PARFAITEMENT VALIDE
+   - Pas de virgules trainantes avant les accolades fermantes
+   - Échappe correctement les guillemets dans les chaînes avec \"
+   - Échappe correctement les retours à la ligne avec \n
+   - N'utilise PAS de sauts de ligne réels dans les chaînes JSON
+   - Teste mentalement la validité du JSON avant de répondre
 
 CHAMPS OBLIGATOIRES ET DÉTAILLÉS :
 - "learningExperiences": Détaille les ACTIVITÉS D'APPRENTISSAGE et les STRATÉGIES D'ENSEIGNEMENT (ex: Apprentissage par enquête, travail collaboratif...).
@@ -489,6 +507,13 @@ RÈGLES ABSOLUES - FORMAT JSON:
 2. Le CONTENU (valeurs) doit être en FRANÇAIS ET EN ARABE (deux champs séparés).
 3. Ne laisse AUCUN champ vide. Remplis TOUTES les sections en français ET en arabe.
 4. La traduction arabe doit être précise, naturelle et pédagogiquement appropriée.
+5. ⚠️ CRITIQUE - VALIDITÉ JSON :
+   - Assure-toi que le JSON est PARFAITEMENT VALIDE
+   - Pas de virgules trainantes avant les accolades fermantes
+   - Échappe correctement les guillemets dans les chaînes avec \"
+   - Échappe correctement les retours à la ligne avec \n
+   - N'utilise PAS de sauts de ligne réels dans les chaînes JSON
+   - Teste mentalement la validité du JSON avant de répondre
 
 CHAMPS OBLIGATOIRES ET DÉTAILLÉS (avec versions arabes):
 - "learningExperiences": Détailler les ACTIVITÉS D'APPRENTISSAGE et STRATÉGIES PÉDAGOGIQUES (enquête, collaboration...).
@@ -617,6 +642,13 @@ ABSOLUTE RULES - JSON FORMAT:
 1. Use ONLY the JSON KEYS IN ENGLISH below. DO NOT TRANSLATE THEM.
 2. The CONTENT (values) must be in ENGLISH.
 3. Do NOT leave ANY field empty. Fill ALL sections.
+4. ⚠️ CRITICAL - JSON VALIDITY:
+   - Ensure the JSON is PERFECTLY VALID
+   - No trailing commas before closing braces
+   - Properly escape quotes in strings with \"
+   - Properly escape newlines with \n
+   - Do NOT use real line breaks inside JSON strings
+   - Mentally test JSON validity before responding
 
 MANDATORY AND DETAILED FIELDS:
 - "learningExperiences": Detail the LEARNING ACTIVITIES and TEACHING STRATEGIES (e.g., Inquiry-based learning, collaborative work...).
@@ -731,7 +763,8 @@ export const generateFullUnitPlan = async (
         4. Adapt sub-aspects to unit content (can combine multiple in one exercise)
         5. Design assessments for 30-minute duration
         6. Generate ALL content in ENGLISH (this is a language acquisition subject)
-        7. Return a valid, complete JSON structure
+        7. Return ONLY a valid, complete JSON structure - no additional text before or after
+        8. Ensure JSON is perfectly valid: no trailing commas, properly escaped quotes and newlines
       `;
     } else if (lang === 'bilingual') {
       userPrompt = `
@@ -761,7 +794,8 @@ export const generateFullUnitPlan = async (
         5. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
         6. Concevoir chaque évaluation pour une durée de 30 minutes
         7. Pour chaque exercice, fournir: title, title_ar, content, content_ar, criterionReference, criterionReference_ar
-        8. Retourner une structure JSON valide et complète avec TOUS les champs bilingues
+        8. Retourner UNIQUEMENT une structure JSON valide et complète avec TOUS les champs bilingues - pas de texte avant ou après
+        9. S'assurer que le JSON est parfaitement valide: pas de virgules trainantes, guillemets et retours à la ligne échappés correctement
         
         La traduction arabe doit être pédagogiquement appropriée et naturelle.
       `;
@@ -786,7 +820,8 @@ export const generateFullUnitPlan = async (
         3. Sélectionner STANDARD: 2 critères (les plus convenables), EXCEPTIONNEL: 3 critères (si vraiment nécessaire)
         4. Adapter les sous-aspects au contenu (possibilité de combiner plusieurs dans un exercice)
         5. Concevoir chaque évaluation pour une durée de 30 minutes
-        6. Retourner une structure JSON valide et complète
+        6. Retourner UNIQUEMENT une structure JSON valide et complète - pas de texte avant ou après
+        7. S'assurer que le JSON est parfaitement valide: pas de virgules trainantes, guillemets et retours à la ligne échappés correctement
       `;
     }
 
@@ -806,22 +841,37 @@ export const generateFullUnitPlan = async (
     }
     
     console.log("✓ Réponse AI reçue, longueur:", text.length);
+    console.log("✓ Premiers 500 caractères:", text.substring(0, 500));
     
     const cleanedJson = cleanJsonText(text);
     console.log("✓ JSON nettoyé, longueur:", cleanedJson.length);
     
     if (!cleanedJson || cleanedJson === "{}") {
-      console.error("Échec du nettoyage JSON. Texte brut:", text.substring(0, 200));
-      throw new Error("L'IA n'a pas retourné de plan valide. Le format JSON est invalide.");
+      console.error("❌ Échec du nettoyage JSON. Texte brut (premiers 1000 chars):", text.substring(0, 1000));
+      throw new Error("L'IA n'a pas retourné de plan valide. Le format JSON est invalide. Veuillez réessayer avec des chapitres plus simples et structurés.");
     }
     
     let parsed;
     try {
       parsed = JSON.parse(cleanedJson);
-    } catch (parseError) {
+      console.log("✓ JSON parsé avec succès");
+    } catch (parseError: any) {
       console.error("❌ Erreur de parsing JSON:", parseError);
-      console.error("JSON problématique:", cleanedJson.substring(0, 500));
-      throw new Error("Le plan généré contient des erreurs de format. Veuillez réessayer.");
+      console.error("❌ Message d'erreur:", parseError.message);
+      console.error("❌ JSON problématique (premiers 1000 chars):", cleanedJson.substring(0, 1000));
+      
+      // Try to identify the specific location of the error
+      if (parseError.message && parseError.message.includes("position")) {
+        const match = parseError.message.match(/position (\d+)/);
+        if (match) {
+          const pos = parseInt(match[1]);
+          const contextStart = Math.max(0, pos - 100);
+          const contextEnd = Math.min(cleanedJson.length, pos + 100);
+          console.error("❌ Contexte autour de l'erreur:", cleanedJson.substring(contextStart, contextEnd));
+        }
+      }
+      
+      throw new Error("Le plan généré contient des erreurs de format JSON. Veuillez réessayer avec des chapitres plus clairs et structurés.");
     }
     
     // Vérifier que le plan contient des données essentielles
