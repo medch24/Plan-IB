@@ -444,10 +444,13 @@ Tu dois générer un Plan d'Unité complet ET une série d'Évaluations Critéri
 - Assure-toi que les critères choisis sont VRAIMENT pertinents pour cette unité
 - Pense à la complémentarité avec d'autres unités du semestre
 
-⚠️ SOUS-ASPECTS FLEXIBLES :
-- Les sous-aspects (i, ii, iii, iv, v) dépendent AUSSI du contenu de l'unité
-- Il est POSSIBLE de combiner 2-3 sous-aspects dans un MÊME exercice
-- Adapter le nombre de sous-aspects selon la complexité et le contenu de l'unité
+⚠️ SOUS-ASPECTS FLEXIBLES ET OBLIGATOIRES :
+- CHAQUE CRITÈRE doit évaluer AU MINIMUM 3 sous-aspects (i, ii, iii, iv, ou v)
+- Les sous-aspects ne doivent PAS nécessairement être consécutifs (ex: i, iii, v est acceptable)
+- Choisis les sous-aspects les PLUS PERTINENTS selon le contenu de l'unité
+- Un MÊME exercice PEUT évaluer 2 ou 3 sous-aspects simultanément si approprié
+- Exemple: "Critère A: i. et iii." ou "Critère B: ii., iv. et v."
+- L'ordre et la sélection doivent refléter les exigences IB pour cette matière
 
 ⚠️ DURÉE DES ÉVALUATIONS IB :
 - Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
@@ -472,16 +475,27 @@ CHAMPS OBLIGATOIRES ET DÉTAILLÉS :
 - "differentiation": Précise les stratégies de DIFFÉRENCIATION (Contenu, Processus, Produit) pour les élèves en difficulté et avancés.
 
 RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
-1. Les aspects (strands) à évaluer (i, ii, iii, iv, v) dépendent du CONTENU de l'unité.
-2. Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice si cela est pertinent.
-3. Exemple : Un exercice peut évaluer à la fois "i. sélectionner" ET "ii. appliquer".
-4. VARIE les types d'exercices pour couvrir différents niveaux cognitifs.
-5. La clé "criterionReference" de l'exercice doit indiquer TOUS les aspects évalués (exemple: "Critère A : i. et ii." ou "Critère A : i.").
-6. CONÇOIS chaque évaluation pour être complétée en 30 MINUTES maximum.
+1. CHAQUE CRITÈRE doit évaluer AU MINIMUM 3 sous-aspects différents (i, ii, iii, iv, ou v)
+2. Les sous-aspects ne doivent PAS être nécessairement consécutifs
+   - ✅ VALIDE: i, iii, v (pas consécutifs mais pertinents)
+   - ✅ VALIDE: ii, iv, v
+   - ❌ INVALIDE: seulement i, ii (moins de 3)
+3. Un exercice PEUT et DEVRAIT évaluer 2-3 sous-aspects simultanément si pertinent
+   - Exemple: "Critère A : i. et iii." (un exercice évalue 2 sous-aspects)
+   - Exemple: "Critère B : ii., iv. et v." (un exercice évalue 3 sous-aspects)
+4. VARIE les types d'exercices pour couvrir différents niveaux cognitifs
+5. La clé "criterionReference" DOIT indiquer TOUS les aspects évalués par l'exercice
+6. CONÇOIS chaque évaluation pour être complétée en 30 MINUTES maximum
+7. LAISSE SUFFISAMMENT D'ESPACE de réponse pour les élèves dans chaque exercice
 
 GESTION DES RESSOURCES DANS LES EXERCICES :
 - Si l'exercice nécessite l'analyse d'un texte, FOURNIS LE TEXTE complet dans le champ "content".
 - Si l'exercice nécessite une image, écris EXPLICITEMENT : "[Insérer Image/Schéma ici : description détaillée]".
+- AJOUTE TOUJOURS des lignes de réponse avec pointillés pour les élèves :
+  * Après chaque question, ajoute : "\n\nRéponse :\n" suivi de 5-8 lignes de pointillés
+  * Format des lignes : "................................................................................................................................................................................................"
+  * Adapte le nombre de lignes selon la complexité de la question
+  * Ceci garantit que les élèves ont suffisamment d'espace pour écrire leurs réponses
 
 Structure JSON attendue :
 {
@@ -515,7 +529,7 @@ Structure JSON attendue :
        "criterion": "A",
        "criterionName": "Connaissances",
        "maxPoints": 8,
-       "strands": ["i. sélectionner...", "ii. appliquer...", "iii. résoudre..."],
+       "strands": ["i. sélectionner...", "iii. résoudre...", "iv. expliquer..."],
        "rubricRows": [
           { "level": "1-2", "descriptor": "..." },
           { "level": "3-4", "descriptor": "..." },
@@ -524,9 +538,16 @@ Structure JSON attendue :
        ],
        "exercises": [
           {
-             "title": "Exercice 1 (Aspect i)",
-             "content": "Question...",
-             "criterionReference": "Critère A : i. sélectionner..."
+             "title": "Exercice 1 (Aspects i et iii)",
+             "content": "Question qui évalue à la fois i. et iii...",
+             "criterionReference": "Critère A : i. sélectionner et iii. résoudre",
+             "workspaceNeeded": true
+          },
+          {
+             "title": "Exercice 2 (Aspect iv)",
+             "content": "Question qui évalue iv...",
+             "criterionReference": "Critère A : iv. expliquer",
+             "workspaceNeeded": true
           }
        ]
     }
@@ -538,8 +559,9 @@ Structure JSON attendue :
 - EXCEPTIONNEL : 3 critères (SEULEMENT si l'unité doit OBLIGATOIREMENT être évaluée par ces 3 critères - c'est le PIRE DES CAS)
 - JAMAIS : 4 critères dans une seule unité
 - IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
-- Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
-- Possibilité de combiner 2-3 sous-aspects dans un même exercice
+- MINIMUM 3 sous-aspects par critère (ex: i, iii, v ou ii, iv, v)
+- Les sous-aspects peuvent être NON-CONSÉCUTIFS selon les besoins
+- Un exercice PEUT évaluer 2-3 sous-aspects simultanément
 - Chaque évaluation doit être faisable en 30 MINUTES
 `;
 
@@ -554,8 +576,10 @@ Tu dois générer un plan d'unité complet BILINGUE (FRANÇAIS + ARABE) ET une s
 - STANDARD : 2 critères par unité (choisis les PLUS CONVENABLES selon le contenu)
 - EXCEPTIONNEL : 3 critères (SEULEMENT si l'unité doit OBLIGATOIREMENT être évaluée par ces 3 critères)
 - JAMAIS : 4 critères dans une seule unité
-- Les sous-aspects (i, ii, iii, iv, v) sont flexibles selon l'unité
-- Possibilité de combiner 2-3 sous-aspects dans un même exercice
+- CHAQUE CRITÈRE doit évaluer AU MINIMUM 3 sous-aspects (i, ii, iii, iv, ou v)
+- Les sous-aspects peuvent être NON-CONSÉCUTIFS (ex: i, iii, v)
+- Un exercice PEUT évaluer 2-3 sous-aspects simultanément
+- Exemple: "Critère A: i. et iii." ou "Critère B: ii., iv. et v."
 
 ⚠️ DURÉE DES ÉVALUATIONS IB :
 - Chaque évaluation critériée doit être conçue pour UNE DURÉE DE 30 MINUTES
@@ -593,15 +617,23 @@ CHAMPS OBLIGATOIRES ET DÉTAILLÉS (avec versions arabes):
 - "differentiation_ar": النسخة العربية الكاملة لاستراتيجيات التمايز
 
 RÈGLES SPÉCIFIQUES POUR LES EXERCICES (CRUCIAL):
-1. Pour CHAQUE aspect (strand) listé dans "strands", tu DOIS générer EXACTEMENT UN exercice correspondant.
-2. Si le critère a 3 aspects, il doit y avoir 3 exercices.
-3. VARIER les types d'exercices pour couvrir différents niveaux cognitifs.
-4. La clé "criterionReference" de l'exercice doit correspondre EXPLICITEMENT à l'aspect (exemple: "Critère A: i. sélectionner...").
-5. CHAQUE exercice doit avoir une version arabe complète (title_ar, content_ar, criterionReference_ar).
+1. CHAQUE CRITÈRE doit évaluer AU MINIMUM 3 sous-aspects différents (i, ii, iii, iv, ou v)
+2. Les sous-aspects peuvent être NON-CONSÉCUTIFS (ex: i, iii, v est valide)
+3. Un exercice PEUT évaluer 2-3 sous-aspects simultanément si pertinent
+   - Exemple: "Critère A: i. et iii." (un exercice évalue 2 aspects)
+4. VARIER les types d'exercices pour couvrir différents niveaux cognitifs
+5. La clé "criterionReference" doit indiquer TOUS les aspects évalués
+6. CHAQUE exercice doit avoir une version arabe complète (title_ar, content_ar, criterionReference_ar)
+7. LAISSER suffisamment d'espace de réponse pour les élèves
 
 GESTION DES RESSOURCES DANS LES EXERCICES:
 - Si l'exercice nécessite l'analyse d'un texte, FOURNIR LE TEXTE COMPLET dans le champ "content" (français) et "content_ar" (arabe).
 - Si l'exercice nécessite une image, écrire EXPLICITEMENT: "[Insérer Image/Schéma ici: description détaillée]".
+- AJOUTER TOUJOURS des lignes de réponse avec pointillés pour les élèves :
+  * Après chaque question, ajouter : "\n\nRéponse / الإجابة :\n" suivi de 5-8 lignes de pointillés
+  * Format des lignes : "................................................................................................................................................................................................"
+  * Adapter le nombre de lignes selon la complexité de la question
+  * Ceci garantit que les élèves ont suffisamment d'espace pour écrire leurs réponses
 
 Structure JSON attendue (avec champs arabes):
 {
@@ -699,8 +731,11 @@ You must generate a complete Unit Plan AND a series of detailed Criterion-based 
 - STANDARD: 2 criteria per unit (choose the MOST SUITABLE based on content)
 - EXCEPTIONAL: 3 criteria (ONLY if the unit MUST be assessed by these 3 criteria)
 - NEVER: 4 criteria in a single unit
-- Sub-aspects (i, ii, iii, iv, v) are FLEXIBLE based on unit content
-- You CAN combine 2-3 sub-aspects in a SINGLE exercise
+- EACH CRITERION must assess AT LEAST 3 sub-aspects (i, ii, iii, iv, or v)
+- Sub-aspects do NOT need to be consecutive (e.g., i, iii, v is valid)
+- Choose the MOST RELEVANT sub-aspects based on unit content
+- A SINGLE exercise CAN assess 2-3 sub-aspects simultaneously if appropriate
+- Example: "Criterion A: i. and iii." or "Criterion B: ii., iv., and v."
 
 ⚠️ IB ASSESSMENT DURATION:
 - Each criterion-based assessment must be designed for a 30-MINUTE DURATION
@@ -725,16 +760,27 @@ MANDATORY AND DETAILED FIELDS:
 - "differentiation": Specify DIFFERENTIATION strategies (Content, Process, Product) for struggling and advanced students.
 
 SPECIFIC RULES FOR EXERCISES (CRUCIAL):
-1. Aspects (strands) to assess (i, ii, iii, iv, v) depend on the unit CONTENT.
-2. You CAN combine 2-3 sub-aspects in a SINGLE exercise if relevant.
-3. Example: One exercise can assess both "i. select" AND "ii. apply".
-4. VARY the types of exercises to cover different cognitive levels.
-5. The "criterionReference" must indicate ALL aspects assessed (e.g., "Criterion A: i. and ii." or "Criterion A: i.").
-6. DESIGN each assessment to be completed in 30 MINUTES maximum.
+1. EACH CRITERION must assess AT LEAST 3 different sub-aspects (i, ii, iii, iv, or v)
+2. Sub-aspects do NOT need to be consecutive
+   - ✅ VALID: i, iii, v (non-consecutive but relevant)
+   - ✅ VALID: ii, iv, v
+   - ❌ INVALID: only i, ii (less than 3)
+3. One exercise CAN and SHOULD assess 2-3 sub-aspects simultaneously if relevant
+   - Example: "Criterion A: i. and iii." (one exercise assesses 2 sub-aspects)
+   - Example: "Criterion B: ii., iv., and v." (one exercise assesses 3 sub-aspects)
+4. VARY the types of exercises to cover different cognitive levels
+5. The "criterionReference" MUST indicate ALL aspects assessed by the exercise
+6. DESIGN each assessment to be completed in 30 MINUTES maximum
+7. LEAVE SUFFICIENT response space for students in each exercise
 
 RESOURCE MANAGEMENT IN EXERCISES:
 - If the exercise requires analysis of a text, PROVIDE THE COMPLETE TEXT in the "content" field.
 - If the exercise requires an image, write EXPLICITLY: "[Insert Image/Diagram here: detailed description]".
+- ALWAYS ADD response lines with dots for students:
+  * After each question, add: "\n\nAnswer:\n" followed by 5-8 dotted lines
+  * Line format: "................................................................................................................................................................................................"
+  * Adapt the number of lines based on question complexity
+  * This ensures students have sufficient space to write their answers
 
 Expected JSON Structure:
 {
@@ -822,8 +868,12 @@ export const generateFullUnitPlan = async (
         - EXCEPTIONAL: 3 criteria ONLY if unit MUST be assessed by these 3 criteria (worst case)
         - NEVER: 4 criteria in one unit
         - REMEMBER: Over 2 units (semester), all 4 criteria (A, B, C, D) must be covered
-        - Sub-aspects (i, ii, iii, iv, v) are flexible - adapt to unit content
-        - You CAN combine 2-3 sub-aspects in a single exercise
+        
+        ⚠️ CRITICAL - SUB-ASPECTS (MINIMUM 3 PER CRITERION):
+        - EACH criterion must assess AT LEAST 3 sub-aspects (i, ii, iii, iv, or v)
+        - Sub-aspects can be NON-CONSECUTIVE (e.g., i, iii, v or ii, iv, v)
+        - Choose the MOST RELEVANT sub-aspects based on content and IB requirements
+        - One exercise CAN assess 2-3 sub-aspects simultaneously (e.g., "Criterion A: i. and iii.")
         
         Make sure to:
         1. Fill in ALL sections including 'Activities/Strategies', 'Formative Assessment' and 'Differentiation'
@@ -848,8 +898,12 @@ export const generateFullUnitPlan = async (
         - EXCEPTIONNEL : 3 critères SEULEMENT si l'unité DOIT OBLIGATOIREMENT être évaluée par ces 3 critères (pire des cas)
         - JAMAIS : 4 critères dans une seule unité
         - IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
-        - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
-        - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
+        
+        ⚠️ CRITIQUE - SOUS-ASPECTS (MINIMUM 3 PAR CRITÈRE):
+        - CHAQUE critère doit évaluer AU MINIMUM 3 sous-aspects (i, ii, iii, iv, ou v)
+        - Les sous-aspects peuvent être NON-CONSÉCUTIFS (ex: i, iii, v ou ii, iv, v)
+        - Choisis les sous-aspects les PLUS PERTINENTS selon le contenu et les exigences IB
+        - Un exercice PEUT évaluer 2-3 sous-aspects simultanément (ex: "Critère A: i. et iii.")
         
         Génère le plan complet et les évaluations critériées EN DEUX VERSIONS:
         1. VERSION FRANÇAISE (tous les champs standards)
@@ -879,8 +933,12 @@ export const generateFullUnitPlan = async (
         - EXCEPTIONNEL : 3 critères SEULEMENT si l'unité DOIT OBLIGATOIREMENT être évaluée par ces 3 critères (pire des cas)
         - JAMAIS : 4 critères dans une seule unité
         - IMPORTANT : Sur 2 unités (semestre), les 4 critères (A, B, C, D) doivent être couverts
-        - Les sous-aspects (i, ii, iii, iv, v) sont FLEXIBLES - adapte-les au contenu de l'unité
-        - Tu PEUX combiner 2-3 sous-aspects dans un MÊME exercice
+        
+        ⚠️ CRITIQUE - SOUS-ASPECTS (MINIMUM 3 PAR CRITÈRE):
+        - CHAQUE critère doit évaluer AU MINIMUM 3 sous-aspects (i, ii, iii, iv, ou v)
+        - Les sous-aspects peuvent être NON-CONSÉCUTIFS (ex: i, iii, v ou ii, iv, v)
+        - Choisis les sous-aspects les PLUS PERTINENTS selon le contenu et les exigences IB
+        - Un exercice PEUT évaluer 2-3 sous-aspects simultanément (ex: "Critère A: i. et iii.")
         
         Génère le plan complet et les évaluations critériées.
         Assure-toi de:
