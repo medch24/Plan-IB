@@ -19,8 +19,17 @@ export async function loadPlansFromDatabase(
   grade: string
 ): Promise<UnitPlan[]> {
   try {
+    // Valider les paramètres avant l'appel API
+    const cleanSubject = subject.trim();
+    const cleanGrade = grade.trim();
+    
+    if (!cleanSubject || !cleanGrade || cleanSubject.startsWith('_') || /^[_\s]+$/.test(cleanSubject)) {
+      console.warn(`⚠️ Paramètres invalides pour le chargement: subject="${cleanSubject}", grade="${cleanGrade}"`);
+      return loadPlansFromLocalStorage(subject, grade);
+    }
+    
     const response = await fetch(
-      `${API_BASE_URL}/planifications?subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`
+      `${API_BASE_URL}/planifications?subject=${encodeURIComponent(cleanSubject)}&grade=${encodeURIComponent(cleanGrade)}`
     );
 
     if (!response.ok) {
@@ -84,14 +93,23 @@ export async function savePlansToDatabase(
   plans: UnitPlan[]
 ): Promise<boolean> {
   try {
+    // Valider les paramètres avant l'appel API
+    const cleanSubject = subject.trim();
+    const cleanGrade = grade.trim();
+    
+    if (!cleanSubject || !cleanGrade || cleanSubject.startsWith('_') || /^[_\s]+$/.test(cleanSubject)) {
+      console.error(`❌ Paramètres invalides pour la sauvegarde: subject="${cleanSubject}", grade="${cleanGrade}"`);
+      return false;
+    }
+    
     const response = await fetch(`${API_BASE_URL}/planifications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        subject,
-        grade,
+        subject: cleanSubject,
+        grade: cleanGrade,
         plans
       })
     });
@@ -126,8 +144,17 @@ export async function deletePlansFromDatabase(
   grade: string
 ): Promise<boolean> {
   try {
+    // Valider les paramètres avant l'appel API
+    const cleanSubject = subject.trim();
+    const cleanGrade = grade.trim();
+    
+    if (!cleanSubject || !cleanGrade || cleanSubject.startsWith('_') || /^[_\s]+$/.test(cleanSubject)) {
+      console.warn(`⚠️ Paramètres invalides pour la suppression: subject="${cleanSubject}", grade="${cleanGrade}"`);
+      return false;
+    }
+    
     const response = await fetch(
-      `${API_BASE_URL}/planifications?subject=${encodeURIComponent(subject)}&grade=${encodeURIComponent(grade)}`,
+      `${API_BASE_URL}/planifications?subject=${encodeURIComponent(cleanSubject)}&grade=${encodeURIComponent(cleanGrade)}`,
       { method: 'DELETE' }
     );
 
@@ -244,8 +271,20 @@ export async function migrateLocalStorageToMongoDB(): Promise<{
         continue;
       }
       
-      const subject = key.substring(0, lastUnderscoreIndex); // Tout avant le dernier _
-      const grade = key.substring(lastUnderscoreIndex + 1); // Tout après le dernier _
+      const subject = key.substring(0, lastUnderscoreIndex).trim(); // Tout avant le dernier _
+      const grade = key.substring(lastUnderscoreIndex + 1).trim(); // Tout après le dernier _
+      
+      // Valider que subject et grade ne sont pas vides ou invalides
+      if (!subject || subject.startsWith('_') || !grade) {
+        console.warn(`⚠️ Clé invalide ignorée (subject ou grade vide/invalide): "${key}" -> subject="${subject}", grade="${grade}"`);
+        continue;
+      }
+      
+      // Vérifier que le subject ne contient que des underscores ou espaces (clé corrompue)
+      if (/^[_\s]+$/.test(subject)) {
+        console.warn(`⚠️ Clé invalide ignorée (subject ne contient que des underscores/espaces): "${key}"`);
+        continue;
+      }
       
       const localPlans = localPlanifications[key];
       
@@ -299,4 +338,50 @@ export async function migrateLocalStorageToMongoDB(): Promise<{
 export function needsMigration(): boolean {
   const localPlanifications = loadSharedPlanifications();
   return Object.keys(localPlanifications).length > 0;
+}
+
+/**
+ * Nettoie les clés localStorage invalides (celles avec subject vide ou commençant par _)
+ * Retourne le nombre de clés supprimées
+ */
+export function cleanupInvalidLocalStorageKeys(): number {
+  console.log('🧹 Nettoyage des clés localStorage invalides...');
+  
+  const allPlanifications = loadSharedPlanifications();
+  const keys = Object.keys(allPlanifications);
+  let cleaned = 0;
+  
+  const validPlanifications: SharedPlanifications = {};
+  
+  for (const key of keys) {
+    const lastUnderscoreIndex = key.lastIndexOf('_');
+    
+    if (lastUnderscoreIndex === -1) {
+      console.log(`🗑️ Suppression de la clé invalide (pas de _): ${key}`);
+      cleaned++;
+      continue;
+    }
+    
+    const subject = key.substring(0, lastUnderscoreIndex).trim();
+    const grade = key.substring(lastUnderscoreIndex + 1).trim();
+    
+    // Vérifier si la clé est valide
+    if (!subject || subject.startsWith('_') || !grade || /^[_\s]+$/.test(subject)) {
+      console.log(`🗑️ Suppression de la clé invalide: ${key} (subject="${subject}", grade="${grade}")`);
+      cleaned++;
+      continue;
+    }
+    
+    // Clé valide, on la garde
+    validPlanifications[key] = allPlanifications[key];
+  }
+  
+  if (cleaned > 0) {
+    saveSharedPlanifications(validPlanifications);
+    console.log(`✅ ${cleaned} clé(s) invalide(s) supprimée(s) de localStorage`);
+  } else {
+    console.log('✅ Aucune clé invalide trouvée');
+  }
+  
+  return cleaned;
 }

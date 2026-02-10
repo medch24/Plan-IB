@@ -6,7 +6,7 @@ import LoginScreen from './components/LoginScreen';
 import AuthenticationScreen from './components/AuthenticationScreen';
 import ExamsWizard from './components/ExamsWizard';
 import { sanitizeUnitPlan } from './services/geminiService';
-import { loadPlansFromDatabase, savePlansToDatabase, migrateLocalStorageToMongoDB, needsMigration } from './services/databaseService';
+import { loadPlansFromDatabase, savePlansToDatabase, migrateLocalStorageToMongoDB, needsMigration, cleanupInvalidLocalStorageKeys } from './services/databaseService';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -60,6 +60,9 @@ const App: React.FC = () => {
       if (migrationDone) return;
       
       try {
+        // Nettoyer d'abord les clés invalides avant la migration
+        cleanupInvalidLocalStorageKeys();
+        
         // Vérifier si une migration est nécessaire
         if (needsMigration()) {
           console.log('🚀 Démarrage de la migration automatique localStorage → MongoDB');

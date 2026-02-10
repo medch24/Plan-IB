@@ -96,11 +96,13 @@ const cleanJsonText = (text: string): string => {
         // 1. Remove trailing commas before closing brackets
         extracted = extracted.replace(/,(\s*[}\]])/g, '$1');
         
-        // 2. Fix unescaped newlines in strings
-        extracted = extracted.replace(/([^\\])\n/g, '$1\\n');
+        // 2. Remove any control characters that might break JSON (except newlines we'll handle separately)
+        extracted = extracted.replace(/[\x00-\x09\x0B-\x1F\x7F]/g, '');
         
-        // 3. Remove any control characters that might break JSON
-        extracted = extracted.replace(/[\x00-\x1F\x7F]/g, '');
+        // 3. Fix unescaped backslashes and newlines in string values
+        // This is complex - we need to be careful not to break already-escaped chars
+        // Replace actual newlines (not \n sequences) with \n
+        extracted = extracted.replace(/\r?\n/g, '\\n');
         
         // Validate it's parseable
         JSON.parse(extracted);
