@@ -62,6 +62,67 @@ const getGenerationLanguage = (subject: string): 'fr' | 'en' | 'bilingual' => {
   return 'fr';
 };
 
+// More aggressive JSON cleaning function that handles malformed responses
+const fixJsonString = (str: string): string => {
+  if (!str) return str;
+  
+  let result = '';
+  let inString = false;
+  let escape = false;
+  
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    const prevChar = i > 0 ? str[i - 1] : '';
+    
+    // Toggle string context when we hit unescaped quotes
+    if (char === '"' && !escape) {
+      inString = !inString;
+      result += char;
+      escape = false;
+      continue;
+    }
+    
+    // If we're in a string, we need to escape special characters
+    if (inString) {
+      if (char === '\\' && !escape) {
+        // Check if this is already a valid escape sequence
+        const nextChar = i < str.length - 1 ? str[i + 1] : '';
+        if ('"\\/bfnrtu'.includes(nextChar)) {
+          // Valid escape sequence, keep as is
+          result += char;
+          escape = true;
+        } else {
+          // Invalid escape, escape the backslash
+          result += '\\\\';
+          escape = false;
+        }
+      } else if (char === '\n' || char === '\r') {
+        // Replace actual newlines with \n
+        result += '\\n';
+        escape = false;
+      } else if (char === '\t') {
+        // Replace tabs with \t
+        result += '\\t';
+        escape = false;
+      } else if (char.charCodeAt(0) < 32) {
+        // Skip other control characters
+        escape = false;
+      } else {
+        result += char;
+        escape = false;
+      }
+    } else {
+      // Outside strings, just copy the character (unless it's a control char)
+      if (char.charCodeAt(0) >= 32 || char === '\n' || char === '\r' || char === '\t') {
+        result += char;
+      }
+      escape = false;
+    }
+  }
+  
+  return result;
+};
+
 // Robust JSON extractor with better error handling
 const cleanJsonText = (text: string): string => {
   if (!text) return "{}";
@@ -92,21 +153,27 @@ const cleanJsonText = (text: string): string => {
     if (start !== -1 && end !== -1 && end > start) {
         let extracted = clean.substring(start, end + 1);
         
-        // Fix common JSON issues before parsing
-        // 1. Remove trailing commas before closing brackets
+        // Apply aggressive JSON string fixing
+        extracted = fixJsonString(extracted);
+        
+        // Remove trailing commas before closing brackets
         extracted = extracted.replace(/,(\s*[}\]])/g, '$1');
         
-        // 2. Remove any control characters that might break JSON (except newlines we'll handle separately)
-        extracted = extracted.replace(/[\x00-\x09\x0B-\x1F\x7F]/g, '');
-        
-        // 3. Fix unescaped backslashes and newlines in string values
-        // This is complex - we need to be careful not to break already-escaped chars
-        // Replace actual newlines (not \n sequences) with \n
-        extracted = extracted.replace(/\r?\n/g, '\\n');
-        
-        // Validate it's parseable
-        JSON.parse(extracted);
-        return extracted;
+        // Try to parse
+        try {
+          JSON.parse(extracted);
+          return extracted;
+        } catch (parseError: any) {
+          console.warn("First parse attempt failed, trying additional fixes...");
+          
+          // Additional fallback: try to fix common issues
+          // Remove any remaining control characters
+          extracted = extracted.replace(/[\x00-\x1F\x7F]/g, '');
+          
+          // Validate it's parseable
+          JSON.parse(extracted);
+          return extracted;
+        }
     }
   } catch (e) {
     console.warn("JSON cleaning failed:", e);

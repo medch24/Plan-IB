@@ -22,7 +22,16 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkAuth = () => {
       const authStatus = localStorage.getItem('isAuthenticated');
+      const authTimestamp = localStorage.getItem('authTimestamp');
+      
+      console.log('🔐 Vérification authentification:', { 
+        authStatus, 
+        authTimestamp,
+        hasSession: !!localStorage.getItem('userSession')
+      });
+      
       if (authStatus === 'true') {
+        console.log('✅ Utilisateur authentifié, restauration de la session...');
         setIsAuthenticated(true);
         
         // Restaurer la session sauvegardée (matière, classe, mode, vue)
@@ -32,22 +41,32 @@ const App: React.FC = () => {
         if (savedSession) {
           try {
             const sessionData = JSON.parse(savedSession);
+            console.log('📋 Session restaurée:', sessionData);
             setSession(sessionData);
             
             // Restaurer la vue active
-            if (savedView) {
+            if (savedView && savedView !== AppView.LOGIN) {
+              console.log('🖼️ Vue restaurée:', savedView);
               setView(savedView as AppView);
             } else if (sessionData.mode === AppMode.EXAMS) {
               setView(AppView.EXAMS_WIZARD);
             } else if (sessionData.mode === AppMode.PEI_PLANNER) {
               setView(AppView.DASHBOARD);
+            } else {
+              // Par défaut, retourner à l'écran de sélection (mais l'utilisateur reste authentifié)
+              setView(AppView.LOGIN);
             }
           } catch (error) {
-            console.error('Erreur lors de la restauration de la session:', error);
-            // En cas d'erreur, retourner à l'écran de sélection
+            console.error('❌ Erreur lors de la restauration de la session:', error);
+            // En cas d'erreur, retourner à l'écran de sélection (mais l'utilisateur reste authentifié)
             setView(AppView.LOGIN);
           }
+        } else {
+          console.log('ℹ️ Aucune session active, affichage écran de sélection');
+          setView(AppView.LOGIN);
         }
+      } else {
+        console.log('🔒 Utilisateur non authentifié');
       }
     };
     
@@ -162,6 +181,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    console.log('🚪 Déconnexion de l\'utilisateur...');
     // Déconnexion complète : effacer la session et l'authentification
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authTimestamp');
@@ -173,6 +193,7 @@ const App: React.FC = () => {
     setSession(null);
     setCurrentPlans([]);
     setView(AppView.LOGIN);
+    console.log('✅ Déconnexion complète effectuée');
   };
 
   const handleAuthenticated = () => {
