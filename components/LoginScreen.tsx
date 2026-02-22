@@ -143,22 +143,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onLogout }) => {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-slate-800 mb-4 text-center">Choisissez votre module</h2>
                 
-                <button
-                  onClick={() => handleModeSelect(AppMode.PEI_PLANNER)}
-                  className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-                >
-                  <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-all duration-300 group-hover:rotate-3">
-                    <BookOpen className="text-blue-600 group-hover:text-white transition-colors" size={28} />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-slate-800 text-lg group-hover:text-blue-600 transition-colors">📚 PEI Planner</h3>
-                    <p className="text-sm text-slate-600">Planification des unités PEI (Programme IB)</p>
-                  </div>
-                  <ChevronRight className="text-slate-400 group-hover:text-blue-600 transition-all group-hover:translate-x-1" size={24} />
-                </button>
+                {/* PEI Planner - Masqué pour exams_only */}
+                {userRole !== 'exams_only' && (
+                  <button
+                    onClick={() => handleModeSelect(AppMode.PEI_PLANNER)}
+                    className="w-full flex items-center gap-4 p-6 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-500 transition-all duration-300 group-hover:rotate-3">
+                      <BookOpen className="text-blue-600 group-hover:text-white transition-colors" size={28} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="font-semibold text-slate-800 text-lg group-hover:text-blue-600 transition-colors">📚 PEI Planner</h3>
+                      <p className="text-sm text-slate-600">Planification des unités PEI (Programme IB)</p>
+                    </div>
+                    <ChevronRight className="text-slate-400 group-hover:text-blue-600 transition-all group-hover:translate-x-1" size={24} />
+                  </button>
+                )}
 
-                {/* Examens & Évaluations - Visible uniquement pour les admins */}
-                {userRole === 'admin' && (
+                {/* Examens & Évaluations - Visible pour admins ET exams_only */}
+                {(userRole === 'admin' || userRole === 'exams_only') && (
                   <button
                     onClick={() => {
                       // Pour les examens, aller directement à la génération sans passer par le formulaire

@@ -18,6 +18,12 @@ const VALID_CREDENTIALS = [
     password: 'Alkawthar01',
     role: 'teacher', // Accès limité (PEI Planner uniquement)
     displayName: 'Enseignant'
+  },
+  {
+    username: 'Alkawthar',
+    password: 'Alkawthar',
+    role: 'exams_only', // Accès uniquement Examens (niveau difficile par défaut)
+    displayName: 'Générateur d\'Examens'
   }
 ];
 
