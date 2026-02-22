@@ -540,7 +540,10 @@ const ExamsWizard: React.FC<ExamsWizardProps> = ({ onBack }) => {
                         <span className="text-sm font-semibold text-violet-600">{question.points} pts</span>
                       </div>
                       <div className="text-sm text-slate-600 mb-2">Type: {question.type}</div>
-                      <div className="text-slate-700 whitespace-pre-wrap">{question.content}</div>
+                      <div
+                        className="text-slate-700 exam-preview-content"
+                        dangerouslySetInnerHTML={{ __html: question.content?.replace(/\n/g, '<br/>') || '' }}
+                      />
                     </div>
                   ))}
                 </div>

@@ -74,6 +74,174 @@ const cleanJsonText = (text: string): string => {
   return "{}";
 };
 
+// ============================================================
+// POST-PROCESSING: Sanitise toute écriture LaTeX/Markdown
+// résiduelle dans les champs texte des questions générées par l'IA
+// ============================================================
+
+/**
+ * Convertit toute notation LaTeX en notation mathématique standard lisible.
+ * Ex: \frac{4z}{3}  →  4z/3
+ *     frac{4z}{3}   →  4z/3
+ *     x^{2}         →  x^2
+ *     \sqrt{16}     →  sqrt(16)
+ *     x²            →  x^2  (exposant Unicode → caret)
+ */
+const sanitizeMathText = (text: string): string => {
+  if (!text) return text;
+  let s = text;
+
+  // --- Fractions LaTeX: \frac{num}{den} ou frac{num}{den} ---
+  // Formes imbriquées : on itère jusqu'à stabilisation
+  for (let i = 0; i < 5; i++) {
+    // \frac{A}{B} ou frac{A}{B}  (sans backslash aussi)
+    s = s.replace(/\\?frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)');
+  }
+  // Simplifier les parenthèses inutiles autour d'un seul terme
+  s = s.replace(/\(([a-zA-Z0-9.]+)\)\/\(([a-zA-Z0-9.]+)\)/g, '$1/$2');
+
+  // --- Racines carrées: \sqrt{x} ou sqrt{x} ---
+  s = s.replace(/\\?sqrt\{([^{}]*)\}/g, 'sqrt($1)');
+  s = s.replace(/\\?sqrt\s+(\S+)/g, 'sqrt($1)');
+
+  // --- Puissances: x^{2} → x^2 ---
+  s = s.replace(/\^{(\d+)}/g, '^$1');
+
+  // --- Exposants Unicode → notation caret ---
+  const superscriptMap: Record<string, string> = {
+    '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4',
+    '⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'
+  };
+  // Remplacer une séquence d'exposants Unicode collée à un caractère
+  s = s.replace(/([a-zA-Z0-9)])([\u2070\u00B9\u00B2\u00B3\u2074-\u2079]+)/g, (match, base, exps) => {
+    const digits = exps.split('').map((c: string) => superscriptMap[c] || c).join('');
+    return `${base}^${digits}`;
+  });
+
+  // --- Racines Unicode: √16 → sqrt(16) ---
+  s = s.replace(/√(\d+)/g, 'sqrt($1)');
+  s = s.replace(/√\(([^)]+)\)/g, 'sqrt($1)');
+
+  // --- Backslashes LaTeX orphelins: \cdot → ×, \times → ×, etc. ---
+  s = s.replace(/\\cdot/g, '×');
+  s = s.replace(/\\times/g, '×');
+  s = s.replace(/\\div/g, '÷');
+  s = s.replace(/\\pm/g, '±');
+  s = s.replace(/\\leq/g, '≤');
+  s = s.replace(/\\geq/g, '≥');
+  s = s.replace(/\\neq/g, '≠');
+  s = s.replace(/\\approx/g, '≈');
+  s = s.replace(/\\infty/g, '∞');
+  s = s.replace(/\\pi/g, 'π');
+  s = s.replace(/\\alpha/g, 'α');
+  s = s.replace(/\\beta/g, 'β');
+  s = s.replace(/\\gamma/g, 'γ');
+  s = s.replace(/\\Delta/g, 'Δ');
+  s = s.replace(/\\theta/g, 'θ');
+  s = s.replace(/\\mathbb\{R\}/g, 'ℝ');
+  s = s.replace(/\\mathbb\{N\}/g, 'ℕ');
+  s = s.replace(/\\mathbb\{Z\}/g, 'ℤ');
+
+  // --- Supprimer les dollars $ entourant des formules inline ---
+  s = s.replace(/\$([^$\n]+)\$/g, '$1');
+
+  // --- Nettoyer les backslashes restants isolés ---
+  s = s.replace(/\\([a-zA-Z]+)/g, '$1');
+
+  return s;
+};
+
+/**
+ * Convertit les tableaux Markdown (pipes |) en tableaux HTML avec bordures.
+ * Ex:  | Col A | Col B |        <table border="1" ...>
+ *      |-------|-------|   →      <tr><th>Col A</th><th>Col B</th></tr>
+ *      | val 1 | val 2 |          <tr><td>val 1</td><td>val 2</td></tr>
+ *                                </table>
+ */
+const convertMarkdownTableToHTML = (text: string): string => {
+  if (!text) return text;
+
+  // Détecte un bloc de lignes contenant des pipes
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    // Vérifie si c'est une ligne de tableau Markdown (contient au moins un |)
+    if (/^\s*\|.+\|\s*$/.test(line)) {
+      // Collecter toutes les lignes consécutives faisant partie du tableau
+      const tableLines: string[] = [];
+      while (i < lines.length && /^\s*\|.+\|\s*$/.test(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+
+      // Construire le HTML
+      let html = '<table border="1" style="border-collapse: collapse; width: 100%;">\n';
+      let isHeader = true;
+
+      for (const tl of tableLines) {
+        // Ligne de séparateur (|---|---|) → skip
+        if (/^\s*\|[\s\-|:]+\|\s*$/.test(tl)) {
+          isHeader = false; // les lignes suivantes sont des données
+          continue;
+        }
+        // Découper les cellules
+        const cells = tl.split('|').map(c => c.trim()).filter(c => c !== '');
+        const tag = isHeader ? 'th' : 'td';
+        html += '  <tr>' + cells.map(c => `<${tag}>${c}</${tag}>`).join('') + '</tr>\n';
+        if (isHeader) isHeader = false; // seulement la 1ère ligne est header
+      }
+
+      html += '</table>';
+      result.push(html);
+    } else {
+      result.push(line);
+      i++;
+    }
+  }
+
+  return result.join('\n');
+};
+
+/**
+ * Applique la sanitisation complète (maths + tableaux) à une chaîne de texte.
+ */
+const sanitizeContent = (text: string): string => {
+  if (!text) return text;
+  let s = sanitizeMathText(text);
+  s = convertMarkdownTableToHTML(s);
+  return s;
+};
+
+/**
+ * Parcourt récursivement toutes les questions d'un examen et sanitise leur contenu.
+ */
+const sanitizeExamContent = (exam: any): any => {
+  if (!exam) return exam;
+
+  if (exam.questions && Array.isArray(exam.questions)) {
+    exam.questions = exam.questions.map((q: any) => {
+      if (q.content)  q.content  = sanitizeContent(q.content);
+      if (q.title)    q.title    = sanitizeMathText(q.title);
+      if (q.answer)   q.answer   = sanitizeContent(q.answer);
+      if (q.options && Array.isArray(q.options)) {
+        q.options = q.options.map((o: string) => sanitizeMathText(o));
+      }
+      if (q.statements && Array.isArray(q.statements)) {
+        q.statements = q.statements.map((s: any) => ({
+          ...s,
+          statement: sanitizeMathText(s.statement)
+        }));
+      }
+      return q;
+    });
+  }
+
+  return exam;
+};
+
 // Déterminer le style d'examen basé sur le grade
 const getExamStyle = (grade: ExamGrade): 'Brevet' | 'Bac' | 'Standard' => {
   if (grade === ExamGrade.TROISIEME) return 'Brevet'; // PEI4 (3ème)
@@ -179,7 +347,24 @@ RÈGLES ABSOLUES - BARÈME :
    - NE JAMAIS utiliser le type "Définitions"
    - Privilégier : Analyse de texte, Compréhension, Grammaire appliquée, Rédaction, Reformulation
 
-ORGANISATION DE L'EXAMEN PAR SECTIONS :
+⚠️ RÈGLES GLOBALES DE FORMAT POUR TOUTES LES MATIÈRES :
+
+1. ÉCRITURE MATHÉMATIQUE STANDARD (toutes matières) :
+   - Fractions  : UNIQUEMENT "/" (ex: 4z/3 = 12, PAS \frac{4z}{3} ni frac{4z}{3})
+   - Puissances : UNIQUEMENT "^" (ex: x^2 - 4x + 3, PAS x², ni LaTeX)
+   - Racines    : UNIQUEMENT "sqrt()" (ex: sqrt(16) = 4, PAS √16 ni \sqrt{16})
+   - NE JAMAIS utiliser des commandes LaTeX (\frac, \sqrt, \cdot, $...$, etc.)
+
+2. TABLEAUX — FORMAT HTML OBLIGATOIRE POUR TOUTES LES MATIÈRES :
+   - TOUJOURS utiliser des balises HTML <table> avec border="1"
+   - NE JAMAIS utiliser le format Markdown avec pipes (| Col | Col |)
+   - Format obligatoire :
+     <table border="1" style="border-collapse: collapse; width: 100%;">
+       <tr><th>En-tête 1</th><th>En-tête 2</th></tr>
+       <tr><td>Donnée 1</td><td>Donnée 2</td></tr>
+     </table>
+
+
 
 **MATHÉMATIQUES** - Structure obligatoire :
 - ÉVITER les QCM, Vrai/Faux ET Définitions (privilégier calculs, résolution de problèmes, constructions)
@@ -577,7 +762,13 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
       throw new Error("JSON invalide retourné par l'IA");
     }
     
-    const parsed = JSON.parse(cleanedJson);
+    let parsed = JSON.parse(cleanedJson);
+
+    // ============================================================
+    // POST-PROCESSING: Sanitiser toute notation LaTeX/Markdown
+    // résiduelle avant de construire l'objet Exam final
+    // ============================================================
+    parsed = sanitizeExamContent(parsed);
     
     // Vérification CRITIQUE: config.subject doit être défini
     if (!config.subject) {

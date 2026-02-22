@@ -50,59 +50,164 @@ const loadTemplate = async (): Promise<ArrayBuffer> => {
   }
 };
 
-// Convertir les formules LaTeX simples en texte lisible
+// Convertir / nettoyer les notations LaTeX résiduelles en notation mathématique standard lisible.
+// Règles d'écriture imposées :
+//   Fractions  : \frac{a}{b} ou frac{a}{b} → a/b
+//   Puissances : x^{2} ou x^2 → x^2  (on garde le caret, PAS d'exposant Unicode)
+//   Racines    : \sqrt{x}            → sqrt(x)
+//   Exposants Unicode (²³…) → notation caret (x² → x^2)
 const convertLaTeXToText = (text: string): string => {
   if (!text) return text;
-  
-  let converted = text;
-  
-  // Convertir les formules LaTeX inline: $...$ 
-  // Exemples: $f$ → f, $x^2$ → x², $\mathbb{R}$ → ℝ
-  
-  // Conversions de symboles mathématiques courants
-  const mathSymbols: { [key: string]: string } = {
-    '\\mathbb{R}': 'ℝ',
-    '\\mathbb{N}': 'ℕ',
-    '\\mathbb{Z}': 'ℤ',
-    '\\mathbb{Q}': 'ℚ',
-    '\\mathbb{C}': 'ℂ',
-    '\\times': '×',
-    '\\div': '÷',
-    '\\pm': '±',
-    '\\leq': '≤',
-    '\\geq': '≥',
-    '\\neq': '≠',
-    '\\approx': '≈',
-    '\\infty': '∞',
-    '\\sqrt': '√',
-    '\\alpha': 'α',
-    '\\beta': 'β',
-    '\\gamma': 'γ',
-    '\\Delta': 'Δ',
-    '\\pi': 'π',
-    '\\theta': 'θ'
-  };
-  
-  // Remplacer les symboles LaTeX
-  for (const [latex, symbol] of Object.entries(mathSymbols)) {
-    converted = converted.replace(new RegExp(latex.replace(/\\/g, '\\\\'), 'g'), symbol);
+
+  let s = text;
+
+  // --- Fractions LaTeX : \frac{num}{den} ou frac{num}{den} (imbriquées : on itère) ---
+  for (let i = 0; i < 5; i++) {
+    s = s.replace(/\\?frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)');
   }
-  
-  // Convertir les exposants: x^2 → x², x^3 → x³
-  converted = converted.replace(/\^2/g, '²');
-  converted = converted.replace(/\^3/g, '³');
-  converted = converted.replace(/\^(\d+)/g, '⁽$1⁾');
-  
-  // Supprimer les dollars $ autour des formules simples
-  converted = converted.replace(/\$([a-zA-Z0-9_\s\+\-\*\/\(\)\[\]²³⁰¹⁴⁵⁶⁷⁸⁹]+)\$/g, '$1');
-  
-  // Nettoyer les commandes LaTeX restantes
-  converted = converted.replace(/\\/g, '');
-  
-  return converted;
+  // Simplifier les parenthèses autour d'un terme simple : (a)/(b) → a/b
+  s = s.replace(/\(([a-zA-Z0-9.]+)\)\/\(([a-zA-Z0-9.]+)\)/g, '$1/$2');
+
+  // --- Racines carrées : \sqrt{x} ou sqrt{x} ---
+  s = s.replace(/\\?sqrt\{([^{}]*)\}/g, 'sqrt($1)');
+  s = s.replace(/\\?sqrt\s+(\S+)/g, 'sqrt($1)');
+
+  // --- Puissances : x^{2} → x^2 (garder le caret) ---
+  s = s.replace(/\^{(\d+)}/g, '^$1');
+
+  // --- Exposants Unicode → notation caret (x² → x^2, x³ → x^3, …) ---
+  const superscriptMap: Record<string, string> = {
+    '⁰':'0','¹':'1','²':'2','³':'3','⁴':'4',
+    '⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'
+  };
+  s = s.replace(/([a-zA-Z0-9)])([\u2070\u00B9\u00B2\u00B3\u2074-\u2079]+)/g, (_, base, exps) => {
+    const digits = exps.split('').map((c: string) => superscriptMap[c] || c).join('');
+    return `${base}^${digits}`;
+  });
+
+  // --- Racine Unicode : √16 → sqrt(16) ---
+  s = s.replace(/√(\d+)/g, 'sqrt($1)');
+  s = s.replace(/√\(([^)]+)\)/g, 'sqrt($1)');
+
+  // --- Symboles LaTeX fréquents ---
+  s = s.replace(/\\cdot/g, '×');
+  s = s.replace(/\\times/g, '×');
+  s = s.replace(/\\div/g, '÷');
+  s = s.replace(/\\pm/g, '±');
+  s = s.replace(/\\leq/g, '≤');
+  s = s.replace(/\\geq/g, '≥');
+  s = s.replace(/\\neq/g, '≠');
+  s = s.replace(/\\approx/g, '≈');
+  s = s.replace(/\\infty/g, '∞');
+  s = s.replace(/\\pi/g, 'π');
+  s = s.replace(/\\alpha/g, 'α');
+  s = s.replace(/\\beta/g, 'β');
+  s = s.replace(/\\gamma/g, 'γ');
+  s = s.replace(/\\Delta/g, 'Δ');
+  s = s.replace(/\\theta/g, 'θ');
+  s = s.replace(/\\mathbb\{R\}/g, 'ℝ');
+  s = s.replace(/\\mathbb\{N\}/g, 'ℕ');
+  s = s.replace(/\\mathbb\{Z\}/g, 'ℤ');
+  s = s.replace(/\\mathbb\{Q\}/g, 'ℚ');
+  s = s.replace(/\\mathbb\{C\}/g, 'ℂ');
+
+  // --- Supprimer les dollars $ autour des formules inline ---
+  s = s.replace(/\$([^$\n]+)\$/g, '$1');
+
+  // --- Nettoyer les backslashes LaTeX orphelins restants ---
+  s = s.replace(/\\([a-zA-Z]+)/g, '$1');
+
+  return s;
 };
 
-// Générer les lignes pointillées pour les réponses (~24 cm de longueur avec interligne 1,5)
+// Convertir les tableaux Markdown (pipes |) en tableaux en texte plat pour Word
+// (Word n'interprète pas le HTML, on convertit donc en texte structuré)
+const convertMarkdownTableToPlainText = (text: string): string => {
+  if (!text) return text;
+
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*\|.+\|\s*$/.test(line)) {
+      // Collecter toutes les lignes consécutives du tableau
+      const tableLines: string[] = [];
+      while (i < lines.length && /^\s*\|.+\|\s*$/.test(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+
+      let isFirstDataRow = true;
+      for (const tl of tableLines) {
+        // Ligne séparateur (|---|) → skip
+        if (/^\s*\|[\s\-|:]+\|\s*$/.test(tl)) {
+          isFirstDataRow = false;
+          continue;
+        }
+        const cells = tl.split('|').map(c => c.trim()).filter(c => c !== '');
+        // En-tête : afficher en majuscules avec séparateurs
+        if (isFirstDataRow) {
+          result.push(cells.join(' | '));
+          result.push(cells.map(() => '--------').join('-+-'));
+          isFirstDataRow = false;
+        } else {
+          result.push(cells.join(' | '));
+        }
+      }
+      result.push(''); // ligne vide après le tableau
+    } else {
+      result.push(line);
+      i++;
+    }
+  }
+
+  return result.join('\n');
+};
+
+// Supprimer les balises HTML de tableau pour Word (docx ne les affiche pas)
+// On les convertit en texte lisible
+const stripHTMLTablesForWord = (text: string): string => {
+  if (!text) return text;
+
+  // Remplacer les balises <table ...> et </table>
+  let s = text;
+
+  // Extraire les tableaux HTML et les convertir en texte lisible
+  s = s.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, tableContent) => {
+    const rows: string[] = [];
+    const rowMatches = tableContent.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
+
+    rowMatches.forEach((rowHtml: string, rowIndex: number) => {
+      const cellMatches = rowHtml.match(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi) || [];
+      const cells = cellMatches.map((cell: string) =>
+        cell.replace(/<[^>]+>/g, '').trim()
+      );
+      rows.push(cells.join(' | '));
+      // Ajouter une ligne séparatrice après l'en-tête
+      if (rowIndex === 0) {
+        rows.push(cells.map(() => '--------').join('-+-'));
+      }
+    });
+
+    return '\n' + rows.join('\n') + '\n';
+  });
+
+  // Nettoyer les balises HTML restantes éventuelles
+  s = s.replace(/<[^>]+>/g, '');
+
+  return s;
+};
+
+// Préparer le contenu texte pour Word : nettoyer LaTeX + convertir tableaux en texte
+const prepareTextForWord = (text: string): string => {
+  if (!text) return text;
+  let s = convertLaTeXToText(text);
+  s = stripHTMLTablesForWord(s);
+  s = convertMarkdownTableToPlainText(s);
+  return s;
+};
 const generateAnswerLines = (numberOfLines: number): string => {
   // ~120 points pour atteindre environ 24 cm (selon la police)
   // Ajout de ligne vide entre chaque ligne pour simuler interligne 1,5
@@ -124,7 +229,7 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
                             subject.toLowerCase().includes('english');
   
   // EN-TÊTE DE L'EXERCICE - EN MAJUSCULES (effet gras visuel)
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${prepareTextForWord(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
@@ -132,7 +237,7 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
   }
   
   // ÉNONCÉ DE L'EXERCICE (contenu) - PAS DE GRAS
-  formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  formatted += `\n${prepareTextForWord(question.content)}\n`;
   
   // Formater selon le type de question
   switch (question.type) {
@@ -140,7 +245,7 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
       if (question.options && Array.isArray(question.options)) {
         formatted += `\n`;
         question.options.forEach((opt: string, i: number) => {
-          formatted += `☐ ${String.fromCharCode(65 + i)}. ${convertLaTeXToText(opt)}\n`;
+          formatted += `☐ ${String.fromCharCode(65 + i)}. ${prepareTextForWord(opt)}\n`;
         });
       }
       break;
@@ -152,7 +257,7 @@ const formatQuestion = (question: any, index: number, isEnglish: boolean = false
         const falseLabel = isEnglish ? 'False' : 'Faux';
         question.statements.forEach((stmt: any, i: number) => {
           const pointsPerStatement = question.pointsPerStatement || 1;
-          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n   ☐ ${trueLabel}   ☐ ${falseLabel}\n\n`;
+          formatted += `${i + 1}. ${prepareTextForWord(stmt.statement)} (${pointsPerStatement} pt)\n   ☐ ${trueLabel}   ☐ ${falseLabel}\n\n`;
         });
       }
       break;
@@ -344,7 +449,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
     : (question.points > 1 ? 'points' : 'point');
   
   // EN-TÊTE - EN MAJUSCULES (effet gras visuel)
-  let formatted = `\n${exerciseLabel} ${index + 1} : ${convertLaTeXToText(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
+  let formatted = `\n${exerciseLabel} ${index + 1} : ${prepareTextForWord(question.title).toUpperCase()} (${question.points} ${pointsLabel})\n`;
   
   if (question.isDifferentiation) {
     const diffLabel = isEnglish ? '⭐ Differentiation exercise' : '⭐ Exercice de différenciation';
@@ -352,7 +457,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
   }
   
   // ÉNONCÉ - PAS DE GRAS
-  formatted += `\n${convertLaTeXToText(question.content)}\n`;
+  formatted += `\n${prepareTextForWord(question.content)}\n`;
   
   // Ajouter les RÉPONSES
   switch (question.type) {
@@ -365,10 +470,10 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
           const letter = String.fromCharCode(65 + i);
           const isCorrect = question.correctAnswer === letter;
           const marker = isCorrect ? `[✓ ${correctLabel}]` : '';
-          formatted += `☐ ${letter}. ${convertLaTeXToText(opt)} ${marker}\n`;
+          formatted += `☐ ${letter}. ${prepareTextForWord(opt)} ${marker}\n`;
         });
         if (question.answer) {
-          formatted += `\n[${explanationLabel}: ${convertLaTeXToText(question.answer)}]`;
+          formatted += `\n[${explanationLabel}: ${prepareTextForWord(question.answer)}]`;
         }
       }
       break;
@@ -382,7 +487,7 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
         question.statements.forEach((stmt: any, i: number) => {
           const pointsPerStatement = question.pointsPerStatement || 1;
           const correctAnswer = stmt.isTrue ? trueLabel : falseLabel;
-          formatted += `${i + 1}. ${stmt.statement} (${pointsPerStatement} pt)\n`;
+          formatted += `${i + 1}. ${prepareTextForWord(stmt.statement)} (${pointsPerStatement} pt)\n`;
           formatted += `   ☐ ${trueLabel}   ☐ ${falseLabel}\n`;
           formatted += `   [✓ ${answerLabel}: ${correctAnswer}]\n\n`;
         });
@@ -393,14 +498,14 @@ const formatQuestionWithCorrection = (question: any, index: number, isEnglish: b
       const labelText = isEnglish ? '[Space to label the diagram/image]' : '[Espace pour légender le schéma/image]';
       formatted += `\n${labelText}\n`;
       if (question.answer) {
-        formatted += `\n[CORRECTION:\n${question.answer}]`;
+        formatted += `\n[CORRECTION:\n${prepareTextForWord(question.answer)}]`;
       }
       break;
       
     default:
       if (question.answer) {
         const correctionLabel = isEnglish ? 'CORRECTION' : 'CORRECTION';
-        formatted += `\n[${correctionLabel}:\n${question.answer}]`;
+        formatted += `\n[${correctionLabel}:\n${prepareTextForWord(question.answer)}]`;
       }
   }
   
