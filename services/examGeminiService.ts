@@ -183,11 +183,13 @@ ORGANISATION DE L'EXAMEN PAR SECTIONS :
 
 **MATHÉMATIQUES** - Structure obligatoire :
 - ÉVITER les QCM, Vrai/Faux ET Définitions (privilégier calculs, résolution de problèmes, constructions)
-- ÉCRITURE MATHÉMATIQUE CORRECTE OBLIGATOIRE :
-  * Fractions : utiliser notation Unicode (½, ¼, ¾) ou format LaTeX (\frac{a}{b})
-  * Puissances : utiliser exposants Unicode (x², x³, 10⁴) ou format LaTeX (x^2, x^3)
-  * Racines : √ ou \sqrt{x}
+- ⚠️ ÉCRITURE MATHÉMATIQUE STANDARD OBLIGATOIRE (PAS DE LATEX) :
+  * Fractions : utiliser UNIQUEMENT la barre oblique "/" (ex: 4z/3 = 12, PAS \frac{4z}{3} ou frac{4z}{3})
+  * Puissances : utiliser le symbole "^" (ex: x^2, x^3, 10^4, PAS x², 10⁴, ni LaTeX)
+  * Racines : utiliser "sqrt()" (ex: sqrt(16) = 4, PAS √16 ni \sqrt{16})
   * Symboles : ≤, ≥, ≠, ∈, ∉, ∀, ∃, π, etc.
+  * Exemples corrects : "5x/2 + 3 = 7", "x^2 - 4x + 3 = 0", "sqrt(25) = 5"
+  * Exemples interdits : "\frac{5x}{2}", "frac{5x}{2}", "x² - 4x", "√25"
 - EXPRESSIONS MATHÉMATIQUES :
   * TOUJOURS donner PLUSIEURS expressions (minimum 3-5 expressions par exercice)
   * Exemples : Si exercice sur simplification, donner 5 expressions à simplifier
@@ -282,8 +284,21 @@ NE PAS créer de section "resources" séparée au niveau de l'examen.
   * Exemple source : (Victor Hugo, Les Misérables, Éditions Gallimard, 1862)
   * Exemple source : (Le Monde, "Article sur le climat", 15 novembre 2023)
   
-- **Tableaux** : Intégrer le tableau dans l'énoncé
-  Format structuré : | Colonne 1 | Colonne 2 | Colonne 3 |
+- **Tableaux** : Intégrer le tableau dans l'énoncé avec format HTML propre
+  ⚠️ UTILISER FORMAT HTML UNIQUEMENT (PAS DE FORMAT MARKDOWN) :
+  <table border="1" style="border-collapse: collapse; width: 100%;">
+    <tr>
+      <th>En-tête 1</th>
+      <th>En-tête 2</th>
+      <th>En-tête 3</th>
+    </tr>
+    <tr>
+      <td>Donnée 1</td>
+      <td>Donnée 2</td>
+      <td>Donnée 3</td>
+    </tr>
+  </table>
+  ⚠️ NE JAMAIS utiliser le format Markdown (|---|---|) pour les tableaux
   
 - **Graphiques/Courbes** : Description DÉTAILLÉE dans l'énoncé
   Exemple : [Graphique : Évolution température vs temps
@@ -444,6 +459,16 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     - ⚠️ FORBIDDEN: "Definitions" type questions or "Define..." questions
     - PRIORITIZE: Comprehension, grammar in context, application exercises
     
+    ${config.subject.toLowerCase().includes('math') ? `⚠️ CRITICAL RULES FOR MATHEMATICS :
+    - STANDARD MATHEMATICAL WRITING (NO LATEX) :
+      * Fractions : ONLY "/" (ex: "4z/3 = 12", NOT "frac{4z}{3}" or "\\frac{4z}{3}")
+      * Powers : ONLY "^" (ex: "x^2 + 5", NOT "x²" or LaTeX)
+      * Roots : ONLY "sqrt()" (ex: "sqrt(16) = 4", NOT "√16" or "\\sqrt{16}")
+      * Correct examples : "Solve: 2x/3 + 5 = 7", "Simplify: x^2 - 4x + 4", "Calculate: sqrt(25)"
+      * FORBIDDEN examples : "\\frac{2x}{3}", "frac{2x}{3}", "x² - 4x", "√25"
+    - TABLES : Use HTML FORMAT only, NOT Markdown format (|---|)
+    ` : ''}
+    
     Make sure to:
     - Vary question types (minimum ${isEvaluation ? '3' : '4'} different types)
     - Include EXACTLY 1 differentiation question
@@ -473,6 +498,26 @@ export const generateExam = async (config: ExamGenerationConfig): Promise<Exam> 
     - PRIVILÉGIER : Compréhension, grammaire en contexte, exercices d'application, analyse
     - EXEMPLES VALIDES : "Identifiez...", "Transformez...", "Analysez...", "Expliquez en contexte..."
     - EXEMPLES INTERDITS : "Définissez ce qu'est...", "Donnez la définition de..."
+    ` : ''}
+    
+    ${config.subject.toLowerCase().includes('math') ? `⚠️ RÈGLES CRITIQUES POUR MATHÉMATIQUES :
+    - ÉCRITURE MATHÉMATIQUE STANDARD (PAS DE LATEX) :
+      * Fractions : UNIQUEMENT "/" (ex: "4z/3 = 12", PAS "frac{4z}{3}" ni "\\frac{4z}{3}")
+      * Puissances : UNIQUEMENT "^" (ex: "x^2 + 5", PAS "x²" ni LaTeX)
+      * Racines : UNIQUEMENT "sqrt()" (ex: "sqrt(16) = 4", PAS "√16" ni "\\sqrt{16}")
+      * Exemples corrects : "Résoudre : 2x/3 + 5 = 7", "Simplifier : x^2 - 4x + 4", "Calculer : sqrt(25)"
+      * Exemples INTERDITS : "\\frac{2x}{3}", "frac{2x}{3}", "x² - 4x", "√25"
+    - TABLEAUX : Utiliser FORMAT HTML uniquement, PAS de format Markdown (|---|)
+    ` : ''}
+    
+    ${needsGraph ? `⚠️ RÈGLES POUR TABLEAUX ET GRAPHIQUES :
+    - TABLEAUX : OBLIGATOIRE d'utiliser format HTML avec <table>, <tr>, <th>, <td>
+    - NE JAMAIS utiliser le format Markdown avec pipes (| Colonne | Colonne |)
+    - Exemple correct :
+      <table border="1">
+        <tr><th>Valeur 1</th><th>Valeur 2</th></tr>
+        <tr><td>Donnée 1</td><td>Donnée 2</td></tr>
+      </table>
     ` : ''}
     
     Assure-toi de :
